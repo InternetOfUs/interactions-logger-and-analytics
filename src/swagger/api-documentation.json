@@ -1,0 +1,376 @@
+{
+  "openapi" : "3.0.0",
+  "info" : {
+    "title" : "Memorable Experience",
+    "description" : "APIs of the Memorable experience project",
+    "version" : "0.1",
+    "contact" : {
+      "email" : "massimiliano.luca@unitn.it"
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "ErrorModel" : {
+        "type" : "object",
+        "required" : [ "code", "message" ],
+        "properties" : {
+          "code" : {
+            "enum" : [ 400 ]
+          },
+          "message" : {
+            "enum" : [ "A generic error occured" ]
+          }
+        }
+      },
+      "ServiceModel" : {
+        "type" : "array",
+        "items" : {
+          "type" : "object",
+          "properties" : {
+            "serviceName" : {
+              "type" : "string",
+              "example" : "wine"
+            },
+            "performance" : {
+              "type" : "integer",
+              "format" : "int32",
+              "example" : 0.93
+            }
+          }
+        }
+      },
+      "MessageModel" : {
+        "type" : "object",
+        "properties" : {
+          "traceId" : {
+            "type" : "string",
+            "example" : "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+          },
+          "sentence" : {
+            "type" : "string",
+            "example" : "devo fare un bonifico di 40 euro"
+          },
+          "domain" : {
+            "type" : "string",
+            "example" : "pagamenti"
+          },
+          "intent" : {
+            "type" : "object",
+            "properties" : {
+              "name" : {
+                "type" : "string",
+                "example" : "bonifico"
+              },
+              "confidence" : {
+                "type" : "string",
+                "example" : 0.87
+              }
+            }
+          },
+          "entities" : {
+            "type" : "object",
+            "properties" : {
+              "type" : {
+                "type" : "string",
+                "example" : "array"
+              },
+              "items" : {
+                "type" : "array",
+                "items" : {
+                  "oneOf" : [ {
+                    "$ref" : "#/components/schemas/ImportoModel"
+                  } ]
+                }
+              }
+            }
+          },
+          "project" : {
+            "type" : "string",
+            "example" : "MeMex"
+          },
+          "language" : {
+            "type" : "string",
+            "example" : "IT"
+          }
+        }
+      },
+      "ImportoModel" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "example" : "IMPORTO"
+          },
+          "value" : {
+            "type" : "string",
+            "example" : "40 euro"
+          },
+          "confidence" : {
+            "type" : "number",
+            "format" : "float",
+            "example" : 0.91
+          },
+          "start" : {
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 23
+          },
+          "end" : {
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 30
+          },
+          "normalization" : {
+            "type" : "object",
+            "properties" : {
+              "confidence" : {
+                "type" : "number",
+                "format" : "float",
+                "example" : 0.96
+              },
+              "value" : {
+                "type" : "integer",
+                "format" : "int32",
+                "example" : 40
+              },
+              "unit" : {
+                "type" : "string",
+                "example" : "EUR"
+              }
+            }
+          }
+        }
+      },
+      "MessagesModel" : {
+        "type" : "object",
+        "properties" : {
+          "messages" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MessageModel"
+            }
+          }
+        }
+      },
+      "ServicesModel" : {
+        "type" : "object",
+        "properties" : {
+          "service" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ServiceModel"
+            }
+          }
+        }
+      }
+    },
+    "requestBodies" : {
+      "Message" : {
+        "description" : "A message in JSON format",
+        "required" : false,
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/MessageModel"
+            }
+          }
+        }
+      },
+      "Messages" : {
+        "description" : "A set of messages in JSON format",
+        "required" : false,
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/MessagesModel"
+            }
+          }
+        }
+      },
+      "Services" : {
+        "description" : "A set of services and their performances in JSON format",
+        "required" : false,
+        "content" : {
+          "applicaiton/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/ServicesModel"
+            }
+          }
+        }
+      }
+    },
+    "responses" : {
+      "GeneralError" : {
+        "description" : "An error occurred",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/ErrorModel"
+            }
+          }
+        }
+      }
+    },
+    "pathitems" : {
+      "GetMessage" : {
+        "get" : {
+          "summary" : "Retrieve a single message by specifying the trace id",
+          "description" : "This end-point can be used to retrieve all the information of a single message",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "traceId",
+            "schema" : {
+              "type" : "string"
+            },
+            "required" : true,
+            "description" : "The trace id of the message"
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "success",
+              "content" : {
+                "applicaiton/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/requestBodies/Message"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "invalid trace id"
+            }
+          }
+        }
+      },
+      "GetConversation" : {
+        "get" : {
+          "summary" : "Retrieve a conversation by specifying the conversation id",
+          "description" : "This end-point can be used to retrieve all the information of a conversation",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "conversationId",
+            "schema" : {
+              "type" : "string"
+            },
+            "required" : true,
+            "explode" : true,
+            "description" : "The id of the conversation"
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "success",
+              "content" : {
+                "applicaiton/json" : {
+                  "schema" : {
+                    "type" : "array",
+                    "items" : {
+                      "$ref" : "#/components/requestBodies/Messages"
+                    }
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "invalid conversation id"
+            }
+          }
+        }
+      },
+      "GetServicesList" : {
+        "get" : {
+          "summary" : "Retrieve the list of services involved in a message and, eventually, the performances",
+          "description" : "An end-point to retrieve the services involved in a message and the relative performance measure",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "traceId",
+            "schema" : {
+              "type" : "string"
+            },
+            "required" : true,
+            "description" : "The trace id of the message"
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "success",
+              "content" : {
+                "applicaiton/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/requestBodies/Services"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "invalid trace id"
+            }
+          }
+        }
+      },
+      "GetLowPerformancesModules" : {
+        "get" : {
+          "summary" : "Retrieve the average performances of all the modules",
+          "description" : "With this end-point the average performances of the module in the last n days can be obtained",
+          "parameters" : [ {
+            "in" : "path",
+            "name" : "noDays",
+            "schema" : {
+              "type" : "integer",
+              "format" : "int32"
+            },
+            "required" : true,
+            "description" : "the number of days to consider"
+          } ],
+          "responses" : {
+            "200" : {
+              "description" : "success",
+              "content" : {
+                "application/json" : {
+                  "schema" : {
+                    "$ref" : "#/components/requestBodies/Services"
+                  }
+                }
+              }
+            },
+            "400" : {
+              "description" : "invalid number id"
+            }
+          }
+        }
+      },
+      "LogMessage" : {
+        "post" : {
+          "summary" : "Add a new single message to the database",
+          "description" : "This end-point allows to log a single message into the database",
+          "requestBody" : {
+            "$ref" : "#/components/requestBodies/Message"
+          },
+          "responses" : {
+            "201" : {
+              "description" : "Created"
+            },
+            "default" : {
+              "$ref" : "#/components/responses/GeneralError"
+            }
+          }
+        }
+      },
+      "LogMessages" : {
+        "post" : {
+          "summary" : "Add a batch of messages to the database",
+          "description" : "This end-point allows to log a set of messages into the database",
+          "requestBody" : {
+            "$ref" : "#/components/requestBodies/Messages"
+          },
+          "responses" : {
+            "201" : {
+              "description" : "Created"
+            },
+            "default" : {
+              "$ref" : "#/components/responses/GeneralError"
+            }
+          }
+        }
+      }
+    }
+  }
+}
