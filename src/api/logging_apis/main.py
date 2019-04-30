@@ -1,11 +1,16 @@
-from flask import Flask
-from flask import request
+from flask import Flask, request, jsonify
 # for second-level logging
 import logging
 from logging.handlers import RotatingFileHandler
 import datetime
 # for handling elasticsearch
 from elasticsearch import Elasticsearch
+import argparse
+
+argParser = argparse.ArgumentParser()
+argParser.add_argument("-hs", "--host", type=str, dest="h", default="localhost")
+argParser.add_argument("-p", "--port", type=str, dest="p", default="9200")
+args = argParser.parse_args()
 
 app = Flask(__name__)
 
@@ -13,7 +18,7 @@ app = Flask(__name__)
 ELASTIC_HOST = 'localhost'
 ELASTIC_PORT = '9200'
 
-es = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
+es = Elasticsearch([{'host': args.h, 'port': args.p}])
 
 # second-level logging
 handler = RotatingFileHandler('logger.log', maxBytes=10000, backupCount=1)
@@ -24,7 +29,7 @@ app.logger.addHandler(handler)
 @app.errorhandler(400)
 def internal_error(error):
     response = app.response_class(
-        response='erroneous data format' ,
+        response='erroneous data format',
         status=400,
         content_type='text/xml; charset=utf-8'
     )
@@ -69,7 +74,7 @@ def messages():
             return response
         for element in v:
             # push the message in the database
-            es.index(index='mem-ex', doc_type='message', body=element)
+            es.index(index='message', doc_type='_doc', body=element)
 
     response = app.response_class(
         response='Ok',
@@ -89,7 +94,7 @@ def message():
     """
     app.logger.warning('Logger @ start logging of a single message - ' + str(datetime.datetime.now()))
 
-    es.index(index='mem-ex', doc_type='message', body=request.json)
+    es.index(index='message', doc_type='_doc', body=request.json)
 
     response = app.response_class(
         response='Ok',
@@ -100,4 +105,4 @@ def message():
     return response
 
 
-app.run()
+app.run(host="0.0.0.0", port=5000, debug=True)
