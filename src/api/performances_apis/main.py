@@ -9,19 +9,21 @@ from elasticsearch import Elasticsearch
 
 import json
 
+import argparse
+
 app = Flask(__name__)
-
-# elasticsearch connection - params
-ELASTIC_HOST = 'localhost'
-ELASTIC_PORT = '9200'
-
-es = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
 
 # second-level logging
 handler = RotatingFileHandler('logger.log', maxBytes=10000, backupCount=1)
 handler.setLevel(logging.INFO)
 app.logger.addHandler(handler)
 
+argParser = argparse.ArgumentParser()
+argParser.add_argument("-hs", "--host", type=str, dest="h", default="localhost")
+argParser.add_argument("-p", "--port", type=str, dest="p", default="9200")
+args = argParser.parse_args()
+
+es = Elasticsearch([{'host': args.h, 'port': args.p}])
 
 @app.errorhandler(400)
 def internal_error(error):
