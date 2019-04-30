@@ -14,10 +14,6 @@ args = argParser.parse_args()
 
 app = Flask(__name__)
 
-# elasticsearch connection - params
-ELASTIC_HOST = 'localhost'
-ELASTIC_PORT = '9200'
-
 es = Elasticsearch([{'host': args.h, 'port': args.p}])
 
 # second-level logging
@@ -62,19 +58,9 @@ def messages():
     messages_received = request.json
     # for each key in the dictionary, take the value (the message) and push it in the database
     # there should be just one key associated to a list of messages
-    for k, v in messages_received.items():
-        # if there is more than one top-level key
-        if k != "messages":
-            response = app.response_class(
-                response='400 CHECKLIST there must be just one top-level key in the json file',
-                status=400,
-                mimetype='application/json'
-            )
-            app.logger.warning('Logger @ wrong format of the message (t.l.key) - ' + str(datetime.datetime.now()))
-            return response
-        for element in v:
-            # push the message in the database
-            es.index(index='message', doc_type='_doc', body=element)
+    for element in messages_received:
+        # push the message in the database
+        es.index(index='message', doc_type='_doc', body=element)
 
     response = app.response_class(
         response='Ok',
