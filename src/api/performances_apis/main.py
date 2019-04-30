@@ -45,7 +45,7 @@ def not_found(error):
     return response
 
 
-@app.route('/GetMessage', methods=['GET'])
+@app.route('performances/GetMessage', methods=['GET'])
 def retrieve_message():
     """
     Retrieve a single message by specifying the trace id
@@ -73,7 +73,7 @@ def retrieve_message():
         return response
 
 
-@app.route('/GetConversation', methods=['GET'])
+@app.route('performances/GetConversation', methods=['GET'])
 def retrieve_conversation():
     """
     Retrieve a conversation by specifying the conversation id
@@ -100,7 +100,7 @@ def retrieve_conversation():
         return response
 
 
-@app.route('/GetServicesList', methods=['GET'])
+@app.route('performances/GetServicesList', methods=['GET'])
 def get_services_message():
 
     trace_id = request.args.get('trace_id')
@@ -120,7 +120,7 @@ def get_services_message():
     return response
 
 
-@app.route('/GetLowPerformancesModules', methods=['GET'])
+@app.route('performances/GetLowPerformancesModules', methods=['GET'])
 def get_low_performances():
 
     no_days = request.args.get('no_days')
