@@ -25,6 +25,7 @@ args = argParser.parse_args()
 
 es = Elasticsearch([{'host': args.h, 'port': args.p}])
 
+
 @app.errorhandler(400)
 def internal_error(error):
     response = app.response_class(
@@ -55,7 +56,7 @@ def retrieve_message():
     :return: the HTTP response
     """
 
-    trace_id = request.args.get('traceId')
+    trace_id = request.args.get
 
     response = es.search(index="mem-ex", body={"query": {"match": {"traceId": trace_id}}})
 
@@ -82,7 +83,7 @@ def retrieve_conversation():
     :param conversationId: the id of the conversation to retrieve
     :return: the HTTP response
     """
-    conversation_id = request.args.get('conversationId')
+    conversation_id = request.args.get
 
     response = es.search(index="mem-ex", body={"query": {"term": {"coversationId.keyword": {"value": conversation_id}}}})
 
@@ -105,7 +106,7 @@ def retrieve_conversation():
 @app.route('performances/GetServicesList', methods=['GET'])
 def get_services_message():
 
-    trace_id = request.args.get('trace_id')
+    trace_id = request.args.get
 
     es = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
 
@@ -125,7 +126,7 @@ def get_services_message():
 @app.route('performances/GetLowPerformancesModules', methods=['GET'])
 def get_low_performances():
 
-    no_days = request.args.get('no_days')
+    no_days = request.args.get
 
     es = Elasticsearch([{'host': ELASTIC_HOST, 'port': ELASTIC_PORT}])
 

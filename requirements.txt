@@ -5,6 +5,7 @@ Click==7.0
 elasticsearch==7.0.0
 Flask==1.0.2
 Flask-RESTful==0.3.7
+gunicorn==19.9.0
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10.1
