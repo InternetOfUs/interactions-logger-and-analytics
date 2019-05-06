@@ -1,29 +1,115 @@
-class ErrorMessage:
-
-    def __init__(self,trace_id: str, time: str, module_name: str, message: str):
-        self.trace_id = trace_id
-        self.time = time
-        self.module_name = module_name
-        self.message = message
-
-    def from_rep(self, data:dict) -> ErrorMessage:
-        return ErrorMessage(data['trace_id'], data['timestamp'], data['module_name'], data['message'])
+class Intent:
+    def __init__(self, name: str, confidence: float):
+        self._name = name
+        self._confidence = confidence
 
     def to_repr(self) -> dict:
-        object = {
-            'traceId' : self.trace_id,
-            'timestamp' : self.time,
-            'moduleName' : self.module_name,
-            'message' : self.message
+        return {
+            'name': self._name,
+            'confidence': self._confidence
         }
-        return object
+
+    @staticmethod
+    def from_rep(data: dict):
+        return Intent(data['name'], data['confidence'])
 
 
-class PerformanceMessage:
+class RequestMessage:
 
-    def __init__(self,trace_id: str, time: str, module_name: str, performance_metric: str, performance_value: float):
-        self.trace_id = trace_id
-        self.time = time
-        self.module_name = module_name
-        self.performance_metric = performance_metric
-        self.performance_value = performance_value
+    def __init__(self, trace_id: str, sentence: str, domain: str, intent: Intent, entities: dict, project: str,
+                 language: str) -> None:
+        self._trace_id = trace_id
+        self._sentence = sentence
+        self._domain = domain
+        self._intent = intent
+        self._entities = entities
+        self._project = project
+        self._language = language
+
+        if not isinstance(intent, Intent):
+            raise ValueError('intent type should be Intent')
+
+        if not isinstance(entities, dict):
+            raise ValueError('entities type should be dictionary')
+
+    def to_repr(self) -> dict:
+        return {
+            'traceId': self._trace_id,
+            'sentence': self._sentence,
+            'domain': self._domain,
+            'intent': self._intent.to_repr(),
+            'entities': self._entities,
+            'project': self._project,
+            'language': self._project
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+        intent = Intent.from_rep(data['intent'])
+        return RequestMessage(data['traceId'], data['sentence'], data['domain'], intent, data['entities'],
+                              data['project'], data['language'])
+
+
+class ResponseResource:
+    def __init__(self, resource_id: str, type: str, metadata: dict):
+        self._resourceId = resource_id
+        self._type = type
+        self._metadata = metadata
+
+        if not isinstance(metadata, dict):
+            raise ValueError('metadata type should be dictionary')
+
+    def to_repr(self) -> dict:
+        return{
+            'resourceId': self._resourceId,
+            'type': self._type,
+            'metadata': self._metadata
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+        return ResponseResource(data['resourceId'], data['type'], data['metadata'])
+
+
+class ResponseMessage:
+    def __init__(self, trace_id: str, sentence: str, resources: list):
+        self._trace_id = trace_id
+        self._sentence = sentence
+        self._resources = resources
+
+        for resource in resources:
+            if not isinstance(resource, ResponseResource):
+                raise ValueError('resource type should be ResponseResource')
+
+    def to_repr(self) -> dict:
+        return {
+            'traceId': self._trace_id,
+            'sentence': self._sentence,
+            'resources': self._resources
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+        return ResponseMessage(data['traceId'], data['sentence'], data['resources'])
+
+
+class NotificationMessage:
+    def __init__(self, trace_id: str, sentence: str, metadata: dict):
+        self._trace_id = trace_id,
+        self._sentence = sentence,
+        self._metadata = metadata
+
+        if not isinstance(metadata, dict):
+            raise ValueError('metadata type should be dictionary')
+
+    def to_repr(self) -> dict:
+        return {
+            'traceId': self._trace_id,
+            'sentence': self._sentence,
+            'metadata': self._metadata
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+        return NotificationMessage(data['traceId'], data['sentence'], data['metadata'])
+
