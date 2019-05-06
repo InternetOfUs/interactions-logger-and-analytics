@@ -9,9 +9,6 @@ import logging
 from datetime import datetime
 # for handling elasticsearch
 from elasticsearch import Elasticsearch
-import argparse
-# for managing the responses
-import json
 
 from api.utils.utils import Utils
 
@@ -41,17 +38,19 @@ class LogMessage(Resource):
     def post(self) -> tuple:
         """
         Add a new single message to the database. Pass a single message in JSON format as part of the body of the request
+        This method log the messages with index <project-name>-message-<yyyy>-<mm>-<dd
         :return: the HTTP response
         """
         data = request.get_json()
         utils = Utils()
+        # TODO check structure in v 0.0.4
         trace_id = utils._extract_trace_id(data)
         logging.warning("INFO@LogMessage POST - starting to log a new message with id [%s] at [%s]" % (
             trace_id, str(datetime.now())))
         conversation_id = utils._compute_conversation_id()
         data["conversationId"] = conversation_id
 
-        index_name = self._project_name + "message" + datetime.today().strftime('%Y-%m-%d')
+        index_name = self._project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
 
         self._es.index(index=index_name, doc_type='_doc', body=data)
         response_json = {
@@ -68,6 +67,7 @@ class LogMessage(Resource):
 class LogMessages(Resource):
     """
     This class can be used to log an array of messages. The only method allowed is post
+    This method log the messages with index <project-name>-message-<yyyy>-<mm>-<dd
     """
 
     def __init__(self, es, project_name):
@@ -83,12 +83,13 @@ class LogMessages(Resource):
         :return: the HTTP response
         """
         logging.warning(
-            "INFO@LogMessages POST - starting to log an array of messages at [%s]" % (str(datetime.datetime.now())))
+            "INFO@LogMessages POST - starting to log an array of messages at [%s]" % (str(datetime.now())))
         messages_received = request.json
         message_ids = []
         for element in messages_received:
             # push the message in the database
             utils = Utils()
+            # TODO check structure in v 0.0.4
             trace_id = utils._extract_trace_id(element)
             logging.warning("INFO@LogMessage POST - starting to log a new message with id [%s] at [%s]" % (
                 trace_id, str(datetime.now())))

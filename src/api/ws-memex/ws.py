@@ -4,6 +4,8 @@ import logging
 from flask import Flask
 from flask_restful import Api
 
+from messages_api.main import MessageResourceBuilder
+from logging_api.main import LoggingResourceBuilder
 
 class WsInterface(object):
 
@@ -13,9 +15,9 @@ class WsInterface(object):
         self._init_modules(elastic, project_name)
 
     def _init_modules(self, elastic, project_name) -> None:
-        from messages_api.main import MessageResourceBuilder
         active_routes = [
             (MessageResourceBuilder.routes(elastic, project_name), "/message"),
+            (LoggingResourceBuilder.routes(elastic, project_name), "/logging")
             # (LoggingResourceBuilder.routes(elastic), "/log")
         ]
 
