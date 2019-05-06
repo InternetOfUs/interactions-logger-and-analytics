@@ -1,0 +1,111 @@
+"""
+This module contains all the end-points for the logging APIs
+"""
+
+from flask import Flask, request
+from flask_restful import Resource, Api, abort
+# for second-level logging
+import logging
+from datetime import datetime
+# for handling elasticsearch
+from elasticsearch import Elasticsearch
+import argparse
+# for managing the responses
+import json
+
+from api.utils.utils import Utils
+
+
+class MessageResourceBuilder(object):
+
+    @staticmethod
+    def routes(es: Elasticsearch, project_name: str):
+        return [
+            (LogMessage, '/log', (es, project_name,)),
+            (LogMessages, '/logs', (es, project_name,))
+        ]
+
+
+class LogMessage(Resource):
+    """
+    This class can be used to log a single message. The only message allowed is post
+    """
+
+    def __init__(self, es, project_name):
+        self._es = es
+        self._project_name = project_name
+
+    def get(self) -> None:
+        abort(405, message="method not allowed")
+
+    def post(self) -> tuple:
+        """
+        Add a new single message to the database. Pass a single message in JSON format as part of the body of the request
+        :return: the HTTP response
+        """
+        data = request.get_json()
+        utils = Utils()
+        trace_id = utils._extract_trace_id(data)
+        logging.warning("INFO@LogMessage POST - starting to log a new message with id [%s] at [%s]" % (
+            trace_id, str(datetime.now())))
+        conversation_id = utils._compute_conversation_id()
+        data["conversationId"] = conversation_id
+
+        index_name = self._project_name + "message" + datetime.today().strftime('%Y-%m-%d')
+
+        self._es.index(index=index_name, doc_type='_doc', body=data)
+        response_json = {
+            "trace_id": trace_id,
+            "status": "ok",
+            "code": 200
+        }
+
+        logging.warning("INFO@LogMessage POST - finishing to log a new message with id [%s] at [%s]" % (
+            trace_id, str(datetime.now())))
+        return response_json, 200
+
+
+class LogMessages(Resource):
+    """
+    This class can be used to log an array of messages. The only method allowed is post
+    """
+
+    def __init__(self, es, project_name):
+        self._es = es
+        self._project_name = project_name
+
+    def get(self) -> None:
+        abort(405, message="method not allowed")
+
+    def post(self) -> tuple:
+        """
+        Add a batch of messages to the database. Pass a JSON array in the body of the request
+        :return: the HTTP response
+        """
+        logging.warning(
+            "INFO@LogMessages POST - starting to log an array of messages at [%s]" % (str(datetime.datetime.now())))
+        messages_received = request.json
+        message_ids = []
+        for element in messages_received:
+            # push the message in the database
+            utils = Utils()
+            trace_id = utils._extract_trace_id(element)
+            logging.warning("INFO@LogMessage POST - starting to log a new message with id [%s] at [%s]" % (
+                trace_id, str(datetime.now())))
+            conversation_id = utils._compute_conversation_id()
+            element["conversationId"] = conversation_id
+
+            index_name = self._project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
+
+            self._es.index(index=index_name, doc_type='_doc', body=element)
+            message_ids.append(trace_id)
+            logging.warning("INFO@LogMessage POST - finishing to log a new message with id [%s] at [%s]" % (
+                trace_id, str(datetime.now())))
+        json_response = {
+            "ids_logged": ';'.join(message_ids),
+            "status": "ok",
+            "code": 200
+        }
+        logging.warning(
+            "INFO@LogMessages POST - finishing to log an array of messages at [%s]" % (str(datetime.now())))
+        return json_response, 200
