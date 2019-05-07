@@ -50,6 +50,7 @@ class RequestMessage:
                               data['project'], data['language'])
 
 
+# TODO check models (2)
 class ResponseResource:
     def __init__(self, resource_id: str, type: str, metadata: dict):
         self._resourceId = resource_id

@@ -11,3 +11,13 @@
 - nginx configuration 
 - running end-points @ memex.u-hopper.com/logging/LogMessage AND memex.u-hopper.com/logging/LogMessages 
 - Utils class initialized
+
+### Version 0.0.3
+- Parametrized Elasticsearch instance 
+- restfull flask introduced 
+- indexes rename
+
+### Version 0.0.4
+- endpoints alignment
+- various adjustments
+- alpha release @ memex.u-hopper.com

@@ -1,7 +1,3 @@
-"""
-This module contains all the end-points for the logging APIs
-"""
-
 from flask import Flask, request
 from flask_restful import Resource, Api, abort
 # for second-level logging
@@ -9,17 +5,16 @@ import logging
 from datetime import datetime
 # for handling elasticsearch
 from elasticsearch import Elasticsearch
-
-from api.utils.utils import Utils
+from memex_logging.utils.utils import Utils
 
 
 class MessageResourceBuilder(object):
 
     @staticmethod
-    def routes(es: Elasticsearch, project_name: str):
+    def routes(es: Elasticsearch):
         return [
-            (LogMessage, '/log', (es, project_name,)),
-            (LogMessages, '/logs', (es, project_name,))
+            (LogMessage, '/message', (es,)),
+            (LogMessages, '/messages', (es,))
         ]
 
 
@@ -28,9 +23,8 @@ class LogMessage(Resource):
     This class can be used to log a single message. The only message allowed is post
     """
 
-    def __init__(self, es, project_name):
+    def __init__(self, es: Elasticsearch):
         self._es = es
-        self._project_name = project_name
 
     def get(self) -> None:
         abort(405, message="method not allowed")
@@ -44,13 +38,15 @@ class LogMessage(Resource):
         data = request.get_json()
         utils = Utils()
         # TODO check structure in v 0.0.4
-        trace_id = utils._extract_trace_id(data)
+        trace_id = utils.extract_trace_id(data)
         logging.warning("INFO@LogMessage POST - starting to log a new message with id [%s] at [%s]" % (
             trace_id, str(datetime.now())))
-        conversation_id = utils._compute_conversation_id()
+        conversation_id = utils.compute_conversation_id()
         data["conversationId"] = conversation_id
 
-        index_name = self._project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
+        project_name = utils.extract_project_name(data)
+
+        index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
 
         self._es.index(index=index_name, doc_type='_doc', body=data)
         response_json = {
@@ -70,9 +66,8 @@ class LogMessages(Resource):
     This method log the messages with index <project-name>-message-<yyyy>-<mm>-<dd
     """
 
-    def __init__(self, es, project_name):
+    def __init__(self, es: Elasticsearch):
         self._es = es
-        self._project_name = project_name
 
     def get(self) -> None:
         abort(405, message="method not allowed")
@@ -90,13 +85,15 @@ class LogMessages(Resource):
             # push the message in the database
             utils = Utils()
             # TODO check structure in v 0.0.4
-            trace_id = utils._extract_trace_id(element)
+            trace_id = utils.extract_trace_id(element)
             logging.warning("INFO@LogMessage POST - starting to log a new message with id [%s] at [%s]" % (
                 trace_id, str(datetime.now())))
-            conversation_id = utils._compute_conversation_id()
+            conversation_id = utils.compute_conversation_id()
             element["conversationId"] = conversation_id
 
-            index_name = self._project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
+            project_name = utils.extract_project_name(element)
+
+            index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
 
             self._es.index(index=index_name, doc_type='_doc', body=element)
             message_ids.append(trace_id)

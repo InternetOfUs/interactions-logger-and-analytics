@@ -4,7 +4,7 @@ import argparse
 
 from elasticsearch import Elasticsearch
 
-from ws import WsInterface
+from memex_logging.ws_memex.ws import WsInterface
 
 if __name__ == '__main__':
 
@@ -15,9 +15,7 @@ if __name__ == '__main__':
 
     es = Elasticsearch([{'host': args.h, 'port': args.p}])
 
-    project_name = "memex"
-
-    ws = WsInterface(es, project_name)
+    ws = WsInterface(es)
 
     try:
         ws.run_server()
