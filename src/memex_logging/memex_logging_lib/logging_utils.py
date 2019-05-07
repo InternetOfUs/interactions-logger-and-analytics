@@ -4,6 +4,10 @@ import requests
 
 class LoggingUtility:
 
+    def __init__(self, service_host, service_port):
+        self._service_host = service_host,
+        self._service_port = service_port
+
     def add_message(message: dict, service_host: str = "http://localhost", service_port: int =5000) -> tuple:
         """
         Utils to add a message to the database

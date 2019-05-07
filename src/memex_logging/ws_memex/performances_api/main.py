@@ -26,12 +26,12 @@ class GetMessage(Resource):
         :return: the HTTP response
         """
 
-        response = self._es.search(index="_all", body={"query": {"match": {"traceId": trace_id}}})
+        response = self._es.search(index="memex-*", body={"query": {"match": {"traceId": trace_id}}})
 
         if response['hits']['total'] == 0:
             abort(404, message="resource not found")
         else:
-            return json.dumps(response['hits']['hits'][0]['_source']), 200
+            return response['hits']['hits'][0]['_source'], 200
 
     def post(self)-> None:
         abort(405, message="method not allowed")
@@ -48,13 +48,12 @@ class GetConversation(Resource):
         :return: the HTTP response
         """
 
-        response = self._es.search(index="_all", body={"query": {"term": {"conversationId.keyword": {"value": conversation_id}}}})
+        response = self._es.search(index="memex-*", body={"query": {"term": {"conversationId.keyword": {"value": conversation_id}}}})
 
         if response['hits']['total'] == 0:
             abort(404, message="resource not found")
-            return response
         else:
-            return json.dumps(response['hits']['hits']), 200
+            return response['hits']['hits'], 200
 
     def post(self) -> None:
         abort(405, message="method not allowed")

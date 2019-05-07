@@ -11,6 +11,9 @@ info:
   contact:
     email: "massimiliano.luca@unitn.it"
 
+servers:
+  - url: memex.u-hopper.com
+
 tags:
   - name: message
     description: APIs to log the conversation into the database
@@ -228,11 +231,10 @@ components:
 
         project:
           type: string
-          example: "memex"
+          example: "MeMex"
         language:
           type: string
           example: "IT"
-
 
     # Schema for an array of Message
     MessagesModel:

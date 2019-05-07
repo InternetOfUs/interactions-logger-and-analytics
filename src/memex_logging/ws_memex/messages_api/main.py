@@ -5,8 +5,7 @@ import logging
 from datetime import datetime
 # for handling elasticsearch
 from elasticsearch import Elasticsearch
-
-from utils.utils import Utils
+from memex_logging.utils.utils import Utils
 
 
 class MessageResourceBuilder(object):
@@ -39,13 +38,13 @@ class LogMessage(Resource):
         data = request.get_json()
         utils = Utils()
         # TODO check structure in v 0.0.4
-        trace_id = utils._extract_trace_id(data)
+        trace_id = utils.extract_trace_id(data)
         logging.warning("INFO@LogMessage POST - starting to log a new message with id [%s] at [%s]" % (
             trace_id, str(datetime.now())))
-        conversation_id = utils._compute_conversation_id()
+        conversation_id = utils.compute_conversation_id()
         data["conversationId"] = conversation_id
 
-        project_name = utils._extract_project_name(data)
+        project_name = utils.extract_project_name(data)
 
         index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
 
@@ -86,13 +85,13 @@ class LogMessages(Resource):
             # push the message in the database
             utils = Utils()
             # TODO check structure in v 0.0.4
-            trace_id = utils._extract_trace_id(element)
+            trace_id = utils.extract_trace_id(element)
             logging.warning("INFO@LogMessage POST - starting to log a new message with id [%s] at [%s]" % (
                 trace_id, str(datetime.now())))
-            conversation_id = utils._compute_conversation_id()
+            conversation_id = utils.compute_conversation_id()
             element["conversationId"] = conversation_id
 
-            project_name = utils._extract_project_name(element)
+            project_name = utils.extract_project_name(element)
 
             index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
 

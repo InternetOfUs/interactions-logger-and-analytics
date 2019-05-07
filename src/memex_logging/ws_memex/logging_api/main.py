@@ -6,7 +6,7 @@ from datetime import datetime
 # for handling elasticsearch
 from elasticsearch import Elasticsearch
 
-from utils.utils import Utils
+from memex_logging.utils.utils import Utils
 
 
 class LoggingResourceBuilder(object):
@@ -49,11 +49,11 @@ class LogGeneralLog(Resource):
         data = request.get_json()
         utils = Utils()
         # TODO check structure in v 0.0.4
-        trace_id = utils._extract_trace_id(data)
+        trace_id = utils.extract_trace_id(data)
         logging.warning("INFO@LogGeneralLog POST - starting to log a new log with id [%s] at [%s]" % (
             trace_id, str(datetime.now())))
 
-        project_name = utils._extract_project_name(data)
+        project_name = utils.extract_project_name(data)
 
         index_name = project_name + "-logging-" + datetime.today().strftime('%Y-%m-%d')
 
@@ -104,11 +104,11 @@ class LogGeneralLogs(Resource):
             # push the message in the database
             utils = Utils()
             # TODO check structure in v 0.0.4
-            trace_id = utils._extract_trace_id(element)
+            trace_id = utils.extract_trace_id(element)
             logging.warning("INFO@LogGeneralLogs POST - starting to log a new log with id [%s] at [%s]" % (
                 trace_id, str(datetime.now())))
 
-            project_name = utils._extract_project_name(element)
+            project_name = utils.extract_project_name(element)
 
             index_name = project_name + "-logging-" + datetime.today().strftime('%Y-%m-%d')
 

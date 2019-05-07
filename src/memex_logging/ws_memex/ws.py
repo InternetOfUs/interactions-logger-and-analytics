@@ -28,5 +28,5 @@ class WsInterface(object):
                 logging.debug("Installing route %s", prefix + path)
                 self._api.add_resource(resource, prefix + path, resource_class_args=args)
 
-    def run_server(self, host: str = "127.0.0.1", port: int = 5000):
-        self._app.run(host=host, port=port, debug=True)
+    def run_server(self, host: str = "0.0.0.0", port: int = 80):
+        self._app.run(host=host, port=port, debug=False)
