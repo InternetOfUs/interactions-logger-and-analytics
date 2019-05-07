@@ -23,6 +23,18 @@ class Utils:
             logging.error("ERROR@Utils - traceId not found in the message parsed")
             abort(400, message="Invalid message. traceId is missing")
 
+    def _extract_project_name(self, data: dict) -> str:
+        '''
+        Extract the name of the project to use the right index on elastic
+        :param data:
+        :return:
+        '''
+        if "project" in data.keys():
+            return data["project"]
+        else:
+            logging.error("ERROR@Utils - project not found in the message parsed")
+            abort(400, message="Invalid message. project is missing")
+
     def _time_based_segmentation(self) -> str:
         return ""
 

@@ -10,16 +10,16 @@ from datetime import datetime
 # for handling elasticsearch
 from elasticsearch import Elasticsearch
 
-from api.utils.utils import Utils
+from utils.utils import Utils
 
 
 class MessageResourceBuilder(object):
 
     @staticmethod
-    def routes(es: Elasticsearch, project_name: str):
+    def routes(es: Elasticsearch):
         return [
-            (LogMessage, '/log', (es, project_name,)),
-            (LogMessages, '/logs', (es, project_name,))
+            (LogMessage, '/message', (es,)),
+            (LogMessages, '/messages', (es,))
         ]
 
 
@@ -28,9 +28,8 @@ class LogMessage(Resource):
     This class can be used to log a single message. The only message allowed is post
     """
 
-    def __init__(self, es, project_name):
+    def __init__(self, es: Elasticsearch):
         self._es = es
-        self._project_name = project_name
 
     def get(self) -> None:
         abort(405, message="method not allowed")
@@ -50,7 +49,9 @@ class LogMessage(Resource):
         conversation_id = utils._compute_conversation_id()
         data["conversationId"] = conversation_id
 
-        index_name = self._project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
+        project_name = utils._extract_project_name(data)
+
+        index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
 
         self._es.index(index=index_name, doc_type='_doc', body=data)
         response_json = {
@@ -70,9 +71,8 @@ class LogMessages(Resource):
     This method log the messages with index <project-name>-message-<yyyy>-<mm>-<dd
     """
 
-    def __init__(self, es, project_name):
+    def __init__(self, es: Elasticsearch):
         self._es = es
-        self._project_name = project_name
 
     def get(self) -> None:
         abort(405, message="method not allowed")
@@ -96,7 +96,9 @@ class LogMessages(Resource):
             conversation_id = utils._compute_conversation_id()
             element["conversationId"] = conversation_id
 
-            index_name = self._project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
+            project_name = utils._extract_project_name(element)
+
+            index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
 
             self._es.index(index=index_name, doc_type='_doc', body=element)
             message_ids.append(trace_id)

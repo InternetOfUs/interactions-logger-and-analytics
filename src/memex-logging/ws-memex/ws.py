@@ -6,19 +6,21 @@ from flask_restful import Api
 
 from messages_api.main import MessageResourceBuilder
 from logging_api.main import LoggingResourceBuilder
+from performances_api.main import PerformancesResourceBuilder
+
 
 class WsInterface(object):
 
-    def __init__(self, elastic: Elasticsearch, project_name: str) -> None:
+    def __init__(self, elastic: Elasticsearch) -> None:
         self._app = Flask(__name__)
         self._api = Api(app=self._app)
-        self._init_modules(elastic, project_name)
+        self._init_modules(elastic)
 
-    def _init_modules(self, elastic, project_name) -> None:
+    def _init_modules(self, elastic) -> None:
         active_routes = [
-            (MessageResourceBuilder.routes(elastic, project_name), "/message"),
-            (LoggingResourceBuilder.routes(elastic, project_name), "/logging")
-            # (LoggingResourceBuilder.routes(elastic), "/log")
+            (MessageResourceBuilder.routes(elastic), ""),
+            (LoggingResourceBuilder.routes(elastic), ""),
+            (PerformancesResourceBuilder.routes(elastic), "/performance")
         ]
 
         for module_routes, prefix in active_routes:
@@ -27,4 +29,4 @@ class WsInterface(object):
                 self._api.add_resource(resource, prefix + path, resource_class_args=args)
 
     def run_server(self, host: str = "127.0.0.1", port: int = 5000):
-        self._app.run(host="127.0.0.1", port=5000, debug=True)
+        self._app.run(host=host, port=port, debug=True)
