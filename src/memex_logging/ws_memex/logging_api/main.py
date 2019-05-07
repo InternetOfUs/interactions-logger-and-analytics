@@ -1,7 +1,3 @@
-"""
-This module contains all the end-points for the logging APIs
-"""
-
 from flask import request
 from flask_restful import Resource, abort
 # for second-level logging

@@ -4,7 +4,7 @@ import argparse
 
 from elasticsearch import Elasticsearch
 
-from ws import WsInterface
+from memex_logging.ws_memex.ws import WsInterface
 
 if __name__ == '__main__':
 

@@ -4,9 +4,9 @@ import logging
 from flask import Flask
 from flask_restful import Api
 
-from messages_api.main import MessageResourceBuilder
-from logging_api.main import LoggingResourceBuilder
-from performances_api.main import PerformancesResourceBuilder
+from memex_logging.ws_memex.messages_api.main import MessageResourceBuilder
+from memex_logging.ws_memex.logging_api.main import LoggingResourceBuilder
+from memex_logging.ws_memex.performances_api.main import PerformancesResourceBuilder
 
 
 class WsInterface(object):

@@ -1,11 +1,6 @@
-from flask import Flask, request
-from flask_restful import Resource, Api, abort
-# for second-level logging
-import logging
-import datetime
+from flask_restful import Resource, abort
 # for handling elasticsearch
 from elasticsearch import Elasticsearch
-import argparse
 # for managing the responses
 import json
 
