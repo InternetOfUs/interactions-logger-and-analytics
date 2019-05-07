@@ -12,11 +12,11 @@ class Utils:
         return "ABCD"
 
     def extract_trace_id(self, data: dict) -> str:
-        '''
+        """
         Extract the id of the message from the message
         :param data:
         :return:
-        '''
+        """
         if "traceId" in data.keys():
             return data["traceId"]
         else:
@@ -24,11 +24,11 @@ class Utils:
             abort(400, message="Invalid message. traceId is missing")
 
     def extract_project_name(self, data: dict) -> str:
-        '''
+        """
         Extract the name of the project to use the right index on elastic
         :param data:
         :return:
-        '''
+        """
         if "project" in data.keys():
             return data["project"]
         else:

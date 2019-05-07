@@ -14,5 +14,5 @@ do
 done
 
 echo "Running ws interfare"
-python -m api.logging_apis.main -hs ${EL_HOST} -p ${EL_PORT}
+python -m memex_logging.ws_memex.runner -hs ${EL_HOST} -p ${EL_PORT}
 #gunicorn -w 4 -b 0.0.0.0:80 interface:application
