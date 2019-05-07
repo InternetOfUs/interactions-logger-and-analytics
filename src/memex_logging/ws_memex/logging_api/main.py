@@ -50,8 +50,7 @@ class LogGeneralLog(Resource):
         utils = Utils()
         # TODO check structure in v 0.0.4
         trace_id = utils.extract_trace_id(data)
-        logging.warning("INFO@LogGeneralLog POST - starting to log a new log with id [%s] at [%s]" % (
-            trace_id, str(datetime.now())))
+        logging.warning("INFO@LogGeneralLog POST - starting to log a new log with id [%s] at [%s]" % (trace_id, str(datetime.now())))
 
         project_name = utils.extract_project_name(data)
 
@@ -65,8 +64,7 @@ class LogGeneralLog(Resource):
             "code": 200
         }
 
-        logging.warning("INFO@LogGeneralLog POST - finishing to log a new log with id [%s] at [%s]" % (
-            trace_id, str(datetime.now())))
+        logging.warning("INFO@LogGeneralLog POST - finishing to log a new log with id [%s] at [%s]" % (trace_id, str(datetime.now())))
 
         return response_json, 200
 

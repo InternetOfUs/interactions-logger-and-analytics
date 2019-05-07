@@ -1,4 +1,4 @@
-from logging_utils import LoggingUtility
+from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
 
 logger = LoggingUtility
 
