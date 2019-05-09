@@ -30,10 +30,9 @@ class Utils:
         :return:
         """
         if "project" in data.keys():
-            return data["project"]
+            return data["project"].lower()
         else:
-            logging.error("ERROR@Utils - project not found in the message parsed")
-            abort(400, message="Invalid message. project is missing")
+            return "memex"
 
     def _time_based_segmentation(self) -> str:
         return ""

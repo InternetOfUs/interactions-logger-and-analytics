@@ -21,3 +21,8 @@
 - endpoints alignment
 - various adjustments
 - alpha release @ memex.u-hopper.com
+
+### Version 0.0.5
+- minor adjustments
+- default value of the project is memex. Whenever a message without the project value arrives, it is assigned to memex automatically
+- utility package to use the APIs is now part of the release. The utilities can be found in `memex_logging\memex_logging_lib\logging_utils.py` while the file `example.py` contains a usage example
