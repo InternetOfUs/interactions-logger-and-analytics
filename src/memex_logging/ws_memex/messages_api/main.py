@@ -60,6 +60,8 @@ class LogMessage(Resource):
         return response_json, 200
 
 
+
+
 class LogMessages(Resource):
     """
     This class can be used to log an array of messages. The only method allowed is post
@@ -100,7 +102,7 @@ class LogMessages(Resource):
             logging.warning("INFO@LogMessage POST - finishing to log a new message with id [%s] at [%s]" % (
                 trace_id, str(datetime.now())))
         json_response = {
-            "ids_logged": ';'.join(message_ids),
+            "trace_id": ';'.join(message_ids),
             "status": "ok",
             "code": 200
         }

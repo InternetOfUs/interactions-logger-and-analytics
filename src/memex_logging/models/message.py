@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+
+
 class Intent:
     def __init__(self, name: str, confidence: float):
         self._name = name
@@ -8,9 +11,9 @@ class Intent:
             'name': self._name,
             'confidence': self._confidence
         }
-
+    # TODO update python + import annotaion
     @staticmethod
-    def from_rep(data: dict):
+    def from_rep(data: dict) -> Intent:
         return Intent(data['name'], data['confidence'])
 
 
