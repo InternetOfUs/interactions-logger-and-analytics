@@ -30,7 +30,7 @@ class Utils:
         :return:
         """
         if "project" in data.keys():
-            return data["project"].lower()
+            return str(data["project"]).lower()
         else:
             return "memex"
 

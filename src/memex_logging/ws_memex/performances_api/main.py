@@ -4,13 +4,15 @@ from elasticsearch import Elasticsearch
 # for managing the responses
 import json
 
+
 class PerformancesResourceBuilder:
 
     @staticmethod
     def routes(es: Elasticsearch):
         return [
             (GetMessage, '/message/<string:trace_id>', (es,)),
-            (GetConversation, '/conversation/<string:conversation_id>', (es,))
+            (GetConversation, '/conversation/<string:conversation_id>', (es,)),
+            (DeleteIndex, '/index/<string:index_name>', (es,))
         ]
 
 
@@ -57,3 +59,19 @@ class GetConversation(Resource):
 
     def post(self) -> None:
         abort(405, message="method not allowed")
+
+class DeleteIndex(Resource):
+    def __init__(self, es: Elasticsearch):
+        self._es = es
+
+    def get(self):
+        abort(405, message="method not allowed")
+
+    def post(self):
+        abort(405, message="method not allowed")
+
+    def delete(self, index_name) -> tuple:
+
+        if index_name == "":
+            # TODO check code
+            abort(400, message="")

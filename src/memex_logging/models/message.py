@@ -1,5 +1,8 @@
+from __future__ import absolute_import, annotations
+
+
 class Intent:
-    def __init__(self, name: str, confidence: float):
+    def __init__(self, name: str, confidence: float) -> None:
         self._name = name
         self._confidence = confidence
 
@@ -10,107 +13,297 @@ class Intent:
         }
 
     @staticmethod
-    def from_rep(data: dict):
+    def from_rep(data: dict) -> Intent:
         return Intent(data['name'], data['confidence'])
+
+
+class Entity:
+    def __init__(self, type: str, value: str, confidence: float):
+        self._type = type
+        self._value = value
+        self._confidence = confidence
+
+    def to_repr(self) -> dict:
+        return {
+            'type': self._type,
+            'value': self._value,
+            'confidence': self._confidence
+        }
+
+    @staticmethod
+    def from_rep(data: dict) -> Entity:
+        return Entity(data['type'], data['value'], data['confidence'])
 
 
 class RequestMessage:
 
-    def __init__(self, trace_id: str, sentence: str, domain: str, intent: Intent, entities: dict, project: str,
-                 language: str) -> None:
-        self._trace_id = trace_id
-        self._sentence = sentence
+    def __init__(self, message_id: str, channel: str, user_id: str, conversation_id:str, structure_id:str, timestamp:str, content:str, domain:str,  intent: Intent, entities: list, project: str,
+                 language: str, metadata:dict, type:str) -> None:
+        self._message_id = message_id
+        self._channel = channel
+        self._user_id = user_id
+        self._conversation_id = conversation_id
+        self._structure_id = structure_id
+        self._timestamp = timestamp
+        self._content = content
         self._domain = domain
         self._intent = intent
         self._entities = entities
         self._project = project
         self._language = language
+        self._metadata = metadata
+        self._type = type
 
         if not isinstance(intent, Intent):
             raise ValueError('intent type should be Intent')
 
-        if not isinstance(entities, dict):
-            raise ValueError('entities type should be dictionary')
+        if not isinstance(metadata, dict):
+            raise ValueError('metadata type should be dictionary')
+
+        for entity in entities:
+            if not isinstance(entity, Entity):
+                raise ValueError('entities should contains only object with type Entity')
 
     def to_repr(self) -> dict:
+        entities = []
+        for entity in self._entities:
+            entities.append(entity.to_repr())
         return {
-            'traceId': self._trace_id,
-            'sentence': self._sentence,
+            'messageId': self._message_id,
+            'channel': self._channel,
+            'userId': self._user_id,
+            'conversationId': self._conversation_id,
+            'structureId': self._structure_id,
+            'timestamp': self._timestamp,
+            'content': self._content,
             'domain': self._domain,
             'intent': self._intent.to_repr(),
-            'entities': self._entities,
+            'entities': entities,
             'project': self._project,
-            'language': self._project
+            'language': self._language,
+            'metadata': self._metadata,
+            'type': self._type
         }
 
     @staticmethod
     def from_rep(data: dict):
         intent = Intent.from_rep(data['intent'])
-        return RequestMessage(data['traceId'], data['sentence'], data['domain'], intent, data['entities'],
-                              data['project'], data['language'])
+        entities = []
+        for entity in data['entities']:
+            e = Entity.from_rep(entity)
+            entities.append(e)
+
+        return RequestMessage(data['messageId'], data['channel'], data['userId'],data['conversationId'],data['structureId'],data['timestamp'],data['content'],data['domain'], intent, entities,
+                              data['project'], data['language'], data['metadata'], data['type'])
 
 
-# TODO check models (2)
-class ResponseResource:
-    def __init__(self, resource_id: str, type: str, metadata: dict):
-        self._resourceId = resource_id
+class AttachmentResponse:
+    def __init__(self, type: str, uri: str, alternative_text: str):
         self._type = type
-        self._metadata = metadata
-
-        if not isinstance(metadata, dict):
-            raise ValueError('metadata type should be dictionary')
+        self._uri = uri
+        self._alternative_text = alternative_text
 
     def to_repr(self) -> dict:
-        return{
-            'resourceId': self._resourceId,
+        return {
             'type': self._type,
-            'metadata': self._metadata
+            'uri': self._uri,
+            'alternativeText': self._alternative_text
         }
 
     @staticmethod
     def from_rep(data: dict):
-        return ResponseResource(data['resourceId'], data['type'], data['metadata'])
+        return AttachmentResponse(data['type'], data['uri'], data['alternativeText'])
+
+
+class CarouselResponse:
+    def __init__(self, type, title, description, uri, actions:list):
+        self._type = type,
+        self._title = title,
+        self._description = description,
+        self._uri = uri,
+        self._actions = actions
+
+        for action in actions:
+            if not isinstance(action, QuickReplyResponse):
+                raise ValueError("actions should contains only object with type ActionResponse")
+
+    def to_repr(self) -> dict:
+        actions = []
+        for action in self._actions:
+            actions.append(QuickReplyResponse.to_repr(action))
+        return{
+            'type': self._type,
+            'title': self._title,
+            'description': self._description,
+            'uri': self._uri,
+            'actions': actions
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+        actions = []
+        for action in data['action']:
+            a = QuickReplyResponse.from_rep(action)
+            actions.append(a)
+
+        return CarouselResponse(data['type'], data['title'], data['description'], data['uri'], actions)
+
+
+class TextResponse:
+    def __init__(self, type, value) -> None:
+        self._type = type
+        self._value = value
+
+    def to_repr(self) -> dict:
+        return {
+            'type': self._type,
+            'value': self._value
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+        return TextResponse(data['type'], data['value'])
+
+
+class QuickReplyResponse:
+    def __init__(self, type:str, button_text: str, button_id: str, media_type: str, media_uri: str):
+        self._type = type
+        self._button_text = button_text
+        self._button_id = button_id
+        self._media_type = media_type
+        self._media_uri = media_uri
+
+    def to_repr(self) -> dict:
+        return {
+            'type': self._type,
+            'buttonText': self._button_text,
+            'buttonId': self._button_id,
+            'mediaType': self._media_type,
+            'mediaURI': self._media_uri
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+        return QuickReplyResponse(data['type'], data['buttonText'], data['buttonId'], data['mediaType'], data['mediaURI'])
 
 
 class ResponseMessage:
-    def __init__(self, trace_id: str, sentence: str, resources: list):
-        self._trace_id = trace_id
-        self._sentence = sentence
-        self._resources = resources
+    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id:str, structure_id:str, response_to:str, timestamp:str, content:list, metadata:dict, project:str, type: str):
 
-        for resource in resources:
-            if not isinstance(resource, ResponseResource):
-                raise ValueError('resource type should be ResponseResource')
+        self._message_id = message_id
+        self._conversation_id = conversation_id
+        self._channel = channel
+        self._user_id = user_id
+        self._structure_id = structure_id
+        self._response_to = response_to
+        self._timestamp = timestamp
+        self._content = content
+        self._metadata = metadata
+        self._project = project
+        self._type = type
+
+        for cont in content:
+            if not (isinstance(cont, QuickReplyResponse) or isinstance(cont,CarouselResponse) or isinstance(cont, AttachmentResponse) or isinstance(cont,TextResponse)):
+                raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextResponse")
+
+        if not isinstance(metadata, dict):
+            raise ValueError("metadata should be a dictionary")
 
     def to_repr(self) -> dict:
+        content_list = []
+        for c in self._content:
+            content_list.append(c.to_repr())
+
         return {
-            'traceId': self._trace_id,
-            'sentence': self._sentence,
-            'resources': self._resources
+            'messageId': self._message_id,
+            'conversationId': self._conversation_id,
+            'channel': self._channel,
+            'userId': self._user_id,
+            'structureId': self._structure_id,
+            'responseTo': self._response_to,
+            'timestamp': self._timestamp,
+            'content': content_list,
+            'metadata': self._metadata,
+            'project': self._project,
+            'type': self._type
         }
 
     @staticmethod
     def from_rep(data: dict):
-        return ResponseMessage(data['traceId'], data['sentence'], data['resources'])
+        content = []
+        for item in data['content']:
+            if item['type'] == 'text':
+                element = TextResponse.from_rep(item)
+                content.append(element)
+            elif item['type'] == 'action':
+                element = QuickReplyResponse.from_rep(item)
+                content.append(element)
+            elif item['type'] == 'attachment':
+                element = AttachmentResponse.from_rep(item)
+                content.append(element)
+            elif item['type'] == 'carousel':
+                element = CarouselResponse.from_rep(item)
+                content.append(element)
+
+        return ResponseMessage(data['messageId'], data['conversationId'], data['channel'], data['userId'], data['structureId'], data['responseTo'], data['timestamp'], content, data['metadata'], data['project'], data['type'])
 
 
 class NotificationMessage:
-    def __init__(self, trace_id: str, sentence: str, metadata: dict):
-        self._trace_id = trace_id,
-        self._sentence = sentence,
+    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id:str, structure_id:str, response_to:str, timestamp:str, content:list, metadata:dict, project:str, type: str):
+
+        self._message_id = message_id
+        self._conversation_id = conversation_id
+        self._channel = channel
+        self._user_id = user_id
+        self._structure_id = structure_id
+        self._response_to = response_to
+        self._timestamp = timestamp
+        self._content = content
         self._metadata = metadata
+        self._project = project
+        self._type = type
+
+        for cont in content:
+            if not (isinstance(cont, QuickReplyResponse) or isinstance(cont,CarouselResponse) or isinstance(cont, AttachmentResponse) or isinstance(cont,TextResponse)):
+                raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextResponse")
 
         if not isinstance(metadata, dict):
-            raise ValueError('metadata type should be dictionary')
+            raise ValueError("metadata should be a dictionary")
 
     def to_repr(self) -> dict:
+        content_list = []
+        for c in self._content:
+            content_list.append(c.to_repr())
+
         return {
-            'traceId': self._trace_id,
-            'sentence': self._sentence,
-            'metadata': self._metadata
+            'messageId': self._message_id,
+            'conversationId': self._conversation_id,
+            'channel': self._channel,
+            'userId': self._user_id,
+            'structureId': self._structure_id,
+            'responseTo': self._response_to,
+            'timestamp': self._timestamp,
+            'content': content_list,
+            'metadata': self._metadata,
+            'project': self._project,
+            'type': self._type
         }
 
     @staticmethod
     def from_rep(data: dict):
-        return NotificationMessage(data['traceId'], data['sentence'], data['metadata'])
+        content = []
+        for item in data['content']:
+            if item['type'] == 'text':
+                element = TextResponse.from_rep(item)
+                content.append(element)
+            elif item['type'] == 'action':
+                element = QuickReplyResponse.from_rep(item)
+                content.append(element)
+            elif item['type'] == 'attachment':
+                element = AttachmentResponse.from_rep(item)
+                content.append(element)
+            elif item['type'] == 'carousel':
+                element = CarouselResponse.from_rep(item)
+                content.append(element)
 
+        return ResponseMessage(data['messageId'], data['conversationId'], data['channel'], data['userId'], data['structureId'], data['responseTo'], data['timestamp'], content, data['metadata'], data['project'], data['type'])
