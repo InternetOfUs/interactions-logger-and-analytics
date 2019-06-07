@@ -1,10 +1,13 @@
-from flask import Flask, request
-from flask_restful import Resource, Api, abort
-# for second-level logging
-import logging
+from __future__ import absolute_import
+
+from flask import request
+from flask_restful import Resource, abort
+
 from datetime import datetime
-# for handling elasticsearch
+
 from elasticsearch import Elasticsearch
+
+from memex_logging.models.message import RequestMessage, ResponseMessage, NotificationMessage
 from memex_logging.utils.utils import Utils
 
 
@@ -13,12 +16,12 @@ class MessageResourceBuilder(object):
     @staticmethod
     def routes(es: Elasticsearch):
         return [
-            (LogMessage, '/message', (es,)),
+            (ManipulateMessage, '/message/<string:project>/<string:messageId>', (es,)),
             (LogMessages, '/messages', (es,))
         ]
 
 
-class LogMessage(Resource):
+class ManipulateMessage(Resource):
     """
     This class can be used to log a single message. The only message allowed is post
     """
@@ -26,40 +29,50 @@ class LogMessage(Resource):
     def __init__(self, es: Elasticsearch):
         self._es = es
 
-    def get(self) -> None:
-        abort(405, message="method not allowed")
-
-    def post(self) -> tuple:
+    def delete(self, project, messageId) -> tuple:
         """
-        Add a new single message to the database. Pass a single message in JSON format as part of the body of the request
-        This method log the messages with index <project-name>-message-<yyyy>-<mm>-<dd
+        Method to delete a message of a specific project by id
+        :param project: the name of the project
+        :param messageId: the id of the message
         :return: the HTTP response
         """
-        data = request.get_json()
-        utils = Utils()
-        # TODO check structure in v 0.0.4
-        trace_id = utils.extract_trace_id(data)
-        logging.warning("INFO@LogMessage POST - starting to log a new message with id [%s] at [%s]" % (
-            trace_id, str(datetime.now())))
-        conversation_id = utils.compute_conversation_id()
-        data["conversationId"] = conversation_id
+        query = {
+            "query": {
+                "match": {
+                    "messageId": messageId
+                }
+            }
+        }
+        index = str(project).lower() + "-message-*"
+        self._es.delete_by_query(index=index, body=query)
 
-        project_name = utils.extract_project_name(data)
-
-        index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
-
-        self._es.index(index=index_name, doc_type='_doc', body=data)
-        response_json = {
-            "trace_id": trace_id,
-            "status": "ok",
+        json_response = {
+            "trace_id": messageId,
+            "action": "deleted",
             "code": 200
         }
+        return json_response, 200
 
-        logging.warning("INFO@LogMessage POST - finishing to log a new message with id [%s] at [%s]" % (
-            trace_id, str(datetime.now())))
-        return response_json, 200
-
-
+    def get(self, project, messageId)-> tuple:
+        """
+        Method to obtain a message of a specific project by id
+        :param project: the name of the project
+        :param messageId: the id of the message
+        :return: the HTTP response
+        """
+        query = {
+            "query": {
+                "match": {
+                    "messageId": messageId
+                }
+            }
+        }
+        index = str(project).lower() + "-message-*"
+        response = self._es.search(index=index, body=query)
+        if response['hits']['total'] == 0:
+            abort(404, message="resource not found")
+        else:
+            return response['hits']['hits'][0]['_source'], 200
 
 
 class LogMessages(Resource):
@@ -67,45 +80,57 @@ class LogMessages(Resource):
     This class can be used to log an array of messages. The only method allowed is post
     This method log the messages with index <project-name>-message-<yyyy>-<mm>-<dd
     """
-
     def __init__(self, es: Elasticsearch):
         self._es = es
-
-    def get(self) -> None:
-        abort(405, message="method not allowed")
 
     def post(self) -> tuple:
         """
         Add a batch of messages to the database. Pass a JSON array in the body of the request
         :return: the HTTP response
         """
-        logging.warning(
-            "INFO@LogMessages POST - starting to log an array of messages at [%s]" % (str(datetime.now())))
         messages_received = request.json
-        message_ids = []
-        for element in messages_received:
-            # push the message in the database
+        for message in messages_received:
+            type = str(message['type']).lower()
             utils = Utils()
-            # TODO check structure in v 0.0.4
-            trace_id = utils.extract_trace_id(element)
-            logging.warning("INFO@LogMessage POST - starting to log a new message with id [%s] at [%s]" % (
-                trace_id, str(datetime.now())))
-            conversation_id = utils.compute_conversation_id()
-            element["conversationId"] = conversation_id
 
-            project_name = utils.extract_project_name(element)
+            if type == 'request':
+                request_message = RequestMessage.from_rep(message)
+                project_name = utils.extract_project_name(message)
+                index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
+                self._es.index(index=index_name, doc_type='_doc', body=request_message.to_repr())
 
-            index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
+                json_response = {
+                    "trace_id": message['messageId'],
+                    "status": "ok",
+                    "code": 200
+                }
 
-            self._es.index(index=index_name, doc_type='_doc', body=element)
-            message_ids.append(trace_id)
-            logging.warning("INFO@LogMessage POST - finishing to log a new message with id [%s] at [%s]" % (
-                trace_id, str(datetime.now())))
-        json_response = {
-            "trace_id": ';'.join(message_ids),
-            "status": "ok",
-            "code": 200
-        }
-        logging.warning(
-            "INFO@LogMessages POST - finishing to log an array of messages at [%s]" % (str(datetime.now())))
-        return json_response, 200
+                return json_response, 200
+
+            elif type == "response":
+                response_message = ResponseMessage.from_rep(message)
+                project_name = utils.extract_project_name(message)
+                index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
+                self._es.index(index=index_name, doc_type='_doc', body=response_message.to_repr())
+
+                json_response = {
+                    "trace_id": message['messageId'],
+                    "status": "ok",
+                    "code": 200
+                }
+
+                return json_response, 200
+
+            elif type == "notification":
+                notification_message = NotificationMessage.from_rep(message)
+                project_name = utils.extract_project_name(message)
+                index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
+                self._es.index(index=index_name, doc_type='_doc', body=notification_message.to_repr())
+
+                json_response = {
+                    "trace_id": message['messageId'],
+                    "status": "ok",
+                    "code": 200
+                }
+
+                return json_response, 200

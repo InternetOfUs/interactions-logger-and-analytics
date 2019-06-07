@@ -6,8 +6,27 @@ openapi: 3.0.0
 #######################
 info:
   title: Memorable Experience
-  description: logging APIs for this project
-  version: '0.0.4'
+  description: "This document details the APIs exposed by the MemEx big data platform, realise by U-Hoppper srl within the context of the FESR-funded Memorable Experiences (MemEx) project. The platform logs all interactions among tourists and a purposefully designed chatbot.
+
+    There are three kind of implemented APIs
+
+    1. messages: to store, retrieve and delete messages.
+
+    2. logging: to store, retrieve and delete logs
+
+    3. performances: to retrieve some performances of the system
+
+
+    A part from the entities and models representing the responses, there are three main entities involved in the system: `Message`, `Log` and `Performance`.
+
+    A message can be a `ResponseMessage`, a `RequestMessage` or a `Notification`. A response message represents a response to a request message while the latter represent a message from the user. A notification is a special kind of message sent by, for example, by the local administration or the hotel.
+
+
+    Concerning `Log`, it represents a metric to track the status of the system and what drove to a particular choice.
+
+    "
+
+  version: '0.0.5'
   contact:
     email: "massimiliano.luca@unitn.it"
 
@@ -25,25 +44,6 @@ tags:
 
 paths:
     # MESSAGES APIs
-    /message:
-      post:
-        tags:
-          - message
-        summary: Add a new single message to the database
-        description: This end-point allows to log a single message into the database
-        requestBody:
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/RequestMessageModel'
-                  - $ref: '#/components/schemas/ResponseMessageModel'
-                  - $ref: '#/components/schemas/NotificationModel'
-        responses:
-          '201':
-            description: Message logged
-          '405':
-            description: Invalid format of the message
 
     /messages:
       post:
@@ -55,30 +55,107 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessagesModel'
+                $ref: '#/components/schemas/Messages'
         responses:
           '201':
-            description: Messages logged
+            description: success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ObjectCreatedResponse'
           '405':
-            description: Invalid format of the message
+            description: malformed message
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/MalformedDocumentResponse'
+
+    /message/{id}:
+      get:
+        tags:
+          - message
+        summary: Retrieve a single message by specifying the trace id
+        description: This end-point can be used to retrieve all the information of a single message
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: string
+            required: true
+            description: The id of the message
+        responses:
+          '200':
+            description: success
+            content:
+              application/json:
+                schema:
+                  oneOf:
+                  - $ref: '#/components/schemas/RequestMessage'
+                  - $ref: '#/components/schemas/ResponseMessage'
+                  - $ref: '#/components/schemas/Notification'
+
+          '404':
+            description: message not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/NotFoundResponse'
+
+      put:
+        tags:
+          - message
+        summary: Update a message
+        description: Update a message that is already stored in the database
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: string
+            required: true
+            description: The id of the message
+        responses:
+          '200':
+            description: Message updated
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ObjectCreatedResponse'
+          '404':
+            description: message not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/NotFoundResponse'
+
+      delete:
+        tags:
+          - message
+        summary: Delete a message
+        description: This method should be used to delete a message from the database
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: string
+            required: true
+            description: The id of the message
+        responses:
+          '200':
+            description: Message removed
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/PositiveResponse'
+          '404':
+            description: message not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/NotFoundResponse'
+
+
 
     # GENERAL LOGGING APIS
-    /log:
-      post:
-        tags:
-          - logging
-        summary: Add a single log to the database
-        description: This end-point allows to log a single log into the database
-        requestBody:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GeneralLogModel'
-        responses:
-          '201':
-            description: Log logged
-          '405':
-            description: Invalid format of the log
 
     /logs:
       post:
@@ -90,65 +167,146 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GeneralLogsModel'
+                $ref: '#/components/schemas/GeneralLogs'
         responses:
           '201':
-            description: Logs logged
+            description: success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ObjectCreatedResponse'
           '405':
-            description: Invalid format of the log
+            description: malformed log
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/MalformedDocumentResponse'
+
+    /log/{id}:
+      get:
+        tags:
+          - logging
+        summary: Retrieve a single log by specifying the trace id
+        description: This end-point can be used to retrieve all the information of a single log
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: string
+            required: true
+            description: The trace id of the log
+        responses:
+          '200':
+            description: success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GeneralLog'
+
+          '404':
+            description: log not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/NotFoundResponse'
+
+      put:
+        tags:
+          - logging
+        summary: Update an already existing log
+        description: This method should be used to update existing logs
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: string
+            required: true
+            description: The id of the log
+        responses:
+          '200':
+            description: Log updated
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ObjectCreatedResponse'
+          '404':
+            description: Log not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/NotFoundResponse'
+
+      delete:
+        tags:
+          - logging
+        summary: Delete a log
+        description: This method should be used to delete a log from the database
+        parameters:
+          - in: path
+            name: id
+            schema:
+              type: string
+            required: true
+            description: The  id of the log
+        responses:
+          '200':
+            description: Log removed
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/PositiveResponse'
+          '404':
+            description: Log not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/NotFoundResponse'
 
     # PERFORMANCES APIS
-    /performance/message/{traceId}:
+    /performances/{zoneId}/{date}:
       get:
         tags:
           - performances
-        summary: Retrieve a single message by specifying the trace id
-        description: This end-point can be used to retrieve all the information of a single message
+        summary: Retrieve useful information aggregated by zone for a particular date
+        description: Given a particular zone and a particular date, this method return the number of requests, the number of responses, the number of , the distribution of the languages used, and the distribution of intents.
         parameters:
           - in: path
-            name: traceId
+            name: zoneId
             schema:
               type: string
             required: true
-            description: The trace id of the message
+            description: the id of the zone to analyze
+          - in: path
+            name: date
+            schema:
+              type: string
+            required: true
+            description: the date to be analyzed
         responses:
           '200':
             description: success
             content:
-              applicaiton/json:
+              application/json:
                 schema:
-                  oneOf:
-                    - $ref: '#/components/schemas/RequestMessageModel'
-                    - $ref: '#/components/schemas/ResponseMessageModel'
-                    - $ref: '#/components/schemas/NotificationModel'
+                  $ref: '#/components/schemas/SummarizedInfo'
           '404':
-            description: invalid trace id
+            description: Zone not found
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/NotFoundResponse'
 
-    /performance/conversation/{conversationId}:
+
+    #DOCUMENTATION
+    /documentation:
       get:
         tags:
-          - performances
-        summary: Retrieve a conversation by specifying the conversation id
-        description: This end-point can be used to retrieve all the information of a conversation
-        parameters:
-          - in: path
-            name: conversationId
-            schema:
-              type: string
-            required: true
-            explode: true
-            description: The id of the conversation
+          - documentation
+        summary: Retrieve the documentation
+        description: Retrieve the documentation in a yaml format
         responses:
           '200':
             description: success
-            content:
-              applicaiton/json:
-                schema:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/MessagesModel'
-          '400':
-            description: invalid conversation id
 
 components:
 
@@ -157,62 +315,214 @@ components:
   ####################
   schemas:
 
-    GeneralLogModel:
+    Entity:
       type: object
       properties:
-        source:
+        type:
           type: string
-          example: "wine-module"
-        datetime:
+          example: "@city"
+        value:
+          type: string
+          example: "Boston"
+        confidence:
+          type: number
+          format: float
+          example: 0.94
+
+    AttachmentResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "Image"
+        uri:
+          type: string
+          example: "http://image.com/image.png"
+        alternativeText:
+          type: string
+          example: "An hotel"
+        buttons:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuickReplyResponse'
+
+    CarouselResponse:
+      type: array
+      items:
+        properties:
+          title:
+            type: string
+            example: "Hiking activity"
+          imageUrl:
+            type: string
+            example: "http://www.google.com/logo.png"
+          subtitle:
+            type: string
+            example: "you should hike"
+          defaultAction:
+            type: object
+          buttons:
+            type: array
+            items:
+              $ref: '#/components/schemas/QuickReplyResponse'
+
+    TextResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["text"]
+        value:
+          type: string
+          example: "I want to go hiking"
+        buttons:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuickReplyResponse'
+
+    QuickReplyResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["action"]
+        buttonText:
+          type: string
+          example: "Cerca hotel"
+        buttonId:
+          type: string
+          example: "BTN-DAJKSOD142-ADFGWE2"
+        mediaType:
+          type: string
+          example: "Image"
+        mediaURI:
+          type: string
+          example: "http://www.image.com/image.jpg"
+
+    ResponseMessage:
+      type: object
+      properties:
+        messageId:
+          type: string
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+        conversationId:
+          type: string
+          example: "CONV-DOWI41-DAJPRTI3"
+        channel:
+          type: string
+          example: "FACEBOOK"
+        userId:
+          type: string
+          example: "USR-JDKHEIU2-31NJDTE94"
+        structureId:
+          type: string
+          example: "STR-FIWN25S-DAJO94"
+        responseTo:
+          type: string
+          example: "1FKNSM-GEKRO2-DANK2-FJ33-DASDJOW"
+        timestamp:
           type: string
           example: "2019-04-04:23.11.58"
-        traceId:
-          type: string
-          example: "23DAFG2-DNEMQ-315L-RWEO"
-        message:
-          type: string
-          example: "ERROR @ class Message - no such file or directory exists"
+        content:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/TextResponse'
+              - $ref: '#/components/schemas/QuickReplyResponse'
+              - $ref: '#/components/schemas/AttachmentResponse'
+              - $ref: '#/components/schemas/CarouselResponse'
         metadata:
           type: object
         project:
           type: string
+          example: 'MemEx'
+        type:
+          type: string
+          example: "RESPONSE"
 
-    ResponseMessageModel:
+    Notification:
       type: object
       properties:
-        traceId:
+        messageId:
           type: string
           example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
-        sentence:
+        conversationId:
           type: string
-          example: "ecco una banca vicino a te"
+          example: "CONV-DOWI41-DAJPRTI3"
+        structureId:
+          type: string
+          example: "STR-FIWN25S-DAJO94"
+        channel:
+          type: string
+          example: "FACEBOOK"
+        userId:
+          type: string
+          example: "USR-JDKHEIU2-31NJDTE94"
+        timestamp:
+          type: string
+          example: "2019-04-04:23.11.58"
+        content:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/TextResponse'
+              - $ref: '#/components/schemas/QuickReplyResponse'
+              - $ref: '#/components/schemas/AttachmentResponse'
+              - $ref: '#/components/schemas/CarouselResponse'
         metadata:
           type: object
         project:
           type: string
+          example: "MemEx"
+        type:
+          type: string
+          example: "NOTIFICATION"
 
-    NotificationModel:
+    TextualResponse:
       type: object
       properties:
-        traceId:
+        type:
           type: string
-          example: "23DAFG2-DNEMQ-315L-RWEO"
-        sentence:
+          example: "text"
+        value:
           type: string
-          example: "Non perderti la festa di questa sera!"
-        metadata:
-          type: object
-        project:
-          type: string
+          example: "I want some wine"
 
-    RequestMessageModel:
+    ActionResponse:
       type: object
       properties:
-        traceId:
+        type:
+          type: string
+          example: "action"
+        text:
+          type: string
+          example: "Let's do it!"
+
+    RequestMessage:
+      type: object
+      properties:
+        messageId:
           type: string
           example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
-        sentence:
+        channel:
           type: string
+          example: "FACEBOOK"
+        userId:
+          type: string
+          example: "USR-JDKHEIU2-31NJDTE94"
+        conversationId:
+          type: string
+          example: "CONV-DAJKWPENVOA-314CAD"
+        structureId:
+          type: string
+          example: "STR-FIWN25S-DAJO94"
+        timestamp:
+          type: string
+          example: "2019-04-04:23.11.58"
+        content:
+          oneOf:
+            - $ref: '#/components/schemas/TextualResponse'
+            - $ref: '#/components/schemas/ActionResponse'
           example: "devo fare un bonifico di 40 euro"
         domain:
           type: string
@@ -224,29 +534,160 @@ components:
               type: string
               example: "bonifico"
             confidence:
-              type: string
+              type: number
+              format: float
               example: 0.87
         entities:
-          type: object
-
+          type: array
+          items:
+            $ref: '#/components/schemas/Entity'
         project:
           type: string
           example: "MeMex"
         language:
           type: string
           example: "IT"
+        metadata:
+          type: object
+        type:
+          type: string
+          example: "REQUEST"
 
     # Schema for an array of Message
-    MessagesModel:
+    Messages:
       type: array
       items:
         anyOf:
-          - $ref: '#/components/schemas/RequestMessageModel'
-          - $ref: '#/components/schemas/ResponseMessageModel'
-          - $ref: '#/components/schemas/NotificationModel'
+          - $ref: '#/components/schemas/RequestMessage'
+          - $ref: '#/components/schemas/ResponseMessage'
+          - $ref: '#/components/schemas/Notification'
 
 
-    GeneralLogsModel:
+    GeneralLog:
+      type: object
+      properties:
+        source:
+          type: string
+          example: "wine-module"
+        timestamp:
+          type: string
+          example: "2019-04-04:23.11.58"
+        traceId:
+          type: string
+          example: "23DAFG2-DNEMQ-315L-RWEO"
+        message:
+          type: string
+          example: "ERROR @ class Message - no such file or directory exists"
+        metadata:
+          type: object
+          properties:
+            type:
+              type: string
+              example: "SystemStatus"
+            information:
+              type: array
+              items:
+                type: object
+        project:
+          type: string
+
+    GeneralLogs:
       type: array
       items:
-        $ref: '#/components/schemas/GeneralLogModel'
+        $ref: '#/components/schemas/GeneralLog'
+
+
+    SummarizedInfo:
+      type: object
+      properties:
+        no_requests:
+          type: integer
+          format: int32
+          example: 30
+        no_responses:
+          type: integer
+          format: int32
+          example: 45
+        no_notification:
+          type: integer
+          format: int32
+          example: 5
+        intent_distribution:
+          type: array
+          items:
+            type: object
+            properties:
+              intent:
+                type: string
+                example: "wine_info"
+              frequency:
+                type: integer
+                format: int32
+                example: 9
+        language_distribution:
+          type: array
+          items:
+            type: object
+            properties:
+              intent:
+                type: string
+                example: "it"
+              requests:
+                type: integer
+                format: int32
+                example: 3
+
+    # Responses
+
+    PositiveResponse:
+      type: object
+      properties:
+        traceId:
+          type: string
+          example: "DSADK-IPOWN-3G3478"
+        status:
+          type: string
+          example: "Object Created"
+        code:
+          enum: ['200']
+          example: 200
+
+    ObjectCreatedResponse :
+      type: object
+      properties:
+        traceId:
+          type: string
+          example: "DSADK-IPOWN-3G3478"
+        status:
+          type: string
+          example: "Object Created"
+        code:
+          enum: ['201']
+          example: 201
+
+
+    NotFoundResponse:
+      type: object
+      properties:
+        traceId:
+          type: string
+          example: "DSADK-IPOWN-3G3478"
+        status:
+          type: string
+          example: "Cannot find message {traceId} in the database"
+        code:
+          enum: ['404']
+          example: 404
+
+    MalformedDocumentResponse:
+      type: object
+      properties:
+        traceId:
+          type: string
+          example: "DSADK-IPOWN-3G3478"
+        status:
+          type: string
+          example: "Field {name} is missing in the message"
+        code:
+          enum: ['405']
+          example: 405
