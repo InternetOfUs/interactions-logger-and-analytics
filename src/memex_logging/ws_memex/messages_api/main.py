@@ -89,6 +89,7 @@ class LogMessages(Resource):
         :return: the HTTP response
         """
         messages_received = request.json
+        print(len(messages_received))
         for message in messages_received:
             type = str(message['type']).lower()
             utils = Utils()
@@ -99,27 +100,11 @@ class LogMessages(Resource):
                 index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
                 self._es.index(index=index_name, doc_type='_doc', body=request_message.to_repr())
 
-                json_response = {
-                    "trace_id": message['messageId'],
-                    "status": "ok",
-                    "code": 200
-                }
-
-                return json_response, 200
-
             elif type == "response":
                 response_message = ResponseMessage.from_rep(message)
                 project_name = utils.extract_project_name(message)
                 index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
                 self._es.index(index=index_name, doc_type='_doc', body=response_message.to_repr())
-
-                json_response = {
-                    "trace_id": message['messageId'],
-                    "status": "ok",
-                    "code": 200
-                }
-
-                return json_response, 200
 
             elif type == "notification":
                 notification_message = NotificationMessage.from_rep(message)
@@ -127,10 +112,10 @@ class LogMessages(Resource):
                 index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
                 self._es.index(index=index_name, doc_type='_doc', body=notification_message.to_repr())
 
-                json_response = {
-                    "trace_id": message['messageId'],
-                    "status": "ok",
-                    "code": 200
-                }
+        json_response = {
+            "text": "messages added",
+            "status": "ok",
+            "code": 200
+        }
 
-                return json_response, 200
+        return json_response, 200
