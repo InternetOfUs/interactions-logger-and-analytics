@@ -13,6 +13,6 @@ do
     fi
 done
 
-echo "Running ws interfare"
+echo "Running ws interface"
 python -m memex_logging.ws_memex.runner -hs ${EL_HOST} -p ${EL_PORT}
 #gunicorn -w 4 -b 0.0.0.0:80 interface:application
