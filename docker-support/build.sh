@@ -1,8 +1,9 @@
 #!/bin/bash
 
-DEFAULT_VERSION="0.0.7"
+DEFAULT_VERSION="0.0.8"
 
 clean () {
+    rm -R ${SCRIPT_DIR}/documentation
     rm -R ${SCRIPT_DIR}/src
     rm -R ${SCRIPT_DIR}/migrations
     rm -R ${SCRIPT_DIR}/requirements.txt
@@ -25,6 +26,9 @@ fi
 
 mkdir ${SCRIPT_DIR}/src
 cp -R ${PROJECT_DIR}/src/* ${SCRIPT_DIR}/src
+
+mkdir ${SCRIPT_DIR}/documentation
+cp -R ${PROJECT_DIR}/documentation/* ${SCRIPT_DIR}/documentation
 
 cp ${PROJECT_DIR}/requirements.txt ${SCRIPT_DIR}
 
