@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY run.sh .
 
 ADD src/ /scripts/
+ADD documentation/ /documentation/
 
 ENV PYTHONPATH /scripts
 
