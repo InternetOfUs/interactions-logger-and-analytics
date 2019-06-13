@@ -25,7 +25,6 @@ class Documentation(Resource):
         :return: the documentation in a raw format
         """
         text_response = ""
-        print(os.getcwd())
         f = open("../../../documentation/openapi.yaml", "r")
         for line in f:
             text_response += line + "\n"
