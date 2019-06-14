@@ -1,3 +1,4 @@
+from flask import Response
 from flask_restful import Resource
 
 import os
@@ -19,7 +20,7 @@ class Documentation(Resource):
     This class can be used to log a single log message into the elasticsearch instance
     """
 
-    def get(self) -> tuple:
+    def get(self) -> Response:
         """
         Get the documentation in a raw format
         :return: the documentation in a raw format
@@ -30,4 +31,7 @@ class Documentation(Resource):
         for line in f:
             text_response += line + "\n"
         f.close()
-        return text_response, 200
+
+        resp = Response(text_response, mimetype='text/plain', headers={"Access-Control-Allow-Origin": "*"})
+        resp.status_code = 200
+        return resp
