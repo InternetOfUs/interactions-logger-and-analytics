@@ -3,11 +3,13 @@ import requests
 
 class LoggingUtility:
 
-    def __init__(self, service_host: str, service_port: int, project:str):
+    def __init__(self, service_host: str, service_port: int, project: str):
         self._access_point = service_host + ":" + str(service_port)
         self._project = project
 
-    def add_request(self, message: str, message_type: str, message_id: str, user_id: str, conversation_id: str, structure_id: str, channel: str, timestamp: str, project: str, domain="", intent_name = "", intent_confidence = 0.0, entities=[], language="", metadata={}):
+    def add_request(self, message: str, message_type: str, message_id: str, user_id: str, conversation_id: str,
+                    structure_id: str, channel: str, timestamp: str, domain="", intent_name="", intent_confidence=0.0,
+                    entities=[], language="", metadata={}):
         """
         This method should be used to store a request message. A request message is a message from the user to the chatbot
         :param message: a string that indicates the text of the message
@@ -18,7 +20,6 @@ class LoggingUtility:
         :param structure_id: the id of the structure (i.e., the id of the hotel involved in the conversation). This field is a string
         :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
         :param timestamp: the timestamp of the message. This field should be a string
-        :param project: the name of the project associated to the message. It is a string
         :param domain: this optional field is a string that describe the domain of the message
         :param intent_name: it is an optional string representing the name of the intent
         :param intent_confidence: it is an optional float number to measure the intent detection accuracy. If intent_name is defined, the default value of the confidence is 0.0
@@ -39,13 +40,10 @@ class LoggingUtility:
         if structure_id is None or structure_id == "":
             raise ValueError("structure_id cannot be empty")
 
-        if channel in None or channel == "":
+        if channel == "":
             raise ValueError("channel cannot be empty")
 
-        if project is None or project == "":
-            raise ValueError("project cannot be empty")
-
-        if message_type is None or message_type == "" or message_type.lower() != "text" or message_type.lower() != "action":
+        if message_type.lower() != "text" and message_type.lower() != "action":
             raise ValueError("message type should be 'text' or 'action'")
 
         if timestamp is None or timestamp == "":
@@ -62,10 +60,10 @@ class LoggingUtility:
 
         api_point = self._access_point + "/messages"
 
-        intent_dict = {}
-        if intent_name != "":
-            intent_dict['name'] = intent_name
-            intent_dict['confidence'] = intent_confidence
+        intent_dict = {
+            'name': intent_name,
+            'confidence': intent_confidence
+        }
 
         temp_entities = []
 
@@ -73,7 +71,7 @@ class LoggingUtility:
             if not isinstance(entity, Entity):
                 raise ValueError("entities should be a list of Entity objects")
             else:
-                temp_entities.append(Entity(entity).to_dict())
+                temp_entities.append(entity.to_dict())
 
         message_generated = {
             "messageId": message_id,
@@ -89,7 +87,7 @@ class LoggingUtility:
             "domain": domain,
             "intent": intent_dict,
             "entities": temp_entities,
-            "project": project.lower(),
+            "project": self._project.lower(),
             "language": language,
             "metadata": metadata,
             "type": "REQUEST"
@@ -105,7 +103,8 @@ class LoggingUtility:
 
         return response.status_code, response.content
 
-    def add_response(self, message_id: str, conversation_id: str, channel: str, user_id: str, structure_id: str, response_to: str, timestamp: str, project: str, content=[], metadata={}):
+    def add_response(self, message_id: str, conversation_id: str, channel: str, user_id: str, structure_id: str,
+                     response_to: str, timestamp: str, content=[], metadata={}):
         """
         This method should be used to store a response message. A response message is a message from the bot to the user that represents an answer to a request message
         :param message_id: the id of the message. This field should be a string
@@ -115,7 +114,6 @@ class LoggingUtility:
         :param structure_id: the id of the structure (i.e., the id of the hotel involved in the conversation). This field is a string
         :param response_to: the id of the request that generated this message. It is a string
         :param timestamp: the timestamp of the message. This field should be a string
-        :param project: the name of the project associated to the message. It is a string
         :param content: is an optional list describing the content of the message. The objects in the list can be of types TextResponse, QuickReplyResponse, AttachmentResponse, CarouselResponse
         :param metadata: an optional dictionary containing additional information.
         :return:
@@ -142,15 +140,19 @@ class LoggingUtility:
         if timestamp == "" or timestamp is None:
             raise ValueError("timestamp cannot be empty")
 
-        if project == "" or project is None:
-            raise ValueError("project cannot be empty")
-
         if not isinstance(metadata, dict):
             raise ValueError("metadata must be a dictionary")
 
+        temp_content = []
+
         for item in content:
-            if not ( isinstance(item, TextResponse) or isinstance(item, AttachmentResponse) or isinstance(item, CarouselResponse) or isinstance(item, QuickReplyResponse)):
-                raise ValueError("each item in content should have type TextResponse, AttachmentResponse, QuickReplyResponse or CarouselResponse")
+            if not (isinstance(item, TextResponse) or isinstance(item, AttachmentResponse) or isinstance(item,
+                                                                                                         CarouselResponse) or isinstance(
+                    item, QuickReplyResponse)):
+                raise ValueError(
+                    "each item in content should have type TextResponse, AttachmentResponse, QuickReplyResponse or CarouselResponse")
+            else:
+                temp_content.append(item.to_dict())
 
         api_point = self._access_point + "/messages"
 
@@ -161,9 +163,10 @@ class LoggingUtility:
             "channel": channel,
             "userId": user_id,
             "timestamp": timestamp,
-            "content": content,
+            "responseTo": response_to,
+            "content": temp_content,
             "metadata": metadata,
-            "project": project,
+            "project": self._project.lower(),
             "type": "RESPONSE"
         }
 
@@ -177,7 +180,8 @@ class LoggingUtility:
 
         return response.status_code, response.content
 
-    def add_notification(self, message_id: str, conversation_id:str, structure_id: str, channel: str, user_id: str, timestamp: str, project: str, content=[], metadata={}):
+    def add_notification(self, message_id: str, conversation_id: str, structure_id: str, channel: str, user_id: str,
+                         timestamp: str, content=[], metadata={}):
         """
         This method should be used to store a notification message. A notification message is a message from the bot to the user that represents an answer to a request message
         :param message_id: the id of the message. This field should be a string
@@ -186,7 +190,6 @@ class LoggingUtility:
         :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
         :param user_id: the id of the user. This filed should be a string
         :param timestamp: the timestamp of the message. This field should be a string
-        :param project: the name of the project associated to the message. It is a string
         :param content: is an optional list describing the content of the message. The objects in the list can be of types TextResponse, QuickReplyResponse, AttachmentResponse, CarouselResponse
         :param metadata: an optional dictionary containing additional information.
         :return:
@@ -210,15 +213,19 @@ class LoggingUtility:
         if timestamp == "" or timestamp is None:
             raise ValueError("timestamp cannot be empty")
 
-        if project == "" or project is None:
-            raise ValueError("project cannot be empty")
-
         if not isinstance(metadata, dict):
             raise ValueError("metadata must be a dictionary")
 
+        temp_content = []
+
         for item in content:
-            if not ( isinstance(item, TextResponse) or isinstance(item, AttachmentResponse) or isinstance(item, CarouselResponse) or isinstance(item, QuickReplyResponse)):
-                raise ValueError("each item in content should have type TextResponse, AttachmentResponse, QuickReplyResponse or CarouselResponse")
+            if not (isinstance(item, TextResponse) or isinstance(item, AttachmentResponse) or isinstance(item,
+                                                                                                         CarouselResponse) or isinstance(
+                    item, QuickReplyResponse)):
+                raise ValueError(
+                    "each item in content should have type TextResponse, AttachmentResponse, QuickReplyResponse or CarouselResponse")
+            else:
+                temp_content.append(item.to_dict())
 
         api_point = self._access_point + "/messages"
 
@@ -229,9 +236,9 @@ class LoggingUtility:
             "channel": channel,
             "userId": user_id,
             "timestamp": timestamp,
-            "content": content,
+            "content": temp_content,
             "metadata": metadata,
-            "project": project,
+            "project": self._project.lower(),
             "type": "NOTIFICATION"
         }
 
@@ -257,7 +264,7 @@ class LoggingUtility:
 
         return response.status_code, response.json()
 
-    def delete_message(self, message_id:str) -> tuple:
+    def delete_message(self, message_id: str) -> tuple:
         """
         Utils to delete a message
         :param message_id:
@@ -272,7 +279,7 @@ class LoggingUtility:
 
 class Entity:
 
-    def __init__(self, type:str, value, confidence = 0.0):
+    def __init__(self, type: str, value, confidence=0.0):
         """
         Method to create an Entity
         :param type: the type of the entity (i.e., @city)
@@ -296,7 +303,7 @@ class Entity:
 
 class TextResponse:
 
-    def __init__(self, value: str, buttons = []):
+    def __init__(self, value: str, buttons=[]):
         """
         Create a TextResponse object. A text response can be seen as a standard message containing only text
         :param value: the text of the response
@@ -334,7 +341,7 @@ class QuickReplyResponse:
         :param media_uri: the URI of the media . This field is optional but must be declared if the media type is defined
         """
 
-        if (not(media_type is None) or media_type != "") and (media_uri == "" or media_uri is None):
+        if media_type != "" and media_uri == "":
             raise ValueError("media_type is defined but media_uri is empty")
 
         self.button_text = button_text
@@ -353,6 +360,7 @@ class QuickReplyResponse:
             "mediaType": self.media_type,
             "mediaURI": self.media_uri
         }
+
 
 class AttachmentResponse:
     def __init__(self, uri: str, alternative_text: str, buttons=[]):
@@ -386,9 +394,10 @@ class AttachmentResponse:
             "buttons": buttons
         }
 
+
 class CarouselResponse:
 
-    def __init__(self, title:str, image_url:str, subtitle="", default_action={}, buttons = []):
+    def __init__(self, title: str, image_url: str, subtitle="", default_action={}, buttons=[]):
         """
         Create a CarouselResponse Object. A carousel is a scrollable list of medias. As a best-practice, carousels should be used with no more that 6 elements and when the elements can be ranked.
         :param title: the title of the slide of the carousel

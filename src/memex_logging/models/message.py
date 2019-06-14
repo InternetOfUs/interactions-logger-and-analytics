@@ -249,14 +249,13 @@ class ResponseMessage:
 
 
 class NotificationMessage:
-    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id:str, structure_id:str, response_to:str, timestamp:str, content:list, metadata:dict, project:str, type: str):
+    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id:str, structure_id:str, timestamp:str, content:list, metadata:dict, project:str, type: str):
 
         self._message_id = message_id
         self._conversation_id = conversation_id
         self._channel = channel
         self._user_id = user_id
         self._structure_id = structure_id
-        self._response_to = response_to
         self._timestamp = timestamp
         self._content = content
         self._metadata = metadata
@@ -281,7 +280,6 @@ class NotificationMessage:
             'channel': self._channel,
             'userId': self._user_id,
             'structureId': self._structure_id,
-            'responseTo': self._response_to,
             'timestamp': self._timestamp,
             'content': content_list,
             'metadata': self._metadata,
@@ -306,4 +304,4 @@ class NotificationMessage:
                 element = CarouselResponse.from_rep(item)
                 content.append(element)
 
-        return ResponseMessage(data['messageId'], data['conversationId'], data['channel'], data['userId'], data['structureId'], data['responseTo'], data['timestamp'], content, data['metadata'], data['project'], data['type'])
+        return NotificationMessage(data['messageId'], data['conversationId'], data['channel'], data['userId'], data['structureId'], data['timestamp'], content, data['metadata'], data['project'], data['type'])
