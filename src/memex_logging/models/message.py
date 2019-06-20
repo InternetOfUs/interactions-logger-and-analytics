@@ -16,6 +16,7 @@ class Intent:
     def from_rep(data: dict) -> Intent:
         return Intent(data['name'], data['confidence'])
 
+
 class TextualRequest:
 
     def __init__(self, value):
@@ -164,9 +165,10 @@ class RequestMessage:
 
 
         entities = []
-        for entity in data['entities']:
-            e = Entity.from_rep(entity)
-            entities.append(e)
+        if "entities" in data:
+            for entity in data['entities']:
+                e = Entity.from_rep(entity)
+                entities.append(e)
 
         return RequestMessage(data['messageId'], data['channel'], data['userId'],conversation_id,data['timestamp'],content,domain, intent, entities,
                               data['project'], data['language'], data['metadata'])
