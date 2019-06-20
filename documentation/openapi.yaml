@@ -38,14 +38,14 @@ tags:
     description: APIs to log the conversation into the database
   - name: logging
     description: APIs to log additional information of the modules
-  - name: performances
+  - name: analytics
     description: APIs to retrieve useful information from the database. What follows can be used to analyze the performances of the bot
 
 
 paths:
     # MESSAGES APIs
 
-    /messages:
+    /logging/messages:
       post:
         tags:
           - message
@@ -62,15 +62,15 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/ObjectCreatedResponse'
+                  $ref: '#/components/schemas/HTTP_201'
           '405':
             description: malformed message
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/MalformedDocumentResponse'
+                  $ref: '#/components/schemas/HTTP_405'
 
-    /message/{id}:
+    /logging/message/{id}:
       get:
         tags:
           - message
@@ -92,14 +92,14 @@ paths:
                   oneOf:
                   - $ref: '#/components/schemas/RequestMessage'
                   - $ref: '#/components/schemas/ResponseMessage'
-                  - $ref: '#/components/schemas/Notification'
+                  - $ref: '#/components/schemas/NotificationMessage'
 
           '404':
             description: message not found
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/NotFoundResponse'
+                  $ref: '#/components/schemas/HTTP_404'
 
       put:
         tags:
@@ -119,13 +119,13 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/ObjectCreatedResponse'
+                  $ref: '#/components/schemas/HTTP_201'
           '404':
             description: message not found
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/NotFoundResponse'
+                  $ref: '#/components/schemas/HTTP_404'
 
       delete:
         tags:
@@ -145,19 +145,19 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/PositiveResponse'
+                  $ref: '#/components/schemas/HTTP_200'
           '404':
             description: message not found
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/NotFoundResponse'
+                  $ref: '#/components/schemas/HTTP_404'
 
 
 
     # GENERAL LOGGING APIS
 
-    /logs:
+    /logging/logs:
       post:
         tags:
           - logging
@@ -174,15 +174,15 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/ObjectCreatedResponse'
+                  $ref: '#/components/schemas/HTTP_201'
           '405':
             description: malformed log
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/MalformedDocumentResponse'
+                  $ref: '#/components/schemas/HTTP_405'
 
-    /log/{id}:
+    /logging/log/{id}:
       get:
         tags:
           - logging
@@ -208,7 +208,7 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/NotFoundResponse'
+                  $ref: '#/components/schemas/HTTP_404'
 
       put:
         tags:
@@ -228,13 +228,13 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/ObjectCreatedResponse'
+                  $ref: '#/components/schemas/HTTP_201'
           '404':
             description: Log not found
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/NotFoundResponse'
+                  $ref: '#/components/schemas/HTTP_404'
 
       delete:
         tags:
@@ -254,51 +254,20 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/PositiveResponse'
+                  $ref: '#/components/schemas/HTTP_200'
           '404':
             description: Log not found
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/NotFoundResponse'
+                  $ref: '#/components/schemas/HTTP_404'
 
     # PERFORMANCES APIS
-    /performances/{zoneId}/{date}:
-      get:
-        tags:
-          - performances
-        summary: Retrieve useful information aggregated by zone for a particular date
-        description: Given a particular zone and a particular date, this method return the number of requests, the number of responses, the number of , the distribution of the languages used, and the distribution of intents.
-        parameters:
-          - in: path
-            name: zoneId
-            schema:
-              type: string
-            required: true
-            description: the id of the zone to analyze
-          - in: path
-            name: date
-            schema:
-              type: string
-            required: true
-            description: the date to be analyzed
-        responses:
-          '200':
-            description: success
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/SummarizedInfo'
-          '404':
-            description: Zone not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/NotFoundResponse'
+
 
 
     #DOCUMENTATION
-    /documentation:
+    /logging/documentation:
       get:
         tags:
           - documentation
@@ -315,19 +284,168 @@ components:
   ####################
   schemas:
 
-    Entity:
+    Messages:
+      type: array
+      items:
+        anyOf:
+          - $ref: '#/components/schemas/RequestMessage'
+          - $ref: '#/components/schemas/ResponseMessage'
+          - $ref: '#/components/schemas/NotificationMessage'
+
+
+    RequestMessage:
+      type: object
+      properties:
+        messageId:
+          type: string
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+        channel:
+          type: string
+          example: "FACEBOOK"
+        userId:
+          type: string
+          example: "USR-JDKHEIU2-31NJDTE94"
+        conversationId:
+          type: string
+          example: "CONV-DAJKWPENVOA-314CAD"
+        structureId:
+          type: string
+          example: "STR-FIWN25S-DAJO94"
+        timestamp:
+          type: string
+          example: "2019-04-04:23.11.58"
+        content:
+          oneOf:
+            - $ref: '#/components/schemas/TextualRequest'
+            - $ref: '#/components/schemas/ActionRequest'
+          example: "devo fare un bonifico di 40 euro"
+        domain:
+          type: string
+          example: "pagamenti"
+        intent:
+          type: object
+          properties:
+            name:
+              type: string
+              example: "bonifico"
+            confidence:
+              type: number
+              format: float
+              example: 0.87
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entity'
+        project:
+          type: string
+          example: "MeMex"
+        language:
+          type: string
+          example: "IT"
+        metadata:
+          type: object
+        type:
+          type: string
+          example: "REQUEST"
+
+    TextualRequest:
       type: object
       properties:
         type:
           type: string
-          example: "@city"
+          example: "text"
         value:
           type: string
-          example: "Boston"
-        confidence:
-          type: number
-          format: float
-          example: 0.94
+          example: "I want some wine"
+
+    ActionRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "action"
+        text:
+          type: string
+          example: "Let's do it!"
+
+    ResponseMessage:
+      type: object
+      properties:
+        messageId:
+          type: string
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+        conversationId:
+          type: string
+          example: "CONV-DOWI41-DAJPRTI3"
+        channel:
+          type: string
+          example: "FACEBOOK"
+        userId:
+          type: string
+          example: "USR-JDKHEIU2-31NJDTE94"
+        structureId:
+          type: string
+          example: "STR-FIWN25S-DAJO94"
+        responseTo:
+          type: string
+          example: "1FKNSM-GEKRO2-DANK2-FJ33-DASDJOW"
+        timestamp:
+          type: string
+          example: "2019-04-04:23.11.58"
+        content:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/TextResponse'
+              - $ref: '#/components/schemas/QuickReplyResponse'
+              - $ref: '#/components/schemas/AttachmentResponse'
+              - $ref: '#/components/schemas/CarouselResponse'
+        metadata:
+          type: object
+        project:
+          type: string
+          example: 'MemEx'
+        type:
+          type: string
+          example: "RESPONSE"
+
+    NotificationMessage:
+      type: object
+      properties:
+        messageId:
+          type: string
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+        conversationId:
+          type: string
+          example: "CONV-DOWI41-DAJPRTI3"
+        structureId:
+          type: string
+          example: "STR-FIWN25S-DAJO94"
+        channel:
+          type: string
+          example: "FACEBOOK"
+        userId:
+          type: string
+          example: "USR-JDKHEIU2-31NJDTE94"
+        timestamp:
+          type: string
+          example: "2019-04-04:23.11.58"
+        content:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/TextResponse'
+              - $ref: '#/components/schemas/QuickReplyResponse'
+              - $ref: '#/components/schemas/AttachmentResponse'
+              - $ref: '#/components/schemas/CarouselResponse'
+        metadata:
+          type: object
+        project:
+          type: string
+          example: "MemEx"
+        type:
+          type: string
+          example: "NOTIFICATION"
 
     AttachmentResponse:
       type: object
@@ -399,168 +517,23 @@ components:
           type: string
           example: "http://www.image.com/image.jpg"
 
-    ResponseMessage:
-      type: object
-      properties:
-        messageId:
-          type: string
-          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
-        conversationId:
-          type: string
-          example: "CONV-DOWI41-DAJPRTI3"
-        channel:
-          type: string
-          example: "FACEBOOK"
-        userId:
-          type: string
-          example: "USR-JDKHEIU2-31NJDTE94"
-        structureId:
-          type: string
-          example: "STR-FIWN25S-DAJO94"
-        responseTo:
-          type: string
-          example: "1FKNSM-GEKRO2-DANK2-FJ33-DASDJOW"
-        timestamp:
-          type: string
-          example: "2019-04-04:23.11.58"
-        content:
-          type: array
-          items:
-            anyOf:
-              - $ref: '#/components/schemas/TextResponse'
-              - $ref: '#/components/schemas/QuickReplyResponse'
-              - $ref: '#/components/schemas/AttachmentResponse'
-              - $ref: '#/components/schemas/CarouselResponse'
-        metadata:
-          type: object
-        project:
-          type: string
-          example: 'MemEx'
-        type:
-          type: string
-          example: "RESPONSE"
-
-    Notification:
-      type: object
-      properties:
-        messageId:
-          type: string
-          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
-        conversationId:
-          type: string
-          example: "CONV-DOWI41-DAJPRTI3"
-        structureId:
-          type: string
-          example: "STR-FIWN25S-DAJO94"
-        channel:
-          type: string
-          example: "FACEBOOK"
-        userId:
-          type: string
-          example: "USR-JDKHEIU2-31NJDTE94"
-        timestamp:
-          type: string
-          example: "2019-04-04:23.11.58"
-        content:
-          type: array
-          items:
-            anyOf:
-              - $ref: '#/components/schemas/TextResponse'
-              - $ref: '#/components/schemas/QuickReplyResponse'
-              - $ref: '#/components/schemas/AttachmentResponse'
-              - $ref: '#/components/schemas/CarouselResponse'
-        metadata:
-          type: object
-        project:
-          type: string
-          example: "MemEx"
-        type:
-          type: string
-          example: "NOTIFICATION"
-
-    TextualResponse:
+    Entity:
       type: object
       properties:
         type:
           type: string
-          example: "text"
+          example: "@city"
         value:
           type: string
-          example: "I want some wine"
+          example: "Boston"
+        confidence:
+          type: number
+          format: float
+          example: 0.94
 
-    ActionResponse:
-      type: object
-      properties:
-        type:
-          type: string
-          example: "action"
-        text:
-          type: string
-          example: "Let's do it!"
 
-    RequestMessage:
-      type: object
-      properties:
-        messageId:
-          type: string
-          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
-        channel:
-          type: string
-          example: "FACEBOOK"
-        userId:
-          type: string
-          example: "USR-JDKHEIU2-31NJDTE94"
-        conversationId:
-          type: string
-          example: "CONV-DAJKWPENVOA-314CAD"
-        structureId:
-          type: string
-          example: "STR-FIWN25S-DAJO94"
-        timestamp:
-          type: string
-          example: "2019-04-04:23.11.58"
-        content:
-          oneOf:
-            - $ref: '#/components/schemas/TextualResponse'
-            - $ref: '#/components/schemas/ActionResponse'
-          example: "devo fare un bonifico di 40 euro"
-        domain:
-          type: string
-          example: "pagamenti"
-        intent:
-          type: object
-          properties:
-            name:
-              type: string
-              example: "bonifico"
-            confidence:
-              type: number
-              format: float
-              example: 0.87
-        entities:
-          type: array
-          items:
-            $ref: '#/components/schemas/Entity'
-        project:
-          type: string
-          example: "MeMex"
-        language:
-          type: string
-          example: "IT"
-        metadata:
-          type: object
-        type:
-          type: string
-          example: "REQUEST"
 
     # Schema for an array of Message
-    Messages:
-      type: array
-      items:
-        anyOf:
-          - $ref: '#/components/schemas/RequestMessage'
-          - $ref: '#/components/schemas/ResponseMessage'
-          - $ref: '#/components/schemas/Notification'
 
 
     GeneralLog:
@@ -639,7 +612,7 @@ components:
 
     # Responses
 
-    PositiveResponse:
+    HTTP_200:
       type: object
       properties:
         traceId:
@@ -652,7 +625,7 @@ components:
           enum: ['200']
           example: 200
 
-    ObjectCreatedResponse :
+    HTTP_201 :
       type: object
       properties:
         traceId:
@@ -666,7 +639,7 @@ components:
           example: 201
 
 
-    NotFoundResponse:
+    HTTP_404:
       type: object
       properties:
         traceId:
@@ -679,7 +652,7 @@ components:
           enum: ['404']
           example: 404
 
-    MalformedDocumentResponse:
+    HTTP_405:
       type: object
       properties:
         traceId:
@@ -691,3 +664,4 @@ components:
         code:
           enum: ['405']
           example: 405
+
