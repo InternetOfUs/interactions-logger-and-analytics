@@ -5,10 +5,9 @@ import logging
 
 class Utils:
 
-    def compute_conversation_id(self) -> str:
+    @staticmethod
+    def compute_conversation_id() -> str:
         logging.debug("INFO@Utils - starting to compute the conversation id")
-        # TODO compute the convId
-        
         return "ABCD"
 
     def extract_trace_id(self, data: dict) -> str:
