@@ -318,6 +318,7 @@ components:
           oneOf:
             - $ref: '#/components/schemas/TextualRequest'
             - $ref: '#/components/schemas/ActionRequest'
+            - $ref: '#/components/schemas/AttachmentRequest'
           example: "devo fare un bonifico di 40 euro"
         domain:
           type: string
@@ -347,26 +348,6 @@ components:
         type:
           type: string
           example: "REQUEST"
-
-    TextualRequest:
-      type: object
-      properties:
-        type:
-          type: string
-          example: "text"
-        value:
-          type: string
-          example: "I want some wine"
-
-    ActionRequest:
-      type: object
-      properties:
-        type:
-          type: string
-          example: "action"
-        text:
-          type: string
-          example: "Let's do it!"
 
     ResponseMessage:
       type: object
@@ -447,6 +428,26 @@ components:
           type: string
           example: "NOTIFICATION"
 
+    TextualRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "text"
+        value:
+          type: string
+          example: "I want some wine"
+
+    ActionRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "action"
+        value:
+          type: string
+          example: "Let's do it!"
+
     AttachmentResponse:
       type: object
       properties:
@@ -463,6 +464,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/QuickReplyResponse'
+
+    AttachmentRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "Image"
+        uri:
+          type: string
+          example: "http://image.com/image.png"
+        alternativeText:
+          type: string
+          example: "An hotel"
 
     CarouselResponse:
       type: array
