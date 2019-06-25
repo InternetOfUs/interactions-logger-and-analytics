@@ -100,30 +100,33 @@ class LogMessages(Resource):
         message_ids = []
 
         for message in messages_received:
+
+            print(message)
+
             type = str(message['type']).lower()
             utils = Utils()
 
             if type == 'request':
                 request_message = RequestMessage.from_rep(message)
-                message_ids.append(request_message.message_id)
                 project_name = utils.extract_project_name(message)
-                date = datetime.today().strftime('%Y-%m-%d')
+                date = utils.extract_date(message)
                 index_name = project_name + "-message-" + date
-                self._es.index(index=index_name, doc_type='_doc', body=request_message.to_repr())
+                query = self._es.index(index=index_name, doc_type='_doc', body=request_message.to_repr())
+                message_ids.append(query['_id'])
 
             elif type == "response":
                 response_message = ResponseMessage.from_rep(message)
-                message_ids.append(response_message.message_id)
                 project_name = utils.extract_project_name(message)
                 index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
-                self._es.index(index=index_name, doc_type='_doc', body=response_message.to_repr())
+                query = self._es.index(index=index_name, doc_type='_doc', body=response_message.to_repr())
+                message_ids.append(query['_id'])
 
             elif type == "notification":
                 notification_message = NotificationMessage.from_rep(message)
-                message_ids.append(notification_message.message_id)
                 project_name = utils.extract_project_name(message)
                 index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
-                self._es.index(index=index_name, doc_type='_doc', body=notification_message.to_repr())
+                query = self._es.index(index=index_name, doc_type='_doc', body=notification_message.to_repr())
+                message_ids.append(query['_id'])
 
         json_response = {
             "messageId": message_ids,

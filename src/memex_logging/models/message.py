@@ -403,45 +403,45 @@ class AttachmentResponse:
 
     @staticmethod
     def from_rep(data: dict):
-        actions = []
-        for action in data['action']:
+        buttons = []
+        for action in data['buttons']:
             a = QuickReplyResponse.from_rep(action)
-            actions.append(a)
-        return AttachmentResponse(data['uri'], data['alternativeText'], actions)
+            buttons.append(a)
+        return AttachmentResponse(data['uri'], data['alternativeText'], buttons)
 
 
 class CarouselResponse:
-    def __init__(self, type, title, description, uri, actions=Optional[List[QuickReplyResponse]]):
+    def __init__(self, type, title, description, uri, buttons=Optional[List[QuickReplyResponse]]):
         self.type = type,
         self.title = title,
         self.description = description,
         self.uri = uri,
-        self.actions = actions
+        self.buttons = buttons
 
-        for action in actions:
+        for action in buttons:
             if not isinstance(action, QuickReplyResponse):
-                raise ValueError("actions should contains only object with type ActionResponse")
+                raise ValueError("buttons should be QuickReplyResponse objects")
 
     def to_repr(self) -> dict:
-        actions = []
-        for action in self.actions:
-            actions.append(QuickReplyResponse.to_repr(action))
+        buttons = []
+        for action in self.buttons:
+            buttons.append(QuickReplyResponse.to_repr(action))
         return{
             'type': self.type,
             'title': self.title,
             'description': self.description,
             'uri': self.uri,
-            'actions': actions
+            'buttons': buttons
         }
 
     @staticmethod
     def from_rep(data: dict):
-        actions = []
-        for action in data['action']:
+        buttons = []
+        for action in data['buttons']:
             a = QuickReplyResponse.from_rep(action)
-            actions.append(a)
+            buttons.append(a)
 
-        return CarouselResponse(data['type'], data['title'], data['description'], data['uri'], actions)
+        return CarouselResponse(data['type'], data['title'], data['description'], data['uri'], buttons)
 
 
 class TextResponse:

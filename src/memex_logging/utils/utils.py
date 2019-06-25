@@ -1,6 +1,7 @@
 from flask_restful import abort
 
 import logging
+import datetime
 
 
 class Utils:
@@ -9,6 +10,21 @@ class Utils:
     def compute_conversation_id() -> str:
         logging.debug("INFO@Utils - starting to compute the conversation id")
         return "ABCD"
+
+    def extract_date(self, data:dict) -> str:
+        """
+
+        :param data:
+        :return:
+        """
+        date = ""
+        if "timestamp" in data.keys():
+            timestamp = data['timestamp']
+            date_from_timestamp = datetime.datetime.fromtimestamp(timestamp)
+            date = date_from_timestamp.strftime('%Y-%m-%d')
+        else:
+            date = datetime.datetime.today().strftime('%Y-%m-%d')
+        return date
 
     def extract_trace_id(self, data: dict) -> str:
         """
