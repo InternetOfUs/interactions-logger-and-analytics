@@ -19,9 +19,7 @@ class Utils:
         """
         date = ""
         if "timestamp" in data.keys():
-            timestamp = data['timestamp']
-            date_from_timestamp = datetime.datetime.fromtimestamp(timestamp)
-            date = date_from_timestamp.strftime('%Y-%m-%d')
+            date = data['timestamp']
         else:
             date = datetime.datetime.today().strftime('%Y-%m-%d')
         return date
