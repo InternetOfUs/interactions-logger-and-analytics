@@ -2,6 +2,8 @@ from __future__ import absolute_import, annotations
 
 from typing import Optional, List
 
+import logging
+
 
 class Intent:
     def __init__(self, name: str, confidence: float) -> None:
@@ -16,7 +18,40 @@ class Intent:
 
     @staticmethod
     def from_rep(data: dict) -> Intent:
-        return Intent(data['name'], data['confidence'])
+        name = None
+
+        if 'name' in data:
+            name = data['name']
+
+        confidence = None
+
+        if 'confidence' in data:
+            confidence = data['confidence']
+
+        return Intent(name,confidence)
+
+
+class LocationRequest:
+    def __init__(self, latitude: float, longitude: float) -> None:
+        self.latitude = latitude
+        self.longitude = longitude
+
+    def to_repr(self) -> dict:
+        return{
+            'type': 'location',
+            'latitude': self.latitude,
+            'longitude': self.longitude
+        }
+
+    @staticmethod
+    def from_rep(data: dict)-> LocationRequest:
+        if 'latitude' not in data:
+            raise ValueError("A LocationRequest object must contain a latitude and a longitude. Latitude is missing")
+
+        if 'longitude' not in data:
+            raise ValueError("A LocationRequest object must contain a latitude and a longitude. Longitude is missing")
+
+        return LocationRequest(data['latitude'], data['longitude'])
 
 
 class TextualRequest:
@@ -32,7 +67,10 @@ class TextualRequest:
 
     @staticmethod
     def from_rep(data: dict) -> TextualRequest:
-        return TextualRequest(data['value'])
+        if 'value' in data:
+            return TextualRequest(data['value'])
+        else:
+            raise ValueError("A TextualRequest object must contain a value")
 
 
 class ActionRequest:
@@ -48,7 +86,10 @@ class ActionRequest:
 
     @staticmethod
     def from_rep(data: dict) -> ActionRequest:
-        return ActionRequest(data['value'])
+        if 'value' in data:
+            return ActionRequest(data['value'])
+        else:
+            raise ValueError("An ActionRequest object must contain a value")
 
 
 class AttachmentRequest:
@@ -65,7 +106,12 @@ class AttachmentRequest:
 
     @staticmethod
     def from_rep(data: dict)-> AttachmentRequest:
-        return AttachmentRequest(data['uri'], data['alternativeText'])
+        alt = None
+        if 'alternativeText' in data:
+            alt = data['alternativeText']
+        if 'uri' not in data:
+            raise ValueError("An AttachmentRequest object must contain an uri")
+        return AttachmentRequest(data['uri'], alt)
 
 
 class Entity:
@@ -83,6 +129,12 @@ class Entity:
 
     @staticmethod
     def from_rep(data: dict) -> Entity:
+        if 'type' not in data:
+            raise ValueError("An Entity must contain a type")
+        if 'value' not in data:
+            raise ValueError("An Entity must contain a value")
+        if 'confidence' not in data:
+            raise ValueError("An Entity must contain a confidence")
         return Entity(data['type'], data['value'], data['confidence'])
 
 
@@ -90,6 +142,8 @@ class RequestMessage:
 
     def __init__(self, message_id: str, channel: str, user_id: str, conversation_id: str, timestamp: str, content, domain: str,  intent: Intent, entities: list, project: str,
                  language: str, metadata: dict) -> None:
+        logging.info("MODELS.MESSAGE creating a RequestMessage object for ".format(message_id))
+
         self.message_id = message_id
         self.channel = channel
         self.user_id = user_id
@@ -106,18 +160,25 @@ class RequestMessage:
         if not isinstance(intent, Intent):
             raise ValueError('intent type should be Intent')
 
+        logging.info("MODELS.MESSAGE  intent check passed for ".format(message_id))
+
         if metadata is not None:
             if not isinstance(metadata, dict):
                 raise ValueError('metadata type should be dictionary')
 
+        logging.info("MODELS.MESSAGE  metadata check passed for ".format(message_id))
+
         if content is not None:
-            if not (isinstance(content, TextualRequest) or isinstance(content, ActionRequest) or isinstance(content, AttachmentRequest)):
-                raise ValueError("content should be TextRequest, ActionRequest or AttachmentRequest")
+            if not (isinstance(content, TextualRequest) or isinstance(content, ActionRequest) or isinstance(content, AttachmentRequest) or isinstance(content, LocationRequest)):
+                raise ValueError("content should be TextRequest, ActionRequest, AttachmentRequest or LocationRequest")
+
+        logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
 
         for entity in entities:
-            print(type(entity))
             if not isinstance(entity, Entity):
                 raise ValueError('entities should contains only object with type Entity')
+
+        logging.info("MODELS.MESSAGE  entity check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
         entities = []
@@ -152,6 +213,9 @@ class RequestMessage:
 
     @staticmethod
     def from_rep(data: dict):
+
+        logging.info("MODELS.MESSAGE starting logging a REQUEST message{}".format(data['messageId']))
+
         if 'intent' in data:
             intent = Intent.from_rep(data['intent'])
         else:
@@ -180,6 +244,8 @@ class RequestMessage:
                 content = ActionRequest.from_rep(data['content'])
             elif data['content']['type'] == "attachment":
                 content = AttachmentRequest.from_rep(data['content'])
+            elif data['content']['type'] == "location":
+                content = LocationRequest.from_rep(data['content'])
 
         entities = []
         if "entities" in data:
@@ -195,12 +261,16 @@ class RequestMessage:
         if "language" in data:
             language = data['language']
 
+        logging.warning("MODELS.MESSAGE default parameters set up for ".format(data['messageId']))
+
         return RequestMessage(data['messageId'], data['channel'], data['userId'], conversation_id, data['timestamp'], content, domain, intent, entities,
                               data['project'], language, metadata)
 
 
 class ResponseMessage:
     def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, response_to: str, timestamp: str, content: list, metadata: dict, project: str):
+
+        logging.info("MODELS.MESSAGE creating a ResponseMessage object for ".format(message_id))
 
         self.message_id = message_id
         self.conversation_id = conversation_id
@@ -214,11 +284,16 @@ class ResponseMessage:
         self.type = "RESPONSE"
 
         for cont in content:
-            if not (isinstance(cont, QuickReplyResponse) or isinstance(cont, CarouselResponse) or isinstance(cont, AttachmentResponse) or isinstance(cont, TextResponse)):
+            if not (isinstance(cont, QuickReplyResponse) or isinstance(cont, CarouselResponse) or isinstance(cont, AttachmentResponse) or isinstance(cont, TextualRequest) or isinstance(cont, LocationRequest)):
                 raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextResponse")
 
-        if not isinstance(metadata, dict):
-            raise ValueError("metadata should be a dictionary")
+        logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
+
+        if metadata is not None:
+            if not isinstance(metadata, dict):
+                raise ValueError('metadata type should be dictionary')
+
+        logging.info("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
         content_list = []
@@ -241,31 +316,45 @@ class ResponseMessage:
     @staticmethod
     def from_rep(data: dict):
 
+        logging.info("MODELS.MESSAGE starting logging a RESPONSE message{}".format(data['messageId']))
+
         metadata = None
         if "metadata" in data:
             metadata = data["metadata"]
 
         content = []
+        if 'content' in data:
+            for item in data['content']:
+                if item['type'] == 'text':
+                    element = TextualRequest.from_rep(item)
+                    content.append(element)
+                elif item['type'] == 'location':
+                    element = LocationRequest.from_rep(item)
+                    content.append(element)
+                elif item['type'] == 'action':
+                    element = QuickReplyResponse.from_rep(item)
+                    content.append(element)
+                elif item['type'] == 'attachment':
+                    element = AttachmentResponse.from_rep(item)
+                    content.append(element)
+                elif item['type'] == 'carousel':
+                    element = CarouselResponse.from_rep(item)
+                    content.append(element)
 
-        for item in data['content']:
-            if item['type'] == 'text':
-                element = TextResponse.from_rep(item)
-                content.append(element)
-            elif item['type'] == 'action':
-                element = QuickReplyResponse.from_rep(item)
-                content.append(element)
-            elif item['type'] == 'attachment':
-                element = AttachmentResponse.from_rep(item)
-                content.append(element)
-            elif item['type'] == 'carousel':
-                element = CarouselResponse.from_rep(item)
-                content.append(element)
+        if 'conversationId' in data:
+            conversation_id = data['conversationId']
+        else:
+            conversation_id = None
 
-        return ResponseMessage(data['messageId'], data['conversationId'], data['channel'], data['userId'], data['responseTo'], data['timestamp'], content, metadata, data['project'])
+        logging.warning("MODELS.MESSAGE default parameters set up for ".format(data['messageId']))
+
+        return ResponseMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['responseTo'], data['timestamp'], content, metadata, data['project'])
 
 
 class NotificationMessage:
     def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, timestamp: str, content: list, metadata: dict, project: str):
+
+        logging.info("MODELS.MESSAGE creating a NotificationMessage object for ".format(message_id))
 
         self.message_id = message_id
         self.conversation_id = conversation_id
@@ -278,11 +367,16 @@ class NotificationMessage:
         self.type = type
 
         for cont in content:
-            if not (isinstance(cont, QuickReplyResponse) or isinstance(cont, CarouselResponse) or isinstance(cont, AttachmentResponse) or isinstance(cont, TextResponse)):
+            if not (isinstance(cont, QuickReplyResponse) or isinstance(cont, CarouselResponse) or isinstance(cont, AttachmentResponse) or isinstance(cont, TextualRequest) or isinstance(cont, LocationRequest)):
                 raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextResponse")
 
-        if not isinstance(metadata, dict):
-            raise ValueError("metadata should be a dictionary")
+        logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
+
+        if metadata is not None:
+            if not isinstance(metadata, dict):
+                raise ValueError('metadata type should be dictionary')
+
+        logging.info("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
         content_list = []
@@ -304,43 +398,49 @@ class NotificationMessage:
     @staticmethod
     def from_rep(data: dict):
 
+        logging.info("MODELS.MESSAGE starting logging a NOTIFICATION message{}".format(data['messageId']))
+
         metadata = None
         if "metadata" in data:
             metadata = data["metadata"]
 
         content = []
-        for item in data['content']:
-            if item['type'] == 'text':
-                element = TextResponse.from_rep(item)
-                content.append(element)
-            elif item['type'] == 'action':
-                element = QuickReplyResponse.from_rep(item)
-                content.append(element)
-            elif item['type'] == 'attachment':
-                element = AttachmentResponse.from_rep(item)
-                content.append(element)
-            elif item['type'] == 'carousel':
-                element = CarouselResponse.from_rep(item)
-                content.append(element)
+        if 'content' in data:
+            for item in data['content']:
+                if item['type'] == 'text':
+                    element = TextualRequest.from_rep(item)
+                    content.append(element)
+                elif item['type'] == 'action':
+                    element = QuickReplyResponse.from_rep(item)
+                    content.append(element)
+                elif item['type'] == 'attachment':
+                    element = AttachmentResponse.from_rep(item)
+                    content.append(element)
+                elif item['type'] == 'carousel':
+                    element = CarouselResponse.from_rep(item)
+                    content.append(element)
 
-        return NotificationMessage(data['messageId'], data['conversationId'], data['channel'], data['userId'], data['timestamp'], content, metadata, data['project'])
+        if 'conversationId' in data:
+            conversation_id = data['conversationId']
+        else:
+            conversation_id = None
+
+        logging.warning("MODELS.MESSAGE default parameters set up for ".format(data['messageId']))
+
+        return NotificationMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['timestamp'], content, metadata, data['project'])
 
 
 class QuickReplyResponse:
-    def __init__(self, button_text: str, button_id: str, media_type: str, media_uri: str):
+    def __init__(self, button_text: str, button_id: str):
         self.type = "action"
         self.button_text = button_text
         self.button_id = button_id
-        self.media_type = media_type
-        self.media_uri = media_uri
 
     def to_repr(self) -> dict:
         return {
             'type': 'action',
             'buttonText': self.button_text,
-            'buttonId': self.button_id,
-            'mediaType': self.media_type,
-            'mediaURI': self.media_uri
+            'buttonId': self.button_id
         }
 
     @staticmethod
@@ -356,17 +456,7 @@ class QuickReplyResponse:
         if "buttonId" in data:
             button_id = data['buttonId']
 
-        media_type = None
-
-        if "mediaType" in data:
-            media_type = data['mediaType']
-
-        media_uri = None
-
-        if "mediaURI" in data:
-            media_uri = data['mediaURI']
-
-        return QuickReplyResponse(button_text, button_id, media_type, media_uri)
+        return QuickReplyResponse(button_text, button_id)
 
 
 class AttachmentResponse:
@@ -443,18 +533,3 @@ class CarouselResponse:
 
         return CarouselResponse(data['type'], data['title'], data['description'], data['uri'], buttons)
 
-
-class TextResponse:
-    def __init__(self, type, value) -> None:
-        self.type = type
-        self.value = value
-
-    def to_repr(self) -> dict:
-        return {
-            'type': self.type,
-            'value': self.value
-        }
-
-    @staticmethod
-    def from_rep(data: dict):
-        return TextResponse(data['type'], data['value'])

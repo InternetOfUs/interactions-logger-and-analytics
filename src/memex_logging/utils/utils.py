@@ -9,9 +9,10 @@ class Utils:
     @staticmethod
     def compute_conversation_id() -> str:
         logging.debug("INFO@Utils - starting to compute the conversation id")
-        return "ABCD"
+        return None
 
-    def extract_date(self, data:dict) -> str:
+    @staticmethod
+    def extract_date(data:dict) -> str:
         """
 
         :param data:
@@ -19,12 +20,18 @@ class Utils:
         """
         date = ""
         if "timestamp" in data.keys():
-            date = data['timestamp']
+            try:
+                positioned = datetime.datetime.strptime(data['timestamp'], "%Y-%m-%dT%H:%M:%S.%f")
+                return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
+            except:
+                logging.error("timestamp cannot be parsed of the message cannot be parsed")
+                logging.error(data)
         else:
-            date = datetime.datetime.today().strftime('%Y-%m-%d')
-        return date
+            positioned = datetime.datetime.now().isoformat()
+            return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
 
-    def extract_trace_id(self, data: dict) -> str:
+    @staticmethod
+    def extract_trace_id(data: dict) -> str:
         """
         Extract the id of the message from the message
         :param data:
@@ -36,7 +43,8 @@ class Utils:
             logging.error("ERROR@Utils - traceId not found in the message parsed")
             abort(400, message="Invalid message. traceId is missing")
 
-    def extract_project_name(self, data: dict) -> str:
+    @staticmethod
+    def extract_project_name(data: dict) -> str:
         """
         Extract the name of the project to use the right index on elastic
         :param data:
@@ -46,9 +54,3 @@ class Utils:
             return str(data["project"]).lower()
         else:
             return "memex"
-
-    def _time_based_segmentation(self) -> str:
-        return ""
-
-    def _intent_based_segmentation(self) -> str:
-        return ""
