@@ -1,8 +1,12 @@
 from __future__ import absolute_import, annotations
+
 from typing import Optional, List
+
 import json
 
 import requests
+
+import logging
 
 
 class Entity:
@@ -73,9 +77,97 @@ class LoggingUtility:
         self._access_point = service_host + ":" + str(service_port)
         self._project = project
 
-    def add_textual_request(self, message: object, message_id: object, user_id: object, channel: object,
-                            timestamp: object, conversation_id: object = None, domain: object = None, intent_name: object = None,
-                            intent_confidence: object = None,
+    def add_location_request(self, latitude: float, longitude: float, message_id:str, user_id: str, channel: str,
+                            timestamp: str, conversation_id: str = None, domain: str = None, intent_name: str = None,
+                            intent_confidence: float = None,
+                            entities: object = Optional[List[Entity]], language: object = None, metadata: object = Optional[dict]) -> str:
+        """
+        This method should be used to store a request message that contains text written by the user. A request message is a message from the user to the chatbot
+        :param latitude: a float number representing the latitude of the location
+        :param longitude a float number representing the longitude of the location
+        :param message_id: the id of the message. This field should be a string
+        :param user_id: the id of the user. This filed should be a string
+        :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
+        :param timestamp: the timestamp of the message. This field should be a string
+        :param conversation_id: a string to identify the id of the conversation
+        :param domain: this optional field is a string that describe the domain of the message
+        :param intent_name: it is an optional string representing the name of the intent
+        :param intent_confidence: it is an optional float number to measure the intent detection accuracy. If intent_name is defined, the default value of the confidence is 0.0
+        :param entities: an optional list of entities. Each entity should have type Entity
+        :param language: an optional string indicating the language of the message
+        :param metadata: an optional dictionary containing additional information.
+        :return:
+        """
+
+        logging.info("LIB.LOCATION_REQ - Starting logging a new message ")
+
+        if message_id is None or message_id == "":
+            raise ValueError("message_id cannot be empty")
+
+        if user_id is None or user_id == "":
+            raise ValueError("user_id cannot be empty")
+
+        if channel == "" or channel is None:
+            raise ValueError("channel cannot be empty")
+
+        if timestamp is None or timestamp == "":
+            raise ValueError("timestamp cannot be empty")
+
+        if not isinstance(entities, list):
+            entities = []
+
+        if not isinstance(metadata, dict):
+            metadata = {}
+
+        api_point = self._access_point + "/messages"
+
+        intent_dict = {
+            'name': intent_name,
+            'confidence': intent_confidence
+        }
+
+        temp_entities = []
+
+        for entity in entities:
+            temp_entities.append(entity.to_dict())
+
+        message_generated = {
+            "messageId": message_id,
+            "channel": channel,
+            "userId": user_id,
+            "conversationId": conversation_id,
+            "timestamp": timestamp,
+            "content": {
+                "type": 'location',
+                "latitude": latitude,
+                "longitude": longitude
+            },
+            "domain": domain,
+            "intent": intent_dict,
+            "entities": temp_entities,
+            "project": self._project.lower(),
+            "language": language,
+            "metadata": metadata,
+            "type": "REQUEST"
+        }
+
+        messages = [message_generated]
+
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        response = requests.post(api_point, headers=headers, json=messages)
+
+        if response.status_code == 200:
+            dict_response = json.loads(response.text)
+            return dict_response['messageId']
+        else:
+            raise ValueError("The message has not been logged")
+
+    def add_textual_request(self, message: object, message_id: str, user_id: str, channel: str,
+                            timestamp: str, conversation_id: str = None, domain: str = None, intent_name: str = None,
+                            intent_confidence: float = None,
                             entities: object = Optional[List[Entity]], language: object = None, metadata: object = Optional[dict]) -> str:
         """
         This method should be used to store a request message that contains text written by the user. A request message is a message from the user to the chatbot
@@ -157,7 +249,7 @@ class LoggingUtility:
             raise ValueError("The message has not been logged")
 
     def add_action_request(self, message: str, message_id: str, user_id: str, channel: str,
-                           timestamp: int, conversation_id=None, domain=None, intent_name=None, intent_confidence=None,
+                           timestamp: str, conversation_id=None, domain=None, intent_name=None, intent_confidence=None,
                            entities=Optional[List[Entity]], language=None, metadata=Optional[dict]) -> str:
         """
         This method should be used to store a request message. This method should be used when the request message is generated by pressing a quick action button. A request message is a message from the user to the chatbot
@@ -241,7 +333,7 @@ class LoggingUtility:
         else:
             raise ValueError("The message has not been logged")
 
-    def add_attachment_request(self, attachment_uri: str, message_id: str, user_id: str, channel: str, timestamp: int, conversation_id=None, alternative_text=None, domain=None, intent_name=None,
+    def add_attachment_request(self, attachment_uri: str, message_id: str, user_id: str, channel: str, timestamp: str, conversation_id=None, alternative_text=None, domain=None, intent_name=None,
                                intent_confidence=None,
                                entities=Optional[List[Entity]], language=None, metadata=Optional[dict]) -> str:
         """
@@ -326,7 +418,7 @@ class LoggingUtility:
             raise ValueError("The message has not been logged")
 
     def add_textual_response(self, message_text: str, message_id: str, channel: str, user_id: str,
-                             response_to: str, timestamp: int, conversation_id=None, buttons=Optional[List],
+                             response_to: str, timestamp: str, conversation_id=None, buttons=Optional[List],
                              metadata=Optional[dict]) -> str:
         """
         This method should be used to store a response message. A response message is a message from the bot to the user that represents an answer to a request message
@@ -409,7 +501,7 @@ class LoggingUtility:
             raise ValueError("The message has not been logged")
 
     def add_attachment_response(self, attachment_uri: str, message_id: str, channel: str, user_id: str,
-                                response_to: str, timestamp: int, conversation_id=None, alternative_text=None,
+                                response_to: str, timestamp: str, conversation_id=None, alternative_text=None,
                                 buttons=Optional[List], metadata=Optional[dict]) -> str:
         """
         This method should be used to store a response message. A response message is a message from the bot to the user that represents an answer to a request message
@@ -718,13 +810,25 @@ class LoggingUtility:
     #
     #     return response.status_code, response.content
 
-    def get_message(self, message_id: str) -> tuple:
+    def get_message_from_message_id(self, message_id: str) -> tuple:
         """
         Utils to retrieve a message from the database
         :param message_id: the if of the message to retrieve
         :return: the status and the content of the response
         """
-        api_point = self._access_point + "/message/" + self._project + "/" + message_id
+        api_point = self._access_point + "/message?project=" + self._project + "&messageId=" + message_id
+
+        response = requests.get(api_point)
+
+        return response.status_code, response.json()
+
+    def get_message_from_generic_id(self, id: str) -> tuple:
+        """
+        Utils to retrieve a message from the database
+        :param id: the if of the message to retrieve
+        :return: the status and the content of the response
+        """
+        api_point = self._access_point + "/message?id=" + id
 
         response = requests.get(api_point)
 
