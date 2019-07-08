@@ -3,6 +3,8 @@ from flask_restful import abort
 import logging
 import datetime
 
+import dateutil.parser
+
 
 class Utils:
 
@@ -21,7 +23,7 @@ class Utils:
         date = ""
         if "timestamp" in data.keys():
             try:
-                positioned = datetime.datetime.strptime(data['timestamp'], "%Y-%m-%dT%H:%M:%S.%f")
+                positioned = dateutil.parser.parse(data['timestamp'])
                 return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
             except:
                 logging.error("timestamp cannot be parsed of the message cannot be parsed")
