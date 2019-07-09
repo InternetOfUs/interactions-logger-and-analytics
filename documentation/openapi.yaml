@@ -70,19 +70,25 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_405'
 
-    /logging/message/{id}:
+    /logging/message:
       get:
         tags:
           - message
         summary: Retrieve a single message by specifying the trace id
         description: This end-point can be used to retrieve all the information of a single message
         parameters:
-          - in: path
-            name: id
+          - in: query
+            name: project
             schema:
               type: string
             required: true
-            description: The id of the message
+            description: the name of the project related to the message you want to retrieve
+          - in: query
+            name: messageId
+            schema:
+              type: string
+            required: true
+            description: the id of the message you want to retrieve
         responses:
           '200':
             description: success
@@ -479,9 +485,11 @@ components:
           example: "An hotel"
 
     CarouselResponse:
-      type: array
-      items:
+        type: object
         properties:
+          type:
+            type: string
+            example: "carousel"
           title:
             type: string
             example: "Hiking activity"
@@ -550,79 +558,53 @@ components:
     # Schema for an array of Message
 
 
-    GeneralLog:
+    Log:
       type: object
       properties:
-        source:
+        logId:
           type: string
-          example: "wine-module"
+          example: "LOG391390123"
+        severity:
+          type: string
+          enum: ['error','warning','info']
+          example: "error"
+        logContent:
+          type: string
+          example: "bot stopped"
         timestamp:
           type: string
-          example: "2019-04-04:23.11.58"
-        traceId:
+          example: "2019-07-04T08:33:48.35408Z"
+        authority:
           type: string
-          example: "23DAFG2-DNEMQ-315L-RWEO"
-        message:
-          type: string
-          example: "ERROR @ class Message - no such file or directory exists"
-        metadata:
+          example: "memex.dimension.nlu"
+        resolution:
           type: object
           properties:
-            type:
+            input:
               type: string
-              example: "SystemStatus"
-            information:
-              type: array
-              items:
-                type: object
+              example: metadata.is_detected
+            output:
+              type: string
+              example: "true"
+        messageId:
+          type: string
+          example: "MSG00138938901133892"
+        botVersion:
+          type: string
+          example: "mem-1.0.2"
+        device:
+          type: object
+        metadata:
+          type: object
         project:
           type: string
+          example: "memex"
 
-    GeneralLogs:
+    Logs:
       type: array
       items:
-        $ref: '#/components/schemas/GeneralLog'
+        $ref: '#/components/schemas/Log'
 
-
-    SummarizedInfo:
-      type: object
-      properties:
-        no_requests:
-          type: integer
-          format: int32
-          example: 30
-        no_responses:
-          type: integer
-          format: int32
-          example: 45
-        no_notification:
-          type: integer
-          format: int32
-          example: 5
-        intent_distribution:
-          type: array
-          items:
-            type: object
-            properties:
-              intent:
-                type: string
-                example: "wine_info"
-              frequency:
-                type: integer
-                format: int32
-                example: 9
-        language_distribution:
-          type: array
-          items:
-            type: object
-            properties:
-              intent:
-                type: string
-                example: "it"
-              requests:
-                type: integer
-                format: int32
-                example: 3
 
     # Responses
 
@@ -678,4 +660,3 @@ components:
         code:
           enum: ['405']
           example: 405
-
