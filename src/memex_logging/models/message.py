@@ -346,9 +346,14 @@ class ResponseMessage:
         else:
             conversation_id = None
 
+        if 'project' in data:
+            project = data['project']
+        else:
+            project = "memex"
+
         logging.warning("MODELS.MESSAGE default parameters set up for ".format(data['messageId']))
 
-        return ResponseMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['responseTo'], data['timestamp'], content, metadata, data['project'])
+        return ResponseMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['responseTo'], data['timestamp'], content, metadata, project)
 
 
 class NotificationMessage:
@@ -409,6 +414,9 @@ class NotificationMessage:
             for item in data['content']:
                 if item['type'] == 'text':
                     element = TextualRequest.from_rep(item)
+                    content.append(element)
+                elif item['type'] == 'location':
+                    element = LocationRequest.from_rep(item)
                     content.append(element)
                 elif item['type'] == 'action':
                     element = QuickReplyResponse.from_rep(item)
@@ -519,8 +527,8 @@ class CarouselResponse:
         return{
             'type': self.type,
             'title': self.title,
-            'description': self.description,
-            'uri': self.uri,
+            'subtitle': self.description,
+            'imageUrl': self.uri,
             'buttons': buttons
         }
 
@@ -531,5 +539,5 @@ class CarouselResponse:
             a = QuickReplyResponse.from_rep(action)
             buttons.append(a)
 
-        return CarouselResponse(data['type'], data['title'], data['description'], data['uri'], buttons)
+        return CarouselResponse(data['type'], data['title'], data['subtitle'], data['imageUrl'], buttons)
 

@@ -1,4 +1,6 @@
-from flask import request
+import json
+
+from flask import request, Response
 from flask_restful import Resource, abort
 # for second-level logging
 import logging
@@ -6,6 +8,7 @@ from datetime import datetime
 # for handling elasticsearch
 from elasticsearch import Elasticsearch
 
+from memex_logging.models.log import Log
 from memex_logging.utils.utils import Utils
 
 
@@ -81,49 +84,39 @@ class LogGeneralLogs(Resource):
         """
         self._es = es
 
-    def get(self) -> None:
-        """
-        This method is not allowed
-        :return: 405 HTTTP Error
-        """
-        abort(405, message="method not allowed")
-
-    def post(self) -> tuple:
+    def post(self) -> Response:
         """
         Add a batch of log messages to the database. The logs must be passed in the request body.
         This method log the messages with index <project-name>-logging-<yyyy>-<mm>-<dd>
         :return: the HTTP response
         """
-        logging.warning(
-            "INFO@LogGeneralLogs POST - starting to log an array of logs at [%s]" % (str(datetime.now())))
-        messages_received = request.json
-        message_ids = []
-        for element in messages_received:
+        logging.warning("LOGGING.API Starting to log a new set of messages")
+
+        logs_received = request.json
+        log_ids = []
+
+        for log in logs_received:
             # push the message in the database
             utils = Utils()
-            # TODO check structure in v 0.0.4
-            trace_id = utils.extract_trace_id(element)
-            logging.warning("INFO@LogGeneralLogs POST - starting to log a new log with id [%s] at [%s]" % (
-                trace_id, str(datetime.now())))
 
-            project_name = utils.extract_project_name(element)
-
-            index_name = project_name + "-logging-" + datetime.today().strftime('%Y-%m-%d')
-
-            self._es.index(index=index_name, doc_type='_doc', body=element)
-
-            message_ids.append(trace_id)
-
-            logging.warning("INFO@LogGeneralLogs POST - finishing to log a new log with id [%s] at [%s]" % (
-                trace_id, str(datetime.now())))
+            try:
+                temp_log = Log.from_rep(log)
+                project_name = utils.extract_project_name(log)
+                date = utils.extract_date(log)
+                index_name = project_name + "-logging-" + date
+                query = self._es.index(index=index_name, doc_type='_doc', body=temp_log.to_repr())
+                log_ids.append(query['_id'])
+            except:
+                logging.error("LOGGING.API Failed to log")
+                logging.error(log)
 
         json_response = {
-            "ids_logged": ';'.join(message_ids),
+            "logId": log_ids,
             "status": "ok",
             "code": 200
         }
 
-        logging.warning(
-            "INFO@LogGeneralLogs POST - finishing to log an array of logs at [%s]" % (str(datetime.now())))
+        resp = Response(json.dumps(json_response), mimetype='application/json')
+        resp.status_code = 200
 
-        return json_response, 200
+        return resp
