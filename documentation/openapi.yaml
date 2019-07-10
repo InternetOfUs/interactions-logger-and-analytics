@@ -583,9 +583,6 @@ components:
         timestamp:
           type: string
           example: "2019-07-04T08:33:48.35408Z"
-        messageId:
-          type: string
-          example: "MSG00138938901133892"
         botVersion:
           type: string
           example: "mem-1.0.2"
