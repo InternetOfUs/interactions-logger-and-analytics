@@ -153,7 +153,8 @@ class LogMessages(Resource):
                 try:
                     response_message = ResponseMessage.from_rep(message)
                     project_name = utils.extract_project_name(message)
-                    index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
+                    date = utils.extract_date(message)
+                    index_name = project_name + "-message-" + date
                     query = self._es.index(index=index_name, doc_type='_doc', body=response_message.to_repr())
                     message_ids.append(query['_id'])
                 except:
@@ -163,7 +164,8 @@ class LogMessages(Resource):
                 try:
                     notification_message = NotificationMessage.from_rep(message)
                     project_name = utils.extract_project_name(message)
-                    index_name = project_name + "-message-" + datetime.today().strftime('%Y-%m-%d')
+                    date = utils.extract_date(message)
+                    index_name = project_name + "-message-" + date
                     query = self._es.index(index=index_name, doc_type='_doc', body=notification_message.to_repr())
                     message_ids.append(query['_id'])
                 except:

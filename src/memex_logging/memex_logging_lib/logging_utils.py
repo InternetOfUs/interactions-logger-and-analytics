@@ -35,22 +35,15 @@ class Entity:
 
 class QuickReplyResponse:
 
-    def __init__(self, button_text: str, button_id=None, media_type=None, media_uri=None) -> None:
+    def __init__(self, button_text: str, button_id=None) -> None:
         """
         Create a QuickReplyResponse object. A quick reply response is a button that suggest the user a quick action to perform.
         :param button_text: the text of the button
         :param button_id: optionally, the id of the button
-        :param media_type: if there is an image associated to the button, declare it here. media_type should be "image" or "video". This field is optional
-        :param media_uri: the URI of the media . This field is optional but must be declared if the media type is defined
         """
-
-        if media_type != "" and media_uri == "":
-            raise ValueError("media_type is defined but media_uri is empty")
 
         self.button_text = button_text
         self.button_id = button_id
-        self.media_type = media_type
-        self.media_uri = media_uri
 
     def __repr__(self) -> str:
         return 'QuickReplyResponse(value {}, id {})'.format(self.button_text, self.button_id)
@@ -59,28 +52,66 @@ class QuickReplyResponse:
         return {
             "type": "action",
             "buttonText": self.button_text,
-            "buttonId": self.button_id,
-            "mediaType": self.media_type,
-            "mediaURI": self.media_uri
+            "buttonId": self.button_id
+        }
+
+
+class CarouselItem:
+
+    def __init__(self, title: str, image_url: str, subtitle="", default_action = {},
+                 buttons= []) -> None:
+        """
+        Create a CarouselResponse Object. A carousel is a scrollable list of medias. As a best-practice, carousels should be used with no more that 6 elements and when the elements can be ranked.
+        :param title: the title of the slide of the carousel
+        :param image_url: the url of the media
+        :param subtitle: eventually, a subtitle for the slide
+        :param default_action: the default action the user may take. It is a dictionary and it is optional
+        :param buttons: a list of QuickReply responses (list of buttons to let the user perform quick actions)
+        """
+        self.title = title
+        self.image_url = image_url
+        self.subtitle = subtitle
+        self.default_action = default_action
+        self.buttons = buttons
+
+    def __repr__(self) -> str:
+        return "CarouselResponse obj"
+
+    def to_dict(self) -> dict:
+
+        buttons = []
+
+        for button in self.buttons:
+            if not isinstance(button, QuickReplyResponse):
+                raise ValueError("LIB.LOGGING the elements in the button list should be instances of QuickReplyResponse")
+            else:
+                buttons.append(button.to_dict())
+
+        return {
+            "type": "carousel",
+            "title": self.title,
+            "imageUrl": self.image_url,
+            "subtitle": self.subtitle,
+            "defaultAction": self.default_action,
+            "buttons": buttons
         }
 
 
 class LoggingUtility:
 
-    def __init__(self, service_host: str, project: str, service_port=80) -> None:
+    def __init__(self, service_host: str, project: str) -> None:
         """
         Initialize a logging Utility object by specifying the host, the port and the project
         :param service_host: the host of the service as a string (e.g, https://www.test.com)
-        :param service_port: the port of the service as an integer (e.g, 80)
         :param project: the name of the project. It is used to create well-formed indexes in the database and to retrieve information from the right index
         """
-        self._access_point = service_host + ":" + str(service_port)
+        self._access_point = service_host
         self._project = project
 
-    def add_location_request(self, latitude: float, longitude: float, message_id:str, user_id: str, channel: str,
-                            timestamp: str, conversation_id: str = None, domain: str = None, intent_name: str = None,
-                            intent_confidence: float = None,
-                            entities: object = Optional[List[Entity]], language: object = None, metadata: object = Optional[dict]) -> str:
+    def add_location_request(self, latitude: float, longitude: float, message_id: str, user_id: str, channel: str,
+                             timestamp: str, conversation_id: str = None, domain: str = None, intent_name: str = None,
+                             intent_confidence: float = None,
+                             entities: object = Optional[List[Entity]], language: object = None, metadata: object = Optional[dict]) -> str:
         """
         This method should be used to store a request message that contains text written by the user. A request message is a message from the user to the chatbot
         :param latitude: a float number representing the latitude of the location
@@ -102,16 +133,16 @@ class LoggingUtility:
         logging.info("LIB.LOCATION_REQ - Starting logging a new message ")
 
         if message_id is None or message_id == "":
-            raise ValueError("message_id cannot be empty")
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
 
         if user_id is None or user_id == "":
-            raise ValueError("user_id cannot be empty")
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
 
         if channel == "" or channel is None:
-            raise ValueError("channel cannot be empty")
+            raise ValueError("LIB.LOGGING channel cannot be empty")
 
         if timestamp is None or timestamp == "":
-            raise ValueError("timestamp cannot be empty")
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
 
         if not isinstance(entities, list):
             entities = []
@@ -163,7 +194,7 @@ class LoggingUtility:
             dict_response = json.loads(response.text)
             return dict_response['messageId']
         else:
-            raise ValueError("The message has not been logged")
+            raise ValueError("LIB.LOGGING The message has not been logged")
 
     def add_textual_request(self, message: object, message_id: str, user_id: str, channel: str,
                             timestamp: str, conversation_id: str = None, domain: str = None, intent_name: str = None,
@@ -186,16 +217,16 @@ class LoggingUtility:
         :return:
         """
         if message_id is None or message_id == "":
-            raise ValueError("message_id cannot be empty")
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
 
         if user_id is None or user_id == "":
-            raise ValueError("user_id cannot be empty")
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
 
         if channel == "" or channel is None:
-            raise ValueError("channel cannot be empty")
+            raise ValueError("LIB.LOGGING channel cannot be empty")
 
         if timestamp is None or timestamp == "":
-            raise ValueError("timestamp cannot be empty")
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
 
         if not isinstance(entities, list):
             entities = []
@@ -246,7 +277,7 @@ class LoggingUtility:
             dict_response = json.loads(response.text)
             return dict_response['messageId']
         else:
-            raise ValueError("The message has not been logged")
+            raise ValueError("LIB.LOGGING The message has not been logged")
 
     def add_action_request(self, message: str, message_id: str, user_id: str, channel: str,
                            timestamp: str, conversation_id=None, domain=None, intent_name=None, intent_confidence=None,
@@ -268,16 +299,16 @@ class LoggingUtility:
         :return:
         """
         if message_id is None or message_id == "":
-            raise ValueError("message_id cannot be empty")
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
 
         if user_id is None or user_id == "":
-            raise ValueError("user_id cannot be empty")
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
 
         if channel == "" or channel is None:
-            raise ValueError("channel cannot be empty")
+            raise ValueError("LIB.LOGGING channel cannot be empty")
 
         if timestamp is None or timestamp == "":
-            raise ValueError("timestamp cannot be empty")
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
 
         if not isinstance(entities, list):
             entities = []
@@ -296,7 +327,7 @@ class LoggingUtility:
 
         for entity in entities:
             if not isinstance(entity, Entity):
-                raise ValueError("entities should be a list of Entity objects")
+                raise ValueError("LIB.LOGGING entities should be a list of Entity objects")
             else:
                 temp_entities.append(entity.to_dict())
 
@@ -331,7 +362,7 @@ class LoggingUtility:
             dict_response = json.loads(response.text)
             return dict_response['messageId']
         else:
-            raise ValueError("The message has not been logged")
+            raise ValueError("LIB.LOGGING The message has not been logged")
 
     def add_attachment_request(self, attachment_uri: str, message_id: str, user_id: str, channel: str, timestamp: str, conversation_id=None, alternative_text=None, domain=None, intent_name=None,
                                intent_confidence=None,
@@ -354,16 +385,16 @@ class LoggingUtility:
         :return:
         """
         if message_id is None or message_id == "":
-            raise ValueError("message_id cannot be empty")
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
 
         if user_id is None or user_id == "":
-            raise ValueError("user_id cannot be empty")
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
 
         if channel == "" or channel is None:
-            raise ValueError("channel cannot be empty")
+            raise ValueError("LIB.LOGGING channel cannot be empty")
 
         if timestamp is None or timestamp == "":
-            raise ValueError("timestamp cannot be empty")
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
 
         if not isinstance(entities, list):
             entities = []
@@ -415,7 +446,7 @@ class LoggingUtility:
             dict_response = json.loads(response.text)
             return dict_response['messageId']
         else:
-            raise ValueError("The message has not been logged")
+            raise ValueError("LIB.LOGGING The message has not been logged")
 
     def add_textual_response(self, message_text: str, message_id: str, channel: str, user_id: str,
                              response_to: str, timestamp: str, conversation_id=None, buttons=Optional[List],
@@ -434,22 +465,22 @@ class LoggingUtility:
         :return:
         """
         if message_text == "" or message_text is None:
-            raise ValueError("message_text cannot be empty")
+            raise ValueError("LIB.LOGGING message_text cannot be empty")
 
         if message_id == "" or message_id is None:
-            raise ValueError("message_id cannot be empty")
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
 
         if channel == "" or channel is None:
-            raise ValueError("channel cannot be empty")
+            raise ValueError("LIB.LOGGING channel cannot be empty")
 
         if user_id == "" or user_id is None:
-            raise ValueError("user_id cannot be empty")
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
 
         if response_to == "" or response_to is None:
-            raise ValueError("response_to cannot be empty")
+            raise ValueError("LIB.LOGGING response_to cannot be empty. If you are not answering to a specific message, please add a Notification instead of a Response")
 
         if timestamp == "" or timestamp is None:
-            raise ValueError("timestamp cannot be empty")
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
 
         if not isinstance(buttons, list):
             buttons = []
@@ -498,7 +529,7 @@ class LoggingUtility:
             dict_response = json.loads(response.text)
             return dict_response['messageId']
         else:
-            raise ValueError("The message has not been logged")
+            raise ValueError("LIB.LOGGING The message has not been logged")
 
     def add_attachment_response(self, attachment_uri: str, message_id: str, channel: str, user_id: str,
                                 response_to: str, timestamp: str, conversation_id=None, alternative_text=None,
@@ -519,22 +550,22 @@ class LoggingUtility:
         """
 
         if attachment_uri == "" or attachment_uri is None:
-            raise ValueError("uri cannot be empty")
+            raise ValueError("LIB.LOGGING uri cannot be empty")
 
         if message_id == "" or message_id is None:
-            raise ValueError("message_id cannot be empty")
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
 
         if channel == "" or channel is None:
-            raise ValueError("channel cannot be empty")
+            raise ValueError("LIB.LOGGING channel cannot be empty")
 
         if user_id == "" or user_id is None:
-            raise ValueError("user_id cannot be empty")
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
 
         if response_to == "" or response_to is None:
-            raise ValueError("response_to cannot be empty")
+            raise ValueError("LIB.LOGGING response_to cannot be empty")
 
         if timestamp == "" or timestamp is None:
-            raise ValueError("timestamp cannot be empty")
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
 
         if not isinstance(buttons, list):
             buttons = []
@@ -584,231 +615,456 @@ class LoggingUtility:
             dict_response = json.loads(response.text)
             return dict_response['messageId']
         else:
-            raise ValueError("The message has not been logged")
+            raise ValueError("LIB.LOGGING The message has not been logged")
 
-     # def add_quick_reply_response(self, buttons: list, message_id: str, channel: str,
-    #                              user_id: str, structure_id: str,
-    #                              response_to: str, timestamp: int, conversation_id=None,
-    #                              metadata=Optional[dict]) -> tuple:
-    #     """
-    #     This method should be used to store a response message. A response message is a message from the bot to the user that represents an answer to a request message
-    #     :param buttons: the list of the buttons
-    #     :param message_id: the id of the message. This field should be a string
-    #     :param conversation_id: a string to identify the id of the conversation
-    #     :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
-    #     :param user_id: the id of the user. This filed should be a string
-    #     :param structure_id: the id of the structure (i.e., the id of the hotel involved in the conversation). This field is a string
-    #     :param response_to: the id of the request that generated this message. It is a string
-    #     :param timestamp: the timestamp of the message. This field should be a string
-    #     :param metadata: an optional dictionary containing additional information.
-    #     :return:
-    #     """
-    #
-    #     if message_id == "" or message_id is None:
-    #         raise ValueError("message_id cannot be empty")
-    #
-    #     if channel == "" or channel is None:
-    #         raise ValueError("channel cannot be empty")
-    #
-    #     if user_id == "" or user_id is None:
-    #         raise ValueError("user_id cannot be empty")
-    #
-    #     if structure_id == "" or structure_id is None:
-    #         raise ValueError("structure_id cannot be empty")
-    #
-    #     if response_to == "" or response_to is None:
-    #         raise ValueError("response_to cannot be empty")
-    #
-    #     if timestamp == "" or timestamp is None:
-    #         raise ValueError("timestamp cannot be empty")
-    #
-    #     if not isinstance(buttons, list):
-    #         buttons = []
-    #
-    #     if not isinstance(metadata, dict):
-    #         metadata = {}
-    #
-    #     button_list = []
-    #     for button in buttons:
-    #         if button[1] == "" or button[1] is None:
-    #             button_temp = QuickReplyResponse(button[0])
-    #         else:
-    #             button_temp = QuickReplyResponse(button[0], button_id=button[1])
-    #         button_list.append(button_temp.to_dict())
-    #
-    #     api_point = self._access_point + "/messages"
-    #
-    #     content = {
-    #         "type": "action",
-    #         "buttons": button_list
-    #     }
-    #
-    #     message_generated = {
-    #         "messageId": message_id,
-    #         "conversationId": conversation_id,
-    #         "structureId": structure_id,
-    #         "channel": channel,
-    #         "userId": user_id,
-    #         "timestamp": timestamp,
-    #         "responseTo": response_to,
-    #         "content": content,
-    #         "metadata": metadata,
-    #         "project": self._project.lower(),
-    #         "type": "RESPONSE"
-    #     }
-    #
-    #     messages = [message_generated]
-    #
-    #     headers = {
-    #         'Content-Type': 'application/json',
-    #     }
-    #
-    #     response = requests.post(api_point, headers=headers, json=messages)
-    #
-    #     if response.status_code == 200:
-    #         dict_response = json.loads(response.text)
-    #         return dict_response['messageId']
-    #     else:
-    #         raise ValueError("The message has not been logged")
-    #
-    #
-    # def add_carousel_response(self, message_id: str, conversation_id: str, channel: str, user_id: str,
-    #                           structure_id: str,
-    #                           response_to: str, timestamp: int, content=Optional[List],
-    #                           metadata=Optional[dict]) -> tuple:
-    #     """
-    #     This method should be used to store a response message. A response message is a message from the bot to the user that represents an answer to a request message
-    #     :param message_id: the id of the message. This field should be a string
-    #     :param conversation_id: a string to identify the id of the conversation
-    #     :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
-    #     :param user_id: the id of the user. This filed should be a string
-    #     :param structure_id: the id of the structure (i.e., the id of the hotel involved in the conversation). This field is a string
-    #     :param response_to: the id of the request that generated this message. It is a string
-    #     :param timestamp: the timestamp of the message. This field should be a string
-    #     :param content: is an optional list describing the content of the message. The objects in the list can be of types TextResponse, QuickReplyResponse, AttachmentResponse, CarouselResponse
-    #     :param metadata: an optional dictionary containing additional information.
-    #     :return:
-    #     """
-    #
-    #     if message_id == "" or message_id is None:
-    #         raise ValueError("message_id cannot be empty")
-    #
-    #     if conversation_id == "" or conversation_id is None:
-    #         raise ValueError("conversation_id cannot be empty")
-    #
-    #     if channel == "" or channel is None:
-    #         raise ValueError("channel cannot be empty")
-    #
-    #     if user_id == "" or user_id is None:
-    #         raise ValueError("user_id cannot be empty")
-    #
-    #     if structure_id == "" or structure_id is None:
-    #         raise ValueError("structure_id cannot be empty")
-    #
-    #     if response_to == "" or response_to is None:
-    #         raise ValueError("response_to cannot be empty")
-    #
-    #     if timestamp == "" or timestamp is None:
-    #         raise ValueError("timestamp cannot be empty")
-    #
-    #     if not isinstance(metadata, dict):
-    #         raise ValueError("metadata must be a dictionary")
-    #
-    #     api_point = self._access_point + "/messages"
-    #
-    #     message_generated = {
-    #         "messageId": message_id,
-    #         "conversationId": conversation_id,
-    #         "structureId": structure_id,
-    #         "channel": channel,
-    #         "userId": user_id,
-    #         "timestamp": timestamp,
-    #         "responseTo": response_to,
-    #         #"content": temp_content,
-    #         "metadata": metadata,
-    #         "project": self._project.lower(),
-    #         "type": "RESPONSE"
-    #     }
-    #
-    #     messages = [message_generated]
-    #
-    #     headers = {
-    #         'Content-Type': 'application/json',
-    #     }
-    #
-    #     response = requests.post(api_point, headers=headers, json=messages)
-    #
-    #     return response.status_code, response.content
-    #
-    # def add_notification(self, message_id: str, conversation_id: str, structure_id: str, channel: str, user_id: str,
-    #                      timestamp: int, content=Optional[List], metadata=Optional[dict]) -> tuple:
-    #     """
-    #     This method should be used to store a notification message. A notification message is a message from the bot to the user that represents an answer to a request message
-    #     :param message_id: the id of the message. This field should be a string
-    #     :param conversation_id: a string to identify the id of the conversation
-    #     :param structure_id: the id of the structure (i.e., the id of the hotel involved in the conversation). This field is a string
-    #     :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
-    #     :param user_id: the id of the user. This filed should be a string
-    #     :param timestamp: the timestamp of the message. This field should be a string
-    #     :param content: is an optional list describing the content of the message. The objects in the list can be of types TextResponse, QuickReplyResponse, AttachmentResponse, CarouselResponse
-    #     :param metadata: an optional dictionary containing additional information.
-    #     :return:
-    #     """
-    #
-    #     if message_id == "" or message_id is None:
-    #         raise ValueError("message_id cannot be empty")
-    #
-    #     if conversation_id == "" or conversation_id is None:
-    #         raise ValueError("conversation_id cannot be empty")
-    #
-    #     if channel == "" or channel is None:
-    #         raise ValueError("channel cannot be empty")
-    #
-    #     if user_id == "" or user_id is None:
-    #         raise ValueError("user_id cannot be empty")
-    #
-    #     if structure_id == "" or structure_id is None:
-    #         raise ValueError("structure_id cannot be empty")
-    #
-    #     if timestamp == "" or timestamp is None:
-    #         raise ValueError("timestamp cannot be empty")
-    #
-    #     if not isinstance(metadata, dict):
-    #         raise ValueError("metadata must be a dictionary")
-    #
-    #     temp_content = []
-    #
-    #     for item in content:
-    #         if not (isinstance(item, TextResponse) or isinstance(item, AttachmentResponse) or isinstance(item, CarouselResponse) or isinstance(item, QuickReplyResponse)):
-    #             raise ValueError(
-    #                 "each item in content should have type TextResponse, AttachmentResponse, QuickReplyResponse or CarouselResponse")
-    #         else:
-    #             temp_content.append(item.to_dict())
-    #
-    #     api_point = self._access_point + "/messages"
-    #
-    #     message_generated = {
-    #         "messageId": message_id,
-    #         "conversationId": conversation_id,
-    #         "structureId": structure_id,
-    #         "channel": channel,
-    #         "userId": user_id,
-    #         "timestamp": timestamp,
-    #         "content": temp_content,
-    #         "metadata": metadata,
-    #         "project": self._project.lower(),
-    #         "type": "NOTIFICATION"
-    #     }
-    #
-    #     messages = [message_generated]
-    #
-    #     headers = {
-    #         'Content-Type': 'application/json',
-    #     }
-    #
-    #     response = requests.post(api_point, headers=headers, json=messages)
-    #
-    #     return response.status_code, response.content
+    def add_quick_reply_response(self, buttons: list, message_id: str, channel: str,
+                                 user_id: str,
+                                 response_to: str, timestamp: str, conversation_id=None,
+                                 metadata=Optional[dict]) -> tuple:
+        """
+        This method should be used to store a response message. A response message is a message from the bot to the user that represents an answer to a request message
+        :param buttons: the list of the buttons
+        :param message_id: the id of the message. This field should be a string
+        :param conversation_id: a string to identify the id of the conversation
+        :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
+        :param user_id: the id of the user. This filed should be a string
+        :param response_to: the id of the request that generated this message. It is a string
+        :param timestamp: the timestamp of the message. This field should be a string
+        :param metadata: an optional dictionary containing additional information.
+        :return:
+        """
+
+        if message_id == "" or message_id is None:
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
+
+        if channel == "" or channel is None:
+            raise ValueError("LIB.LOGGING channel cannot be empty")
+
+        if user_id == "" or user_id is None:
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
+
+        if response_to == "" or response_to is None:
+            raise ValueError("LIB.LOGGING response_to cannot be empty")
+
+        if timestamp == "" or timestamp is None:
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
+
+        if not isinstance(buttons, list):
+            buttons = []
+
+        if not isinstance(metadata, dict):
+            metadata = {}
+
+        content = []
+
+        for button in buttons:
+            if button[1] == "" or button[1] is None:
+                button_temp = QuickReplyResponse(button[0])
+            else:
+                button_temp = QuickReplyResponse(button[0], button_id=button[1])
+            content.append(button_temp.to_dict())
+
+        api_point = self._access_point + "/messages"
+
+        message_generated = {
+            "messageId": message_id,
+            "conversationId": conversation_id,
+            "channel": channel,
+            "userId": user_id,
+            "timestamp": timestamp,
+            "responseTo": response_to,
+            "content": content,
+            "metadata": metadata,
+            "project": self._project.lower(),
+            "type": "RESPONSE"
+        }
+
+        messages = [message_generated]
+
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        response = requests.post(api_point, headers=headers, json=messages)
+
+        if response.status_code == 200:
+            dict_response = json.loads(response.text)
+            return dict_response['messageId']
+        else:
+            raise ValueError("LIB.LOGGING The message has not been logged")
+
+    def add_carousel_response(self, carousel_items: list, message_id: str,  channel: str, user_id: str,
+                              response_to: str, timestamp: str, conversation_id=None,
+                              metadata=Optional[dict]) -> tuple:
+        """
+        This method should be used to store a response message. A response message is a message from the bot to the user that represents an answer to a request message
+        :param carousel_items: a list of CarouselItem objects
+        :param message_id: the id of the message. This field should be a string
+        :param conversation_id: a string to identify the id of the conversation
+        :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
+        :param user_id: the id of the user. This filed should be a string
+        :param response_to: the id of the request that generated this message. It is a string
+        :param timestamp: the timestamp of the message. This field should be a string
+        :param metadata: an optional dictionary containing additional information.
+        :return:
+        """
+
+        if message_id == "" or message_id is None:
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
+
+        if channel == "" or channel is None:
+            raise ValueError("LIB.LOGGING channel cannot be empty")
+
+        if user_id == "" or user_id is None:
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
+
+        if response_to == "" or response_to is None:
+            raise ValueError("LIB.LOGGING response_to cannot be empty")
+
+        if timestamp == "" or timestamp is None:
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
+
+        if not isinstance(metadata, dict):
+            metadata = {}
+
+        content = []
+        for element in carousel_items:
+            if isinstance(element, CarouselItem):
+                content.append(element.to_dict())
+
+        api_point = self._access_point + "/messages"
+
+        message_generated = {
+            "messageId": message_id,
+            "conversationId": conversation_id,
+            "channel": channel,
+            "userId": user_id,
+            "timestamp": timestamp,
+            "responseTo": response_to,
+            "content": content,
+            "metadata": metadata,
+            "project": self._project.lower(),
+            "type": "NOTIFICATION"
+        }
+
+        messages = [message_generated]
+
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        response = requests.post(api_point, headers=headers, json=messages)
+
+        return response.status_code, response.content
+
+    def add_textual_notification(self, message_text: str, message_id: str, channel: str, user_id: str,
+                             response_to: str, timestamp: str, conversation_id=None, buttons=Optional[List],
+                             metadata=Optional[dict]) -> str:
+        """
+        This method should be used to store a notification message.
+        :param message_text: the text of the message. It is a string
+        :param message_id: the id of the message. This field should be a string
+        :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
+        :param user_id: the id of the user. This filed should be a string
+        :param response_to: the id of the request that generated this message. It is a string
+        :param timestamp: the timestamp of the message. This field should be a string
+        :param conversation_id: a string to identify the id of the conversation
+        :param buttons: a list of QuickReplyResponse objects. Each object represents a quick action button associated to the message. This field is optional
+        :param metadata: an optional dictionary containing additional information.
+        :return:
+        """
+        if message_text == "" or message_text is None:
+            raise ValueError("LIB.LOGGING message_text cannot be empty")
+
+        if message_id == "" or message_id is None:
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
+
+        if channel == "" or channel is None:
+            raise ValueError("LIB.LOGGING channel cannot be empty")
+
+        if user_id == "" or user_id is None:
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
+
+        if response_to == "" or response_to is None:
+            raise ValueError("LIB.LOGGING response_to cannot be empty. If you are not answering to a specific message, please add a Notification instead of a Response")
+
+        if timestamp == "" or timestamp is None:
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
+
+        if not isinstance(buttons, list):
+            buttons = []
+
+        if not isinstance(metadata, dict):
+            metadata = {}
+
+        api_point = self._access_point + "/messages"
+
+        button_list = []
+        for button in buttons:
+            if button[1] == "" or button[1] is None:
+                button_temp = QuickReplyResponse(button[0])
+            else:
+                button_temp = QuickReplyResponse(button[0], button_id=button[1])
+            button_list.append(button_temp.to_dict())
+
+        content_dict = {
+            'type': 'text',
+            'value': message_text,
+            'buttons': button_list
+        }
+
+        message_generated = {
+            "messageId": message_id,
+            "conversationId": conversation_id,
+            "channel": channel,
+            "userId": user_id,
+            "timestamp": timestamp,
+            "responseTo": response_to,
+            "content": [content_dict],
+            "metadata": metadata,
+            "project": self._project.lower(),
+            "type": "NOTIFICATION"
+        }
+
+        messages = [message_generated]
+
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        response = requests.post(api_point, headers=headers, json=messages)
+
+        if response.status_code == 200:
+            dict_response = json.loads(response.text)
+            return dict_response['messageId']
+        else:
+            raise ValueError("LIB.LOGGING The message has not been logged")
+
+    def add_attachment_notification(self, attachment_uri: str, message_id: str, channel: str, user_id: str,
+                                response_to: str, timestamp: str, conversation_id=None, alternative_text=None,
+                                buttons=Optional[List], metadata=Optional[dict]) -> str:
+        """
+        This method should be used to store a notification message.
+        :param attachment_uri: the uri of the resource associated to the message
+        :param message_id: the id of the message. This field should be a string
+        :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
+        :param user_id: the id of the user. This filed should be a string
+        :param response_to: the id of the request that generated this message. It is a string
+        :param timestamp: the timestamp of the message. This field should be a string
+        :param conversation_id: a string to identify the id of the conversation
+        :param alternative_text: the alternative text of the media. It is a string and it is displayed whenever the media cannot be loaded correctly. Usually, it is a description of the media. This field is optional
+        :param buttons: a list of QuickReply responses (list of buttons to let the user perform quick actions). This field is optional
+        :param metadata: an optional dictionary containing additional information.
+        :return:
+        """
+
+        if attachment_uri == "" or attachment_uri is None:
+            raise ValueError("LIB.LOGGING uri cannot be empty")
+
+        if message_id == "" or message_id is None:
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
+
+        if channel == "" or channel is None:
+            raise ValueError("LIB.LOGGING channel cannot be empty")
+
+        if user_id == "" or user_id is None:
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
+
+        if response_to == "" or response_to is None:
+            raise ValueError("LIB.LOGGING response_to cannot be empty")
+
+        if timestamp == "" or timestamp is None:
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
+
+        if not isinstance(buttons, list):
+            buttons = []
+
+        if not isinstance(metadata, dict):
+            metadata = {}
+
+        button_list = []
+        for button in buttons:
+            if button[1] == "" or button[1] is None:
+                button_temp = QuickReplyResponse(button[0])
+            else:
+                button_temp = QuickReplyResponse(button[0], button_id=button[1])
+            button_list.append(button_temp.to_dict())
+
+        content_dict = {
+            'type': 'attachment',
+            'uri': attachment_uri,
+            'alternativeText': alternative_text,
+            'buttons': button_list
+        }
+
+        api_point = self._access_point + "/messages"
+
+        message_generated = {
+            "messageId": message_id,
+            "conversationId": conversation_id,
+            "channel": channel,
+            "userId": user_id,
+            "timestamp": timestamp,
+            "responseTo": response_to,
+            "content": [content_dict],
+            "metadata": metadata,
+            "project": self._project.lower(),
+            "type": "NOTIFICATION"
+        }
+
+        messages = [message_generated]
+
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        response = requests.post(api_point, headers=headers, json=messages)
+
+        if response.status_code == 200:
+            dict_response = json.loads(response.text)
+            return dict_response['messageId']
+        else:
+            raise ValueError("LIB.LOGGING The message has not been logged")
+
+    def add_quick_reply_notification(self, buttons: list, message_id: str, channel: str,
+                                 user_id: str,
+                                 response_to: str, timestamp: str, conversation_id=None,
+                                 metadata=Optional[dict]) -> tuple:
+        """
+        This method should be used to store a notification message.
+        :param buttons: the list of the buttons
+        :param message_id: the id of the message. This field should be a string
+        :param conversation_id: a string to identify the id of the conversation
+        :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
+        :param user_id: the id of the user. This filed should be a string
+        :param response_to: the id of the request that generated this message. It is a string
+        :param timestamp: the timestamp of the message. This field should be a string
+        :param metadata: an optional dictionary containing additional information.
+        :return:
+        """
+
+        if message_id == "" or message_id is None:
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
+
+        if channel == "" or channel is None:
+            raise ValueError("LIB.LOGGING channel cannot be empty")
+
+        if user_id == "" or user_id is None:
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
+
+        if response_to == "" or response_to is None:
+            raise ValueError("LIB.LOGGING response_to cannot be empty")
+
+        if timestamp == "" or timestamp is None:
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
+
+        if not isinstance(buttons, list):
+            buttons = []
+
+        if not isinstance(metadata, dict):
+            metadata = {}
+
+        content = []
+
+        for button in buttons:
+            if button[1] == "" or button[1] is None:
+                button_temp = QuickReplyResponse(button[0])
+            else:
+                button_temp = QuickReplyResponse(button[0], button_id=button[1])
+            content.append(button_temp.to_dict())
+
+        api_point = self._access_point + "/messages"
+
+        message_generated = {
+            "messageId": message_id,
+            "conversationId": conversation_id,
+            "channel": channel,
+            "userId": user_id,
+            "timestamp": timestamp,
+            "responseTo": response_to,
+            "content": content,
+            "metadata": metadata,
+            "project": self._project.lower(),
+            "type": "NOTIFICATION"
+        }
+
+        messages = [message_generated]
+
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        response = requests.post(api_point, headers=headers, json=messages)
+
+        if response.status_code == 200:
+            dict_response = json.loads(response.text)
+            return dict_response['messageId']
+        else:
+            raise ValueError("LIB.LOGGING The message has not been logged")
+
+    def add_carousel_notification(self, carousel_items: list, message_id: str,  channel: str, user_id: str,
+                              response_to: str, timestamp: str, conversation_id=None,
+                              metadata=Optional[dict]) -> tuple:
+        """
+        This method should be used to store a notification message.
+        :param carousel_items: a list of CarouselItem objects
+        :param message_id: the id of the message. This field should be a string
+        :param conversation_id: a string to identify the id of the conversation
+        :param channel: it is a string that identifies the channel used by the user. Some example of channels are TELEGRAM, MESSENGER, and ALEXA
+        :param user_id: the id of the user. This filed should be a string
+        :param response_to: the id of the request that generated this message. It is a string
+        :param timestamp: the timestamp of the message. This field should be a string
+        :param metadata: an optional dictionary containing additional information.
+        :return:
+        """
+
+        if message_id == "" or message_id is None:
+            raise ValueError("LIB.LOGGING message_id cannot be empty")
+
+        if channel == "" or channel is None:
+            raise ValueError("LIB.LOGGING channel cannot be empty")
+
+        if user_id == "" or user_id is None:
+            raise ValueError("LIB.LOGGING user_id cannot be empty")
+
+        if response_to == "" or response_to is None:
+            raise ValueError("LIB.LOGGING response_to cannot be empty")
+
+        if timestamp == "" or timestamp is None:
+            raise ValueError("LIB.LOGGING timestamp cannot be empty")
+
+        if not isinstance(metadata, dict):
+            metadata = {}
+
+        content = []
+        for element in carousel_items:
+            if isinstance(element, CarouselItem):
+                content.append(element.to_dict())
+
+        api_point = self._access_point + "/messages"
+
+        message_generated = {
+            "messageId": message_id,
+            "conversationId": conversation_id,
+            "channel": channel,
+            "userId": user_id,
+            "timestamp": timestamp,
+            "responseTo": response_to,
+            "content": content,
+            "metadata": metadata,
+            "project": self._project.lower(),
+            "type": "NOTIFICATION"
+        }
+
+        messages = [message_generated]
+
+        headers = {
+            'Content-Type': 'application/json',
+        }
+
+        response = requests.post(api_point, headers=headers, json=messages)
+
+        return response.status_code, response.content
 
     def get_message_from_message_id(self, message_id: str) -> tuple:
         """
@@ -822,13 +1078,13 @@ class LoggingUtility:
 
         return response.status_code, response.json()
 
-    def get_message_from_generic_id(self, id: str) -> tuple:
+    def get_message_from_generic_id(self, object_id: str) -> tuple:
         """
         Utils to retrieve a message from the database
-        :param id: the if of the message to retrieve
+        :param object_id: the if of the message to retrieve
         :return: the status and the content of the response
         """
-        api_point = self._access_point + "/message?id=" + id
+        api_point = self._access_point + "/message?id=" + object_id
 
         response = requests.get(api_point)
 
@@ -846,104 +1102,49 @@ class LoggingUtility:
 
         return response.status_code, response.json()
 
+    def add_log(self, log_id:str, component:str, severity:str, log_content:str, timestamp:str, authority:str = None,  bot_version:str = None, metadata:dict = None) -> str:
 
-class TextResponse:
+        logging.info("LIB.LOCATION_REQ - Starting logging a new message ")
 
-    def __init__(self, value: str, buttons=Optional[List[QuickReplyResponse]]) -> None:
-        """
-        Create a TextResponse object. A text response can be seen as a standard message containing only text
-        :param value: the text of the response
-        :param buttons: an optional list of QuickReplyResponse objects
-        """
-        self.value = value
-        self.buttons = buttons
+        if log_id == "" or log_id is None:
+            raise ValueError("LIB.LOGGING logId is missing and is required")
 
-    def __repr__(self) -> str:
-        return 'TextResponse(value {})'.format(self.value)
+        if component == "" or component is None:
+            raise ValueError("LIB.LOGGING component is missing and is required")
 
-    def to_dict(self) -> dict:
-        buttons = []
+        if severity == "" or severity is None:
+            raise ValueError("LIB.LOGGING severity is missing and is required")
 
-        for button in self.buttons:
-            if not isinstance(button, QuickReplyResponse):
-                raise ValueError("the elements in the button list should be instances of QuickReplyResponse")
-            else:
-                buttons.append(button.to_dict())
-        return {
-            "type": "text",
-            "value": self.value,
-            "buttons": buttons
+        if log_content == "" or log_content is None:
+            raise ValueError("LIB.LOGGING logContent is missing and is required")
+
+        if timestamp == "" or timestamp is None:
+            raise ValueError("LIB.LOGGING timestamp is missing and is required")
+
+        api_point = self._access_point + "/logs"
+
+        log_generated = {
+            "logId": log_id,
+            "project": self._project.lower(),
+            "component": component,
+            "authority": authority,
+            "severity": severity,
+            "logContent": log_content,
+            "timestamp": timestamp,
+            "botVersion": bot_version,
+            "metadata": metadata
         }
 
+        logs = [log_generated]
 
-class AttachmentResponse:
-    def __init__(self, uri: str, alternative_text: str, buttons=Optional[List[QuickReplyResponse]]) -> None:
-        """
-        Create an AttachmentResponse Object. An attachment response is a response containing only a media
-        :param uri: uri of the media as a string
-        :param alternative_text: the alternative text of the media. It is a string and it is displayed whenever the media cannot be loaded correctly. Usually, it is a description of the media
-        :param buttons: a list of QuickReply responses (list of buttons to let the user perform quick actions)
-        """
-
-        self.uri = uri
-        self.alternative_text = alternative_text
-        self.buttons = buttons
-
-    def __repr__(self) -> str:
-        return 'AttachmentResponse(uri {})'.format(self.uri)
-
-    def to_dict(self) -> dict:
-
-        buttons = []
-
-        for button in self.buttons:
-            if not isinstance(button, QuickReplyResponse):
-                raise ValueError("the elements in the button list should be instances of QuickReplyResponse")
-            else:
-                buttons.append(button.to_dict())
-        return {
-            "type": "attachment",
-            "uri": self.uri,
-            "alternativeText": self.alternative_text,
-            "buttons": buttons
+        headers = {
+            'Content-Type': 'application/json',
         }
 
+        response = requests.post(api_point, headers=headers, json=logs)
 
-class CarouselResponse:
-
-    def __init__(self, title: str, image_url: str, subtitle="", default_action=Optional[dict],
-                 buttons=Optional[List[QuickReplyResponse]]) -> None:
-        """
-        Create a CarouselResponse Object. A carousel is a scrollable list of medias. As a best-practice, carousels should be used with no more that 6 elements and when the elements can be ranked.
-        :param title: the title of the slide of the carousel
-        :param image_url: the url of the media
-        :param subtitle: eventually, a subtitle for the slide
-        :param default_action: the default action the user may take. It is a dictionary and it is optional
-        :param buttons: a list of QuickReply responses (list of buttons to let the user perform quick actions)
-        """
-        self.title = title
-        self.image_url = image_url
-        self.subtitle = subtitle
-        self.default_action = default_action
-        self.buttons = buttons
-
-    def __repr__(self) -> str:
-        return "CarouselResponse()"
-
-    def to_dict(self) -> dict:
-
-        buttons = []
-
-        for button in self.buttons:
-            if not isinstance(button, QuickReplyResponse):
-                raise ValueError("the elements in the button list should be instances of QuickReplyResponse")
-            else:
-                buttons.append(button.to_dict())
-
-        return {
-            "title": self.title,
-            "imageUrl": self.image_url,
-            "subtitle": self.subtitle,
-            "defaultAction": self.default_action,
-            "buttons": buttons
-        }
+        if response.status_code == 200:
+            dict_response = json.loads(response.text)
+            return dict_response['logId']
+        else:
+            raise ValueError("LIB.LOGGING The message has not been logged")

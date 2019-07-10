@@ -1,10 +1,9 @@
 import json
 
 from flask import request, Response
-from flask_restful import Resource, abort
+from flask_restful import Resource
 # for second-level logging
 import logging
-from datetime import datetime
 # for handling elasticsearch
 from elasticsearch import Elasticsearch
 
@@ -36,40 +35,7 @@ class LogGeneralLog(Resource):
         """
         self._es = es
 
-    def get(self) -> None:
-        """
-        This method is not allowed
-        :return 405 HTTP error:
-        """
-        abort(405, message="method not allowed")
-
-    def post(self) -> tuple:
-        """
-        Add a new single log message to the database. The log must be passed in the request body.
-        This method log the messages with index <project-name>-logging-<yyyy>-<mm>-<dd
-        :return: the HTTP response
-        """
-        data = request.get_json()
-        utils = Utils()
-        # TODO check structure in v 0.0.4
-        trace_id = utils.extract_trace_id(data)
-        logging.warning("INFO@LogGeneralLog POST - starting to log a new log with id [%s] at [%s]" % (trace_id, str(datetime.now())))
-
-        project_name = utils.extract_project_name(data)
-
-        index_name = project_name + "-logging-" + datetime.today().strftime('%Y-%m-%d')
-
-        self._es.index(index=index_name, doc_type='_doc', body=data)
-
-        response_json = {
-            "trace_id": trace_id,
-            "status": "ok",
-            "code": 200
-        }
-
-        logging.warning("INFO@LogGeneralLog POST - finishing to log a new log with id [%s] at [%s]" % (trace_id, str(datetime.now())))
-
-        return response_json, 200
+    # TODO get log
 
 
 class LogGeneralLogs(Resource):

@@ -173,7 +173,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GeneralLogs'
+                $ref: '#/components/schemas/Logs'
         responses:
           '201':
             description: success
@@ -207,7 +207,7 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/GeneralLog'
+                  $ref: '#/components/schemas/Log'
 
           '404':
             description: log not found
@@ -563,10 +563,19 @@ components:
       properties:
         logId:
           type: string
-          example: "LOG391390123"
+          example: "LOG31235141"
+        project:
+          type: string
+          example: "memex"
+        component:
+          type: string
+          example: "dimension"
+        authority:
+          type: string
+          example: "nlu"
         severity:
           type: string
-          enum: ['error','warning','info']
+          enum: ['error','warning','info','debug']
           example: "error"
         logContent:
           type: string
@@ -574,31 +583,14 @@ components:
         timestamp:
           type: string
           example: "2019-07-04T08:33:48.35408Z"
-        authority:
-          type: string
-          example: "memex.dimension.nlu"
-        resolution:
-          type: object
-          properties:
-            input:
-              type: string
-              example: metadata.is_detected
-            output:
-              type: string
-              example: "true"
         messageId:
           type: string
           example: "MSG00138938901133892"
         botVersion:
           type: string
           example: "mem-1.0.2"
-        device:
-          type: object
         metadata:
           type: object
-        project:
-          type: string
-          example: "memex"
 
     Logs:
       type: array
