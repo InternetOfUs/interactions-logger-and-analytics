@@ -183,7 +183,7 @@ class RequestMessage:
     def to_repr(self) -> dict:
         entities = []
         for entity in self.entities:
-            entities.append(entity.to_repr)
+            entities.append(entity.to_repr())
 
         local_content = None
 
@@ -221,7 +221,7 @@ class RequestMessage:
         else:
             intent_value = {
                 'name': None,
-                'confidence': 0.0
+                'confidence': None
             }
             intent = Intent.from_rep(intent_value)
 
