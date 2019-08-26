@@ -314,9 +314,6 @@ components:
         conversationId:
           type: string
           example: "CONV-DAJKWPENVOA-314CAD"
-        structureId:
-          type: string
-          example: "STR-FIWN25S-DAJO94"
         timestamp:
           type: string
           example: "2019-04-04:23.11.58"
@@ -325,6 +322,8 @@ components:
             - $ref: '#/components/schemas/TextualRequest'
             - $ref: '#/components/schemas/ActionRequest'
             - $ref: '#/components/schemas/AttachmentRequest'
+            - $ref: '#/components/schemas/LocationRequest'
+            - $ref: '#/components/schemas/UserInfoRequest'
           example: "devo fare un bonifico di 40 euro"
         domain:
           type: string
@@ -370,9 +369,6 @@ components:
         userId:
           type: string
           example: "USR-JDKHEIU2-31NJDTE94"
-        structureId:
-          type: string
-          example: "STR-FIWN25S-DAJO94"
         responseTo:
           type: string
           example: "1FKNSM-GEKRO2-DANK2-FJ33-DASDJOW"
@@ -380,13 +376,12 @@ components:
           type: string
           example: "2019-04-04:23.11.58"
         content:
-          type: array
-          items:
             anyOf:
               - $ref: '#/components/schemas/TextResponse'
               - $ref: '#/components/schemas/QuickReplyResponse'
               - $ref: '#/components/schemas/AttachmentResponse'
               - $ref: '#/components/schemas/CarouselResponse'
+              - $ref: '#/components/schemas/LocationResponse'
         metadata:
           type: object
         project:
@@ -405,9 +400,6 @@ components:
         conversationId:
           type: string
           example: "CONV-DOWI41-DAJPRTI3"
-        structureId:
-          type: string
-          example: "STR-FIWN25S-DAJO94"
         channel:
           type: string
           example: "FACEBOOK"
@@ -418,13 +410,12 @@ components:
           type: string
           example: "2019-04-04:23.11.58"
         content:
-          type: array
-          items:
             anyOf:
               - $ref: '#/components/schemas/TextResponse'
               - $ref: '#/components/schemas/QuickReplyResponse'
               - $ref: '#/components/schemas/AttachmentResponse'
               - $ref: '#/components/schemas/CarouselResponse'
+              - $ref: '#/components/schemas/LocationResponse'
         metadata:
           type: object
         project:
@@ -433,6 +424,29 @@ components:
         type:
           type: string
           example: "NOTIFICATION"
+
+    LocationRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          example: 'location'
+        longitude:
+          type: string
+          example: '47.3123451'
+        latitude:
+          type: string
+          example: '9.321151'
+
+    UserInfoRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ['firstName','lastName','profilePic','locale','timezone','gender','isPaymentEnable','userId']
+        value:
+          type: string
+
 
     TextualRequest:
       type: object
@@ -483,6 +497,19 @@ components:
         alternativeText:
           type: string
           example: "An hotel"
+
+    LocationResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          example: 'location'
+        longitude:
+          type: string
+          example: '49.3128319'
+        latitude:
+          type: string
+          example: '8.3189321'
 
     CarouselResponse:
         type: object
