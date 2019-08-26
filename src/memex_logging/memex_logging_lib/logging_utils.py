@@ -130,8 +130,6 @@ class LoggingUtility:
         :return:
         """
 
-        logging.info("LIB.LOCATION_REQ - Starting logging a new message ")
-
         if message_id is None or message_id == "":
             raise ValueError("LIB.LOGGING message_id cannot be empty")
 
