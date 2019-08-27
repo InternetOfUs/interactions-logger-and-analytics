@@ -517,6 +517,14 @@ components:
           type:
             type: string
             example: "carousel"
+          cards:
+            type: array
+            items:
+              $ref: '#/components/schemas/Card'
+
+    Card:
+      type: object
+      properties:
           title:
             type: string
             example: "Hiking activity"
