@@ -5,6 +5,8 @@ import datetime
 
 import dateutil.parser
 
+from elasticsearch import Elasticsearch
+
 
 class Utils:
 
@@ -56,3 +58,12 @@ class Utils:
             return str(data["project"]).lower()
         else:
             return "memex"
+
+    @staticmethod
+    def get_mapping(elastic: Elasticsearch, project: str, field: str = None) -> dict:
+        index = project + "-message*"
+
+        #response = elastic.(index=index)
+        response = elastic.indices.get_mapping(index="memex-message*")
+
+        print(response)
