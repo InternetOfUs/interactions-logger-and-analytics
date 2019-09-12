@@ -28,7 +28,27 @@ class Intent:
         if 'confidence' in data:
             confidence = data['confidence']
 
-        return Intent(name,confidence)
+        return Intent(name, confidence)
+
+
+class UserInfoRequest:
+    def __init__(self, type: str, value: str) -> None:
+        self.type = type
+        self.value = value
+
+    def to_repr(self) -> dict:
+        return{
+            'type': self.type,
+            'value': self.value
+        }
+
+    @staticmethod
+    def from_rep(data: dict) -> UserInfoRequest:
+        if 'type' not in data:
+            raise ValueError("A UserInfoRequest must contain a type. 'type' is missing")
+        if 'value' not in data:
+            raise ValueError("A UserInfoRequest must contain a value. 'value' is missing")
+        return UserInfoRequest(data['type'], data['value'])
 
 
 class LocationRequest:
@@ -54,9 +74,82 @@ class LocationRequest:
         return LocationRequest(data['latitude'], data['longitude'])
 
 
-class TextualRequest:
-
+class ActionRequest:
     def __init__(self, value):
+        self.value = value
+
+    def to_repr(self) -> dict:
+        return {
+            'type': 'action',
+            'value': self.value
+        }
+
+    @staticmethod
+    def from_rep(data: dict) -> ActionRequest:
+        if 'value' in data:
+            return ActionRequest(data['value'])
+        else:
+            raise ValueError("An ActionRequest object must contain a value")
+
+
+class ActionResponse:
+    def __init__(self, button_text: str, button_id: str):
+        self.button_text = button_text
+        self.button_id = button_id
+
+    def to_repr(self) -> dict:
+        return {
+            'type': 'action',
+            'buttonText': self.button_text,
+            'buttonId': self.button_id
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+
+        if "buttonText" in data:
+            button_text = data['buttonText']
+        else:
+            raise ValueError("An action must have the Text of the button")
+
+        button_id = None
+
+        if "buttonId" in data:
+            button_id = data['buttonId']
+
+        return ActionResponse(button_text, button_id)
+
+
+class MultiActionResponse:
+    def __init__(self, buttons=Optional[List[ActionResponse]]):
+        self.buttons = buttons
+
+    def to_repr(self) -> dict:
+        buttons = []
+
+        for button in self.buttons:
+            if not isinstance(button, ActionResponse):
+                raise ValueError("the elements in the button list should be instances of QuickReplyResponse")
+            else:
+                buttons.append(button.to_repr())
+
+        return {
+            'type': 'multiaction',
+            'buttons': buttons
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+        buttons = []
+        if 'buttons' in data:
+            for action in data['buttons']:
+                a = ActionResponse.from_rep(action)
+                buttons.append(a)
+        return MultiActionResponse(buttons)
+
+
+class TextualRequest:
+    def __init__(self, value: str):
         self.value = value
 
     def to_repr(self) -> dict:
@@ -73,23 +166,34 @@ class TextualRequest:
             raise ValueError("A TextualRequest object must contain a value")
 
 
-class ActionRequest:
-
-    def __init__(self, value):
+class TextualResponse:
+    def __init__(self, value: str, buttons=Optional[List[ActionResponse]]) -> None:
         self.value = value
+        self.buttons = buttons
 
     def to_repr(self) -> dict:
+        buttons = []
+
+        for button in self.buttons:
+            if not isinstance(button, ActionResponse):
+                raise ValueError("the elements in the button list should be instances of QuickReplyResponse")
+            else:
+                buttons.append(button.to_repr())
+
         return {
-            'type': 'action',
-            'value': self.value
+            'type': 'text',
+            'value': self.value,
+            'buttons': buttons
         }
 
     @staticmethod
-    def from_rep(data: dict) -> ActionRequest:
-        if 'value' in data:
-            return ActionRequest(data['value'])
-        else:
-            raise ValueError("An ActionRequest object must contain a value")
+    def from_rep(data: dict) -> TextualResponse:
+        buttons = []
+        if 'buttons' in data:
+            for action in data['buttons']:
+                a = ActionResponse.from_rep(action)
+                buttons.append(a)
+        return TextualResponse(data['value'], buttons)
 
 
 class AttachmentRequest:
@@ -112,6 +216,124 @@ class AttachmentRequest:
         if 'uri' not in data:
             raise ValueError("An AttachmentRequest object must contain an uri")
         return AttachmentRequest(data['uri'], alt)
+
+
+class AttachmentResponse:
+    def __init__(self, uri: str, alternative_text="", buttons=Optional[List[ActionResponse]]):
+        """
+        Create an AttachmentResponse Object. An attachment response is a response containing only a media
+        :param uri: uri of the media as a string
+        :param alternative_text: the alternative text of the media. It is a string and it is displayed whenever the media cannot be loaded correctly. Usually, it is a description of the media
+        :param buttons: a list of QuickReply responses (list of buttons to let the user perform quick actions). This field is optional
+        """
+        self.uri = uri
+        self.alternative_text = alternative_text
+        self.buttons = buttons
+
+    def to_repr(self) -> dict:
+
+        buttons = []
+
+        for button in self.buttons:
+            if not isinstance(button, ActionResponse):
+                raise ValueError("the elements in the button list should be instances of QuickReplyResponse")
+            else:
+                buttons.append(button.to_repr())
+
+        return {
+            "type": "attachment",
+            "uri": self.uri,
+            "alternativeText": self.alternative_text,
+            "buttons": buttons
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+        buttons = []
+        if 'buttons' in data:
+            for action in data['buttons']:
+                a = ActionResponse.from_rep(action)
+                buttons.append(a)
+        alt = None
+        if 'alternativeText' in data:
+            alt = data['alternativeText']
+        if 'uri' not in data:
+            raise ValueError("An AttachmentRequest object must contain an uri")
+        return AttachmentResponse(data['uri'], alt, buttons)
+
+
+class CarouselCardResponse:
+    def __init__(self, title: str, imageUrl: str, subtitle: str, defaultAction: dict, buttons=Optional[List[ActionResponse]]):
+        self.title = title
+        self.imageUrl = imageUrl
+        self.subtitle = subtitle
+        self.default_action = defaultAction
+        self.buttons = buttons
+
+    def to_repr(self) -> dict:
+        buttons = []
+        for action in self.buttons:
+            buttons.append(ActionResponse.to_repr(action))
+        return{
+            'title': self.title,
+            'imageUrl': self.imageUrl,
+            'subtitle': self.subtitle,
+            'defaultAction': self.default_action,
+            'buttons': buttons
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+        buttons = []
+        if 'buttons' in data:
+            for action in data['buttons']:
+                a = ActionResponse.from_rep(action)
+                buttons.append(a)
+
+        if 'title' not in data:
+            raise ValueError("each card should have a title")
+
+        image_url = None
+        if 'imageUrl' in data:
+            image_url = data['imageUrl']
+
+        subtitle = None
+        if 'subtitle' in data:
+            subtitle = data['subtitle']
+
+        default_action = None
+        if 'defaultAction' in data:
+            default_action = data['defaultAction']
+
+        return CarouselCardResponse(data['title'], image_url, subtitle, default_action, buttons)
+
+
+class CarouselResponse:
+    def __init__(self, cards=List[CarouselCardResponse]):
+        self.cards = cards
+
+    def to_repr(self) -> dict:
+        cards = []
+
+        for card in self.cards:
+            if not isinstance(card, CarouselCardResponse):
+                raise ValueError("each card should be instances of CarouselCardResponse")
+            else:
+                cards.append(card.to_repr())
+
+        return {
+            'type': 'carousel',
+            'cards': cards
+        }
+
+    @staticmethod
+    def from_rep(data: dict) -> CarouselResponse:
+        cards = []
+        for card in data['cards']:
+            c = CarouselCardResponse.from_rep(card)
+            cards.append(c)
+
+        return CarouselResponse(cards)
 
 
 class Entity:
@@ -169,8 +391,8 @@ class RequestMessage:
         logging.info("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
         if content is not None:
-            if not (isinstance(content, TextualRequest) or isinstance(content, ActionRequest) or isinstance(content, AttachmentRequest) or isinstance(content, LocationRequest)):
-                raise ValueError("content should be TextRequest, ActionRequest, AttachmentRequest or LocationRequest")
+            if not (isinstance(content, TextualRequest) or isinstance(content, ActionRequest) or isinstance(content, AttachmentRequest) or isinstance(content, LocationRequest) or isinstance(content, UserInfoRequest)):
+                raise ValueError("content should be TextRequest, ActionRequest, AttachmentRequest, UserInfoRequest or LocationRequest")
 
         logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
 
@@ -214,7 +436,7 @@ class RequestMessage:
     @staticmethod
     def from_rep(data: dict):
 
-        logging.info("MODELS.MESSAGE starting logging a REQUEST message{}".format(data['messageId']))
+        logging.info("MODELS.MESSAGE starting logging a REQUEST message {}".format(data['messageId']))
 
         if 'intent' in data:
             intent = Intent.from_rep(data['intent'])
@@ -236,7 +458,7 @@ class RequestMessage:
             conversation_id = None
 
         content = None
-
+        user_info_fields = ['firstName', 'lastName', 'profilePic', 'locale', 'timezone', 'gender', 'isPaymentEnable', 'userId']
         if "content" in data:
             if data['content']['type'] == "text":
                 content = TextualRequest.from_rep(data['content'])
@@ -246,6 +468,10 @@ class RequestMessage:
                 content = AttachmentRequest.from_rep(data['content'])
             elif data['content']['type'] == "location":
                 content = LocationRequest.from_rep(data['content'])
+            elif data['content']['type'] in user_info_fields:
+                content = UserInfoRequest.from_rep(data['content'])
+            else:
+                raise ValueError("An unknown content type is in the message body")
 
         entities = []
         if "entities" in data:
@@ -261,16 +487,16 @@ class RequestMessage:
         if "language" in data:
             language = data['language']
 
-        logging.warning("MODELS.MESSAGE default parameters set up for ".format(data['messageId']))
+        logging.warning("MODELS.MESSAGE default parameters set up for {}".format(data['messageId']))
 
         return RequestMessage(data['messageId'], data['channel'], data['userId'], conversation_id, data['timestamp'], content, domain, intent, entities,
                               data['project'], language, metadata)
 
 
 class ResponseMessage:
-    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, response_to: str, timestamp: str, content: list, metadata: dict, project: str):
+    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, response_to: str, timestamp: str, content, metadata: dict, project: str):
 
-        logging.info("MODELS.MESSAGE creating a ResponseMessage object for ".format(message_id))
+        logging.info("MODELS.MESSAGE creating a ResponseMessage object for {}".format(message_id))
 
         self.message_id = message_id
         self.conversation_id = conversation_id
@@ -283,9 +509,8 @@ class ResponseMessage:
         self.project = project
         self.type = "RESPONSE"
 
-        for cont in content:
-            if not (isinstance(cont, QuickReplyResponse) or isinstance(cont, CarouselResponse) or isinstance(cont, AttachmentResponse) or isinstance(cont, TextualRequest) or isinstance(cont, LocationRequest)):
-                raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextResponse")
+        if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
+            raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextualResponse")
 
         logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
 
@@ -296,10 +521,6 @@ class ResponseMessage:
         logging.info("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
-        content_list = []
-        for c in self.content:
-            content_list.append(c.to_repr())
-
         return {
             'messageId': self.message_id,
             'conversationId': self.conversation_id,
@@ -307,7 +528,7 @@ class ResponseMessage:
             'userId': self.user_id,
             'responseTo': self.response_to,
             'timestamp': self.timestamp,
-            'content': content_list,
+            'content': self.content.to_repr(),
             'metadata': self.metadata,
             'project': self.project,
             'type': self.type
@@ -322,24 +543,20 @@ class ResponseMessage:
         if "metadata" in data:
             metadata = data["metadata"]
 
-        content = []
+        content = None
         if 'content' in data:
-            for item in data['content']:
-                if item['type'] == 'text':
-                    element = TextualRequest.from_rep(item)
-                    content.append(element)
-                elif item['type'] == 'location':
-                    element = LocationRequest.from_rep(item)
-                    content.append(element)
-                elif item['type'] == 'action':
-                    element = QuickReplyResponse.from_rep(item)
-                    content.append(element)
-                elif item['type'] == 'attachment':
-                    element = AttachmentResponse.from_rep(item)
-                    content.append(element)
-                elif item['type'] == 'carousel':
-                    element = CarouselResponse.from_rep(item)
-                    content.append(element)
+            if data['content']['type'] == 'text':
+                content = TextualResponse.from_rep(data['content'])
+            elif data['content']['type'] == 'location':
+                content = LocationRequest.from_rep(data['content'])
+            elif data['content']['type'] == 'multiaction':
+                content = MultiActionResponse.from_rep(data['content'])
+            elif data['content']['type'] == 'attachment':
+                content = AttachmentResponse.from_rep(data['content'])
+            elif data['content']['type'] == 'carousel':
+                content = CarouselResponse.from_rep(data['content'])
+            else:
+                raise ValueError("an unknown type of content is in the body of the message")
 
         if 'conversationId' in data:
             conversation_id = data['conversationId']
@@ -372,7 +589,7 @@ class NotificationMessage:
         self.type = type
 
         for cont in content:
-            if not (isinstance(cont, QuickReplyResponse) or isinstance(cont, CarouselResponse) or isinstance(cont, AttachmentResponse) or isinstance(cont, TextualRequest) or isinstance(cont, LocationRequest)):
+            if not (isinstance(cont, ActionResponse) or isinstance(cont, CarouselResponse) or isinstance(cont, AttachmentResponse) or isinstance(cont, TextualRequest) or isinstance(cont, LocationRequest)):
                 raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextResponse")
 
         logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
@@ -419,7 +636,7 @@ class NotificationMessage:
                     element = LocationRequest.from_rep(item)
                     content.append(element)
                 elif item['type'] == 'action':
-                    element = QuickReplyResponse.from_rep(item)
+                    element = ActionResponse.from_rep(item)
                     content.append(element)
                 elif item['type'] == 'attachment':
                     element = AttachmentResponse.from_rep(item)
@@ -436,108 +653,3 @@ class NotificationMessage:
         logging.warning("MODELS.MESSAGE default parameters set up for ".format(data['messageId']))
 
         return NotificationMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['timestamp'], content, metadata, data['project'])
-
-
-class QuickReplyResponse:
-    def __init__(self, button_text: str, button_id: str):
-        self.type = "action"
-        self.button_text = button_text
-        self.button_id = button_id
-
-    def to_repr(self) -> dict:
-        return {
-            'type': 'action',
-            'buttonText': self.button_text,
-            'buttonId': self.button_id
-        }
-
-    @staticmethod
-    def from_rep(data: dict):
-
-        button_text = None
-
-        if "buttonText" in data:
-            button_text = data['buttonText']
-
-        button_id = None
-
-        if "buttonId" in data:
-            button_id = data['buttonId']
-
-        return QuickReplyResponse(button_text, button_id)
-
-
-class AttachmentResponse:
-    def __init__(self, uri: str, alternative_text="", buttons=Optional[List[QuickReplyResponse]]):
-        """
-        Create an AttachmentResponse Object. An attachment response is a response containing only a media
-        :param uri: uri of the media as a string
-        :param alternative_text: the alternative text of the media. It is a string and it is displayed whenever the media cannot be loaded correctly. Usually, it is a description of the media
-        :param buttons: a list of QuickReply responses (list of buttons to let the user perform quick actions). This field is optional
-        """
-
-        self.uri = uri
-        self.alternative_text = alternative_text
-        self.buttons = buttons
-
-    def __repr__(self):
-        return 'AttachmentResponse(uri {})'.format(self.uri)
-
-    def to_repr(self) -> dict:
-
-        buttons = []
-
-        for button in self.buttons:
-            if not isinstance(button, QuickReplyResponse):
-                raise ValueError("the elements in the button list should be instances of QuickReplyResponse")
-            else:
-                buttons.append(button.to_repr())
-        return {
-            "type": "attachment",
-            "uri": self.uri,
-            "alternativeText": self.alternative_text,
-            "buttons": buttons
-        }
-
-    @staticmethod
-    def from_rep(data: dict):
-        buttons = []
-        for action in data['buttons']:
-            a = QuickReplyResponse.from_rep(action)
-            buttons.append(a)
-        return AttachmentResponse(data['uri'], data['alternativeText'], buttons)
-
-
-class CarouselResponse:
-    def __init__(self, type, title, description, uri, buttons=Optional[List[QuickReplyResponse]]):
-        self.type = type,
-        self.title = title,
-        self.description = description,
-        self.uri = uri,
-        self.buttons = buttons
-
-        for action in buttons:
-            if not isinstance(action, QuickReplyResponse):
-                raise ValueError("buttons should be QuickReplyResponse objects")
-
-    def to_repr(self) -> dict:
-        buttons = []
-        for action in self.buttons:
-            buttons.append(QuickReplyResponse.to_repr(action))
-        return{
-            'type': self.type,
-            'title': self.title,
-            'subtitle': self.description,
-            'imageUrl': self.uri,
-            'buttons': buttons
-        }
-
-    @staticmethod
-    def from_rep(data: dict):
-        buttons = []
-        for action in data['buttons']:
-            a = QuickReplyResponse.from_rep(action)
-            buttons.append(a)
-
-        return CarouselResponse(data['type'], data['title'], data['subtitle'], data['imageUrl'], buttons)
-

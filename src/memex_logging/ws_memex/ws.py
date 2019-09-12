@@ -8,6 +8,7 @@ from memex_logging.ws_memex.documentation_api.main import DocumentationResourceB
 from memex_logging.ws_memex.messages_api.main import MessageResourceBuilder
 from memex_logging.ws_memex.logging_api.main import LoggingResourceBuilder
 from memex_logging.ws_memex.performances_api.main import PerformancesResourceBuilder
+from memex_logging.ws_memex.analytics_api.main import  AnalyticsResourceBuilder
 
 
 class WsInterface(object):
@@ -22,6 +23,7 @@ class WsInterface(object):
             (MessageResourceBuilder.routes(elastic), ""),
             (LoggingResourceBuilder.routes(elastic), ""),
             (PerformancesResourceBuilder.routes(elastic), "/performance"),
+            (AnalyticsResourceBuilder.routes(elastic), ""),
             (DocumentationResourceBuilder.routes(), "")
         ]
 

@@ -146,8 +146,8 @@ class LogMessages(Resource):
                     index_name = project_name + "-message-" + date
                     query = self._es.index(index=index_name, doc_type='_doc', body=request_message.to_repr())
                     message_ids.append(query['_id'])
-                except:
-                    logging.error("MESSAGES.API request message with id {} failed to be logged".format(id))
+                except Exception as e:
+                    logging.exception("MESSAGES.API request message with id {} failed to be logged".format(id), exc_info=e)
                     logging.error(message)
             elif type == "response":
                 try:
@@ -157,8 +157,8 @@ class LogMessages(Resource):
                     index_name = project_name + "-message-" + date
                     query = self._es.index(index=index_name, doc_type='_doc', body=response_message.to_repr())
                     message_ids.append(query['_id'])
-                except:
-                    logging.error("MESSAGES.API response message with id {} failed to be logged".format(id))
+                except Exception as e:
+                    logging.exception("MESSAGES.API response message with id {} failed to be logged".format(id), exc_info=e)
                     logging.error(message)
             elif type == "notification":
                 try:
@@ -168,8 +168,8 @@ class LogMessages(Resource):
                     index_name = project_name + "-message-" + date
                     query = self._es.index(index=index_name, doc_type='_doc', body=notification_message.to_repr())
                     message_ids.append(query['_id'])
-                except:
-                    logging.error("MESSAGES.API request message with id {} failed to be logged".format(id))
+                except Exception as e:
+                    logging.exception("MESSAGES.API request message with id {} failed to be logged".format(id), exc_info=e)
                     logging.error(message)
 
         json_response = {

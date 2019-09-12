@@ -268,7 +268,33 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_404'
 
-    # PERFORMANCES APIS
+    # ANALYTICS
+    # GENERAL LOGGING APIS
+
+    /logging/analytics:
+      post:
+        tags:
+          - analytics
+        summary: Require an analytic
+        description: This end-point allows to retrieve an analytic from the datavase
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analytic'
+        responses:
+          '201':
+            description: success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/HTTP_201'
+          '405':
+            description: malformed log
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/HTTP_405'
 
 
 
@@ -353,6 +379,13 @@ components:
         type:
           type: string
           example: "REQUEST"
+      required:
+        - messageId
+        - channel
+        - userId
+        - timestamp
+        - project
+        - type
 
     ResponseMessage:
       type: object
@@ -377,8 +410,8 @@ components:
           example: "2019-04-04:23.11.58"
         content:
             anyOf:
-              - $ref: '#/components/schemas/TextResponse'
-              - $ref: '#/components/schemas/QuickReplyResponse'
+              - $ref: '#/components/schemas/TextualResponse'
+              - $ref: '#/components/schemas/MultiActionResponse'
               - $ref: '#/components/schemas/AttachmentResponse'
               - $ref: '#/components/schemas/CarouselResponse'
               - $ref: '#/components/schemas/LocationResponse'
@@ -390,6 +423,14 @@ components:
         type:
           type: string
           example: "RESPONSE"
+      required:
+        - messageId
+        - channel
+        - userId
+        - responseTo
+        - timestamp
+        - project
+        - type
 
     NotificationMessage:
       type: object
@@ -411,8 +452,8 @@ components:
           example: "2019-04-04:23.11.58"
         content:
             anyOf:
-              - $ref: '#/components/schemas/TextResponse'
-              - $ref: '#/components/schemas/QuickReplyResponse'
+              - $ref: '#/components/schemas/TextualResponse'
+              - $ref: '#/components/schemas/ActionResponse'
               - $ref: '#/components/schemas/AttachmentResponse'
               - $ref: '#/components/schemas/CarouselResponse'
               - $ref: '#/components/schemas/LocationResponse'
@@ -437,6 +478,10 @@ components:
         latitude:
           type: string
           example: '9.321151'
+      required:
+        - type
+        - longitude
+        - latitude
 
     UserInfoRequest:
       type: object
@@ -446,6 +491,9 @@ components:
           enum: ['firstName','lastName','profilePic','locale','timezone','gender','isPaymentEnable','userId']
         value:
           type: string
+      required:
+        - type
+        - value
 
 
     TextualRequest:
@@ -457,6 +505,26 @@ components:
         value:
           type: string
           example: "I want some wine"
+      required:
+        - type
+        - value
+
+    TextualResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "text"
+        value:
+          type: string
+          example: "I want to go hiking"
+        buttons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionResponse'
+      required:
+        - type
+        - value
 
     ActionRequest:
       type: object
@@ -467,13 +535,60 @@ components:
         value:
           type: string
           example: "Let's do it!"
+      required:
+        - type
+        - value
+
+    ActionResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "action"
+        buttonText:
+          type: string
+          example: "Cerca hotel"
+        buttonId:
+          type: string
+          example: "BTN-DAJKSOD142-ADFGWE2"
+      required:
+        - type
+        - buttonText
+
+    MultiActionResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "multiaction"
+        buttons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionResponse'
+
+
+    AttachmentRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "attachment"
+        uri:
+          type: string
+          example: "http://image.com/image.png"
+        alternativeText:
+          type: string
+          example: "An hotel"
+      required:
+        - type
+        - uri
 
     AttachmentResponse:
       type: object
       properties:
         type:
           type: string
-          example: "Image"
+          example: "attachment"
         uri:
           type: string
           example: "http://image.com/image.png"
@@ -483,20 +598,11 @@ components:
         buttons:
           type: array
           items:
-            $ref: '#/components/schemas/QuickReplyResponse'
+            $ref: '#/components/schemas/ActionResponse'
+      required:
+        - type
+        - uri
 
-    AttachmentRequest:
-      type: object
-      properties:
-        type:
-          type: string
-          example: "Image"
-        uri:
-          type: string
-          example: "http://image.com/image.png"
-        alternativeText:
-          type: string
-          example: "An hotel"
 
     LocationResponse:
       type: object
@@ -510,6 +616,14 @@ components:
         latitude:
           type: string
           example: '8.3189321'
+        buttons:
+            type: array
+            items:
+              $ref: '#/components/schemas/ActionResponse'
+      required:
+        - type
+        - longitude
+        - latitude
 
     CarouselResponse:
         type: object
@@ -521,6 +635,9 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/Card'
+        required:
+          - type
+          - cards
 
     Card:
       type: object
@@ -539,40 +656,9 @@ components:
           buttons:
             type: array
             items:
-              $ref: '#/components/schemas/QuickReplyResponse'
-
-    TextResponse:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["text"]
-        value:
-          type: string
-          example: "I want to go hiking"
-        buttons:
-          type: array
-          items:
-            $ref: '#/components/schemas/QuickReplyResponse'
-
-    QuickReplyResponse:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["action"]
-        buttonText:
-          type: string
-          example: "Cerca hotel"
-        buttonId:
-          type: string
-          example: "BTN-DAJKSOD142-ADFGWE2"
-        mediaType:
-          type: string
-          example: "Image"
-        mediaURI:
-          type: string
-          example: "http://www.image.com/image.jpg"
+              $ref: '#/components/schemas/ActionResponse'
+      required:
+        - title
 
     Entity:
       type: object
@@ -629,6 +715,354 @@ components:
       items:
         $ref: '#/components/schemas/Log'
 
+    # Analytics
+    Analytic:
+      type: object
+      properties:
+        timespan:
+          type: object
+          oneOf:
+            - $ref: '#/components/schemas/DefaultTime'
+            - $ref: '#/components/schemas/CustomTime'
+        metric:
+           oneOf:
+            - $ref: '#/components/schemas/Average'
+            - $ref: '#/components/schemas/WeightedAverage'
+            - $ref: '#/components/schemas/Cardinality'
+            - $ref: '#/components/schemas/GeoBounds'
+            - $ref: '#/components/schemas/GeoCentrality'
+            - $ref: '#/components/schemas/Max'
+            - $ref: '#/components/schemas/Min'
+            - $ref: '#/components/schemas/Percentiles'
+            - $ref: '#/components/schemas/Sum'
+            - $ref: '#/components/schemas/Stats'
+            - $ref: '#/components/schemas/Extended'
+            - $ref: '#/components/schemas/ValueCount'
+            - $ref: '#/components/schemas/MedianAbsoluteDeviation'
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+      required:
+        - timespan
+        - metric
+
+    DefaultTime:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["DEFAULT"]
+        value:
+          type: string
+          enum: ["TODAY","YESTERDAY","7D","30D"]
+      required:
+        - type
+        - value
+
+    CustomTime:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["CUSTOM"]
+        start:
+          type: string
+          format: date-time
+          example: "2019-07-23T16:31:24.432000"
+        end:
+          type: string
+          format: date-time
+          example: "2019-07-23T16:35:50.00"
+      required:
+        - type
+        - start
+        - end
+
+    Average:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["AVG"]
+        field:
+          type: string
+          example: "accuracy"
+        missing:
+          type: string
+          example: "N/A"
+      required:
+        - type
+        - field
+
+    WeightedAverage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["WAVG"]
+        field:
+          type: string
+          example: "accuracy"
+        missing:
+          type: string
+          example: "N/A"
+        weight:
+          type: string
+          example: "language_frequency"
+        format:
+          type: string
+          enum: ["NUMERIC","PERCENTAGE"]
+      required:
+        - type
+        - field
+        - weight
+
+    Cardinality:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["CARDINALITY"]
+        field:
+          type: string
+          example: "language"
+        precisionThreshold:
+          type: integer
+          format: int32
+          example: 100
+      required:
+        - type
+        - field
+
+    GeoBounds:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["GEOBOUNDS"]
+        field:
+          type: string
+          example: "zone"
+        wrap_longitude:
+          type: boolean
+          example: True
+          default: True
+      required:
+        - type
+        - field
+
+    GeoCentrality:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["GEOCENTRALITY"]
+        field:
+          type: string
+          example: "zone"
+      required:
+        - type
+        - field
+
+    Max:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["MAX"]
+        field:
+          type: string
+          example: "accuracy"
+        missing:
+          type: number
+          format: int32
+          example: 10
+      required:
+        - type
+        - field
+
+    Min:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["MIN"]
+        field:
+          type: string
+          example: "accuracy"
+        missing:
+          type: number
+          format: int32
+          example: 10
+      required:
+        - type
+        - field
+
+    Percentiles:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["PERCENTILES"]
+        field:
+          type: string
+          example: "age"
+        percents:
+          type: array
+          items:
+            type: number
+            example: [92.0, 85.0]
+            default: [1.0,5.0,25.0,50.0,75.0,95.0,99.0]
+      required:
+        - type
+        - field
+
+    Sum:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["SUM"]
+        field:
+          type: string
+          example: "age"
+        missing:
+          type: number
+          format: int32
+          example: 10
+      required:
+        - type
+        - field
+
+    Stats:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["STATS"]
+        field:
+          type: string
+          example: "age"
+        missing:
+          type: number
+          format: int32
+          example: 10
+      required:
+        - type
+        - field
+
+    Extended:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["ESTATS"]
+        field:
+          type: string
+          example: "weight"
+        missing:
+          type: number
+          format: int32
+          example: 10
+      required:
+        - type
+        - field
+
+    ValueCount:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["VCOUNT"]
+        field:
+          type: string
+          example: "messageID"
+      required:
+        - type
+        - field
+
+    MedianAbsoluteDeviation:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: ["MAD"]
+        field:
+          type: string
+          example: "weight"
+        compression:
+          type: number
+          format: int32
+          example: 100
+      required:
+        - type
+        - field
+
+    Filter:
+      type: object
+      properties:
+        field:
+          type: string
+          example: "language"
+        comparison:
+          oneOf:
+            - $ref: "#/components/schemas/ValueComparison"
+            - $ref: "#/components/schemas/MultiValueComparison"
+            - $ref: "#/components/schemas/NumberComparison"
+            - $ref: "#/components/schemas/RangeComparison"
+            - $ref: "#/components/schemas/FieldExistanceComparison"
+
+          enum: ["IS", "IS_NOT", "IN", "NOT_IN", "EXISTS", "NOT_EXISTS", "BETWEEN"]
+    ValueComparison:
+      type: object
+      properties:
+        operator:
+          type: string
+          enum: ["IS", "IS_NOT"]
+        value:
+          example: "IT"
+
+    MultiValueComparison:
+      type: object
+      properties:
+        operator:
+          type: string
+          enum: ["ONE_OF", "IS_NOT_ONE_OF"]
+        value:
+          type: array
+          items:
+            anyOf:
+              - type: string
+              - type: number
+
+    NumberComparison:
+      type: object
+      properties:
+        operator:
+          type: string
+          enum: ["EQ","NEQ","GR","LE","GREQ","LEQ"]
+        value:
+          type: number
+          example: 40
+
+    RangeComparison:
+      type: object
+      properties:
+        operator:
+          type: string
+          enum: ["BETWEEN", "NOT_BETWEEN"]
+        from:
+          example: 1
+        to:
+          example: 10
+
+    FieldExistanceComparison:
+      type: object
+      properties:
+        operator:
+          type: string
+          enum: ["EXIST", "NOT_EXIST"]
 
     # Responses
 
