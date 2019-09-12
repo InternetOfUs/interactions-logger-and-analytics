@@ -21,6 +21,7 @@ info:
 
     A message can be a `ResponseMessage`, a `RequestMessage` or a `Notification`. A response message represents a response to a request message while the latter represent a message from the user. A notification is a special kind of message sent by, for example, by the local administration or the hotel.
 
+
     Concerning `Log`, it represents a metric to track the status of the system and what drove to a particular choice.
 
     "
@@ -681,13 +682,25 @@ components:
       type: object
       properties:
         timespan:
+          type: object
           oneOf:
             - $ref: '#/components/schemas/DefaultTime'
             - $ref: '#/components/schemas/CustomTime'
         metrics:
-          type: array
-          items:
-            $ref: '#/components/schemas/Measurement'
+           oneOf:
+            - $ref: '#/components/schemas/Average'
+            - $ref: '#/components/schemas/WeightedAverage'
+            - $ref: '#/components/schemas/Cardinality'
+            - $ref: '#/components/schemas/GeoBounds'
+            - $ref: '#/components/schemas/GeoCentrality'
+            - $ref: '#/components/schemas/Max'
+            - $ref: '#/components/schemas/Min'
+            - $ref: '#/components/schemas/Percentiles'
+            - $ref: '#/components/schemas/Sum'
+            - $ref: '#/components/schemas/Stats'
+            - $ref: '#/components/schemas/Extended'
+            - $ref: '#/components/schemas/ValueCount'
+            - $ref: '#/components/schemas/MedianAbsoluteDeviation'
         filters:
           type: array
           items:
@@ -723,28 +736,6 @@ components:
           type: string
           format: date-time
           example: "2019-07-23T16:35:50.00"
-
-
-
-    Measurement:
-      type: object
-      properties:
-        type:
-          type: object
-          oneOf:
-            - $ref: '#/components/schemas/Average'
-            - $ref: '#/components/schemas/WeightedAverage'
-            - $ref: '#/components/schemas/Cardinality'
-            - $ref: '#/components/schemas/GeoBounds'
-            - $ref: '#/components/schemas/GeoCentrality'
-            - $ref: '#/components/schemas/Max'
-            - $ref: '#/components/schemas/Min'
-            - $ref: '#/components/schemas/Percentiles'
-            - $ref: '#/components/schemas/Sum'
-            - $ref: '#/components/schemas/Stats'
-            - $ref: '#/components/schemas/Extended'
-            - $ref: '#/components/schemas/ValueCount'
-            - $ref: '#/components/schemas/MedianAbsoluteDeviation'
 
     Average:
       type: object
@@ -1034,7 +1025,7 @@ components:
           enum: ['200']
           example: 200
 
-    HTTP_201:
+    HTTP_201 :
       type: object
       properties:
         traceId:
