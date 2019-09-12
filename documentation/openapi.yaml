@@ -268,7 +268,33 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_404'
 
-    # PERFORMANCES APIS
+    # ANALYTICS
+    # GENERAL LOGGING APIS
+
+    /logging/analytics:
+      post:
+        tags:
+          - analytics
+        summary: Require an analytic
+        description: This end-point allows to retrieve an analytic from the datavase
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Analytic'
+        responses:
+          '201':
+            description: success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/HTTP_201'
+          '405':
+            description: malformed log
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/HTTP_405'
 
 
 
@@ -385,7 +411,7 @@ components:
         content:
             anyOf:
               - $ref: '#/components/schemas/TextualResponse'
-              - $ref: '#/components/schemas/ActionResponse'
+              - $ref: '#/components/schemas/MultiActionResponse'
               - $ref: '#/components/schemas/AttachmentResponse'
               - $ref: '#/components/schemas/CarouselResponse'
               - $ref: '#/components/schemas/LocationResponse'
@@ -513,6 +539,34 @@ components:
         - type
         - value
 
+    ActionResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "action"
+        buttonText:
+          type: string
+          example: "Cerca hotel"
+        buttonId:
+          type: string
+          example: "BTN-DAJKSOD142-ADFGWE2"
+      required:
+        - type
+        - buttonText
+
+    MultiActionResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "multiaction"
+        buttons:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionResponse'
+
+
     AttachmentRequest:
       type: object
       properties:
@@ -606,22 +660,6 @@ components:
       required:
         - title
 
-    ActionResponse:
-      type: object
-      properties:
-        type:
-          type: string
-          example: "action"
-        buttonText:
-          type: string
-          example: "Cerca hotel"
-        buttonId:
-          type: string
-          example: "BTN-DAJKSOD142-ADFGWE2"
-      required:
-        - type
-        - buttonText
-
     Entity:
       type: object
       properties:
@@ -686,7 +724,7 @@ components:
           oneOf:
             - $ref: '#/components/schemas/DefaultTime'
             - $ref: '#/components/schemas/CustomTime'
-        metrics:
+        metric:
            oneOf:
             - $ref: '#/components/schemas/Average'
             - $ref: '#/components/schemas/WeightedAverage'
@@ -707,7 +745,7 @@ components:
             $ref: '#/components/schemas/Filter'
       required:
         - timespan
-        - metrics
+        - metric
 
     DefaultTime:
       type: object
@@ -736,6 +774,10 @@ components:
           type: string
           format: date-time
           example: "2019-07-23T16:35:50.00"
+      required:
+        - type
+        - start
+        - end
 
     Average:
       type: object
@@ -833,6 +875,8 @@ components:
           type: string
           example: "accuracy"
         missing:
+          type: number
+          format: int32
           example: 10
       required:
         - type
@@ -848,6 +892,8 @@ components:
           type: string
           example: "accuracy"
         missing:
+          type: number
+          format: int32
           example: 10
       required:
         - type
@@ -882,6 +928,8 @@ components:
           type: string
           example: "age"
         missing:
+          type: number
+          format: int32
           example: 10
       required:
         - type
@@ -897,6 +945,8 @@ components:
           type: string
           example: "age"
         missing:
+          type: number
+          format: int32
           example: 10
       required:
         - type
@@ -912,6 +962,8 @@ components:
           type: string
           example: "weight"
         missing:
+          type: number
+          format: int32
           example: 10
       required:
         - type
@@ -940,6 +992,8 @@ components:
           type: string
           example: "weight"
         compression:
+          type: number
+          format: int32
           example: 100
       required:
         - type

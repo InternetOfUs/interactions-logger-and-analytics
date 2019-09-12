@@ -120,6 +120,34 @@ class ActionResponse:
         return ActionResponse(button_text, button_id)
 
 
+class MultiActionResponse:
+    def __init__(self, buttons=Optional[List[ActionResponse]]):
+        self.buttons = buttons
+
+    def to_repr(self) -> dict:
+        buttons = []
+
+        for button in self.buttons:
+            if not isinstance(button, ActionResponse):
+                raise ValueError("the elements in the button list should be instances of QuickReplyResponse")
+            else:
+                buttons.append(button.to_repr())
+
+        return {
+            'type': 'multiaction',
+            'buttons': buttons
+        }
+
+    @staticmethod
+    def from_rep(data: dict):
+        buttons = []
+        if 'buttons' in data:
+            for action in data['buttons']:
+                a = ActionResponse.from_rep(action)
+                buttons.append(a)
+        return MultiActionResponse(buttons)
+
+
 class TextualRequest:
     def __init__(self, value: str):
         self.value = value
@@ -481,7 +509,7 @@ class ResponseMessage:
         self.project = project
         self.type = "RESPONSE"
 
-        if not (isinstance(content, ActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
+        if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
             raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextualResponse")
 
         logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
@@ -521,8 +549,8 @@ class ResponseMessage:
                 content = TextualResponse.from_rep(data['content'])
             elif data['content']['type'] == 'location':
                 content = LocationRequest.from_rep(data['content'])
-            elif data['content']['type'] == 'action':
-                content = ActionResponse.from_rep(data['content'])
+            elif data['content']['type'] == 'multiaction':
+                content = MultiActionResponse.from_rep(data['content'])
             elif data['content']['type'] == 'attachment':
                 content = AttachmentResponse.from_rep(data['content'])
             elif data['content']['type'] == 'carousel':
