@@ -574,7 +574,7 @@ class ResponseMessage:
 
 
 class NotificationMessage:
-    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, timestamp: str, content: list, metadata: dict, project: str):
+    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, timestamp: str, content, metadata: dict, project: str):
 
         logging.info("MODELS.MESSAGE creating a NotificationMessage object for ".format(message_id))
 
@@ -586,11 +586,10 @@ class NotificationMessage:
         self.content = content
         self.metadata = metadata
         self.project = project
-        self.type = type
+        self.type = "NOTIFICATION"
 
-        for cont in content:
-            if not (isinstance(cont, ActionResponse) or isinstance(cont, CarouselResponse) or isinstance(cont, AttachmentResponse) or isinstance(cont, TextualRequest) or isinstance(cont, LocationRequest)):
-                raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextResponse")
+        if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
+            raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextualResponse")
 
         logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
 
@@ -601,9 +600,6 @@ class NotificationMessage:
         logging.info("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
-        content_list = []
-        for c in self.content:
-            content_list.append(c.to_repr)
 
         return {
             'messageId': self.message_id,
@@ -611,7 +607,7 @@ class NotificationMessage:
             'channel': self.channel,
             'userId': self.user_id,
             'timestamp': self.timestamp,
-            'content': content_list,
+            'content': self.content.to_repr(),
             'metadata': self.metadata,
             'project': self.project,
             'type': self.type
@@ -626,24 +622,20 @@ class NotificationMessage:
         if "metadata" in data:
             metadata = data["metadata"]
 
-        content = []
+        content = None
         if 'content' in data:
-            for item in data['content']:
-                if item['type'] == 'text':
-                    element = TextualRequest.from_rep(item)
-                    content.append(element)
-                elif item['type'] == 'location':
-                    element = LocationRequest.from_rep(item)
-                    content.append(element)
-                elif item['type'] == 'action':
-                    element = ActionResponse.from_rep(item)
-                    content.append(element)
-                elif item['type'] == 'attachment':
-                    element = AttachmentResponse.from_rep(item)
-                    content.append(element)
-                elif item['type'] == 'carousel':
-                    element = CarouselResponse.from_rep(item)
-                    content.append(element)
+            if data['content']['type'] == 'text':
+                content = TextualResponse.from_rep(data['content'])
+            elif data['content']['type'] == 'location':
+                content = LocationRequest.from_rep(data['content'])
+            elif data['content']['type'] == 'multiaction':
+                content = MultiActionResponse.from_rep(data['content'])
+            elif data['content']['type'] == 'attachment':
+                content = AttachmentResponse.from_rep(data['content'])
+            elif data['content']['type'] == 'carousel':
+                content = CarouselResponse.from_rep(data['content'])
+            else:
+                raise ValueError("an unknown type of content is in the body of the message")
 
         if 'conversationId' in data:
             conversation_id = data['conversationId']
