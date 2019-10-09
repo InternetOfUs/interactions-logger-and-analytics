@@ -2,21 +2,17 @@ import json
 
 from flask import request, Response
 from flask_restful import Resource
-# for second-level logging
-import logging
+
 # for handling elasticsearch
 from elasticsearch import Elasticsearch
-
-from memex_logging.models.analytics import Analytic
-from memex_logging.models.log import Log
-from memex_logging.utils.utils import Utils
 
 
 class AnalyticsResourceBuilder(object):
     @staticmethod
     def routes(es: Elasticsearch):
         return [
-            (AnalyticsPerformer, '/analytics', (es,))
+            (AnalyticsPerformer, '/analytics', (es,)),
+            (GetNoClickPerUser, '/analytics/clickcount', (es,))
         ]
 
 
@@ -25,18 +21,85 @@ class AnalyticsPerformer(Resource):
     def __init__(self, es: Elasticsearch):
         self._es = es
 
-    def post(self):
-        item = request.json
-        temp_analytic = Analytic.from_rep(item)
-        index_name = "memex-analytics"
-        query = self._es.index(index=index_name, doc_type='_doc', body=temp_analytic.to_repr())
-        id = query['_id']
+    def get(self):
 
         json_response = {
-            "analyticId": id,
+            "analyticId": "N_TEST IMIN",
             "status": "ok",
             "code": 200
         }
+
+        resp = Response(json.dumps(json_response), mimetype='application/json')
+        resp.status_code = 200
+
+        return resp
+
+
+class GetNoClickPerUser(Resource):
+
+    def __init__(self, es:Elasticsearch):
+        self._es = es
+
+    def get(self):
+        if 'eventId' in request.args:
+            response = self._es.search(index="memex-log*", body={"query": {"match": {"metadata.eventId": request.args['eventId']}}})
+            if response['hits']['total']['value'] != 0:
+                user_collection = {}
+                for item in response['hits']['hits']:
+                    if 'metadata' in item['_source']:
+                        if 'userId' in item['_source']['metadata']:
+                            if item['_source']['metadata']['userId'] in user_collection:
+                                user_collection[item['_source']['metadata']['userId']] = user_collection[item['_source']['metadata']['userId']] + 1
+                            else:
+                                user_collection[item['_source']['metadata']['userId']] = 1
+
+                json_response = {
+                    "type": "click_per_event",
+                    "event": request.args['eventId'],
+                    "click": user_collection,
+                    "status": "ok",
+                    "code": 200
+                }
+            else:
+                json_response = {
+                    "type": "click_per_event",
+                    "event": request.args['eventId'],
+                    "click": {},
+                    "status": "ok",
+                    "code": 200
+                }
+
+        if 'userId' in request.args:
+            response = self._es.search(index="memex-log*",body={"query": {"match": {"metadata.userId": request.args['userId']}}})
+            if response['hits']['total']['value'] != 0:
+                click_collection = {}
+                # TODO check da qualche parte su namespace per capire se sto contando un evento
+                for item in response['hits']['hits']:
+                    if 'metadata' in item['_source']:
+                        if 'eventId' in item['_source']['metadata']:
+                            if item['_source']['metadata']['eventId'] in click_collection:
+                                click_collection[item['_source']['metadata']['eventId']] = click_collection[
+                                                                                             item['_source'][
+                                                                                                 'metadata'][
+                                                                                                 'eventId']] + 1
+                            else:
+                                click_collection[item['_source']['metadata']['eventId']] = 1
+
+                json_response = {
+                    "type": "click_per_event",
+                    "user": request.args['userId'],
+                    "click": click_collection,
+                    "status": "ok",
+                    "code": 200
+                }
+            else:
+                json_response = {
+                    "type": "click_per_event",
+                    "user": request.args['userId'],
+                    "click": {},
+                    "status": "ok",
+                    "code": 200
+                }
 
         resp = Response(json.dumps(json_response), mimetype='application/json')
         resp.status_code = 200
