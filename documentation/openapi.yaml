@@ -1148,23 +1148,11 @@ components:
           type: string
           example: "EV321423"
         click:
-          type: array
-          items:
-            $ref: '#/components/schemas/event_response_object'
+          type: object
         status:
           enum: ['ok']
         cose:
           enum: ['200']
-
-    event_response_object:
-      type: object
-      properties:
-        user:
-          type: string
-          example: "US95583"
-        clcik:
-          type: integer
-          example: 2
 
     200_user_count:
       type: object
@@ -1175,23 +1163,12 @@ components:
           type: string
           example: "USR30942"
         click:
-          type: array
-          items:
-            $ref: '#/components/schemas/user_response_object'
+          type: object
         status:
           enum: ['ok']
         cose:
           enum: ['200']
 
-    user_response_object:
-      type: object
-      properties:
-        event:
-          type: string
-          example: "EV32141"
-        clcik:
-          type: integer
-          example: 2
 
     HTTP_404:
       type: object
