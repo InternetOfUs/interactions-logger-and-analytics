@@ -296,7 +296,47 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_405'
 
+    /logging/analytics/usercount:
+      get:
+        tags:
+          - analytics
+        parameters:
+          - in: query
+            name: userId
+            schema:
+              type: string
+            required: true
+            description: the identifier of the user for which you want to count the clicks
+        summary: Retrieve the number click based on a user identifier
+        description: Retrieve the number click based on a user identifier
+        responses:
+          '200':
+            description: success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/200_user_count'
 
+    /logging/analytics/eventcount:
+      get:
+        tags:
+          - analytics
+        parameters:
+          - in: query
+            name: eventId
+            schema:
+              type: string
+            required: true
+            description: the identifier of the evnet for which you want to count the clicks
+        summary: Retrieve the number click based on an event identifier
+        description: Retrieve the number click based on an event identifier
+        responses:
+          '200':
+            description: success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/200_event_count'
 
     #DOCUMENTATION
     /logging/documentation:
@@ -1099,6 +1139,59 @@ components:
           enum: ['201']
           example: 201
 
+    200_event_count:
+      type: object
+      properties:
+        type:
+          enum: ['click_per_event']
+        event:
+          type: string
+          example: "EV321423"
+        click:
+          type: array
+          items:
+            $ref: '#/components/schemas/event_response_object'
+        status:
+          enum: ['ok']
+        cose:
+          enum: ['200']
+
+    event_response_object:
+      type: object
+      properties:
+        user:
+          type: string
+          example: "US95583"
+        clcik:
+          type: integer
+          example: 2
+
+    200_user_count:
+      type: object
+      properties:
+        type:
+          enum: ['click_per_user']
+        user:
+          type: string
+          example: "USR30942"
+        click:
+          type: array
+          items:
+            $ref: '#/components/schemas/user_response_object'
+        status:
+          enum: ['ok']
+        cose:
+          enum: ['200']
+
+    user_response_object:
+      type: object
+      properties:
+        event:
+          type: string
+          example: "EV32141"
+        clcik:
+          type: integer
+          example: 2
 
     HTTP_404:
       type: object
