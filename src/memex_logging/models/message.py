@@ -460,15 +460,15 @@ class RequestMessage:
         content = None
         user_info_fields = ['firstName', 'lastName', 'profilePic', 'locale', 'timezone', 'gender', 'isPaymentEnable', 'userId']
         if "content" in data:
-            if data['content']['type'] == "text":
+            if str(data['content']['type']).lower() == "text":
                 content = TextualRequest.from_rep(data['content'])
-            elif data['content']['type'] == "action":
+            elif str(data['content']['type']).lower() == "action":
                 content = ActionRequest.from_rep(data['content'])
-            elif data['content']['type'] == "attachment":
+            elif str(data['content']['type']).lower() == "attachment":
                 content = AttachmentRequest.from_rep(data['content'])
-            elif data['content']['type'] == "location":
+            elif str(data['content']['type']).lower() == "location":
                 content = LocationRequest.from_rep(data['content'])
-            elif data['content']['type'] in user_info_fields:
+            elif str(data['content']['type']).lower() in user_info_fields:
                 content = UserInfoRequest.from_rep(data['content'])
             else:
                 raise ValueError("An unknown content type is in the message body")
@@ -545,15 +545,15 @@ class ResponseMessage:
 
         content = None
         if 'content' in data:
-            if data['content']['type'] == 'text':
+            if str(data['content']['type']).lower() == 'text':
                 content = TextualResponse.from_rep(data['content'])
-            elif data['content']['type'] == 'location':
+            elif str(data['content']['type']).lower() == 'location':
                 content = LocationRequest.from_rep(data['content'])
-            elif data['content']['type'] == 'multiaction':
+            elif str(data['content']['type']).lower() == 'multiaction':
                 content = MultiActionResponse.from_rep(data['content'])
-            elif data['content']['type'] == 'attachment':
+            elif str(data['content']['type']).lower() == 'attachment':
                 content = AttachmentResponse.from_rep(data['content'])
-            elif data['content']['type'] == 'carousel':
+            elif str(data['content']['type']).lower() == 'carousel':
                 content = CarouselResponse.from_rep(data['content'])
             else:
                 raise ValueError("an unknown type of content is in the body of the message")
@@ -624,15 +624,15 @@ class NotificationMessage:
 
         content = None
         if 'content' in data:
-            if data['content']['type'] == 'text':
+            if str(data['content']['type']).lower() == 'text':
                 content = TextualResponse.from_rep(data['content'])
-            elif data['content']['type'] == 'location':
+            elif str(data['content']['type']).lower() == 'location':
                 content = LocationRequest.from_rep(data['content'])
-            elif data['content']['type'] == 'multiaction':
+            elif str(data['content']['type']).lower() == 'multiaction':
                 content = MultiActionResponse.from_rep(data['content'])
-            elif data['content']['type'] == 'attachment':
+            elif str(data['content']['type']).lower() == 'attachment':
                 content = AttachmentResponse.from_rep(data['content'])
-            elif data['content']['type'] == 'carousel':
+            elif str(data['content']['type']).lower() == 'carousel':
                 content = CarouselResponse.from_rep(data['content'])
             else:
                 raise ValueError("an unknown type of content is in the body of the message")
