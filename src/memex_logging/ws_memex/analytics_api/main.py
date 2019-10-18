@@ -11,7 +11,7 @@ class AnalyticsResourceBuilder(object):
     @staticmethod
     def routes(es: Elasticsearch):
         return [
-            (AnalyticsPerformer, '/analytics', (es,)),
+            (AnalyticsPerformer, '/customanalytics', (es,)),
             (GetNoClickPerUser, '/analytics/usercount', (es,)),
             (GetNoClickPerEvent, '/analytics/eventcount', (es,))
         ]
@@ -22,7 +22,16 @@ class AnalyticsPerformer(Resource):
     def __init__(self, es: Elasticsearch):
         self._es = es
 
-    def get(self):
+    def post(self):
+        analytic = request.json
+        if "timespan" not in analytic:
+            abort(400, message="Bad Request. Timespan is missing")
+        if "metric" not in analytic:
+            abort(400, message="Bad Request. Metric is missing")
+
+        # filtro i dati on the fly prima di calcolare le analytics
+        if "filters" in analytic:
+            print("a")
 
         json_response = {
             "analyticId": "N_TEST IMIN",
@@ -43,7 +52,7 @@ class GetNoClickPerUser(Resource):
 
     def get(self):
         if 'userId' in request.args:
-            response = self._es.search(index="memex-log*",body={"query": {"match": {"metadata.userId": request.args['userId']}}})
+            response = self._es.search(index="logging-memex*",body={"query": {"match": {"metadata.userId": request.args['userId']}}})
             if response['hits']['total']['value'] != 0:
                 click_collection = {}
                 # TODO check da qualche parte su namespace per capire se sto contando un evento
@@ -88,7 +97,7 @@ class GetNoClickPerEvent(Resource):
 
     def get(self):
         if 'eventId' in request.args:
-            response = self._es.search(index="memex-log*", body={"query": {"match": {"metadata.eventId": request.args['eventId']}}})
+            response = self._es.search(index="logging-memex*", body={"query": {"match": {"metadata.eventId": request.args['eventId']}}})
             if response['hits']['total']['value'] != 0:
                 user_collection = {}
                 for item in response['hits']['hits']:
@@ -121,3 +130,13 @@ class GetNoClickPerEvent(Resource):
         resp.status_code = 200
 
         return resp
+
+
+class GetUsers(Resource):
+
+    def __init__(self, es:Elasticsearch):
+        self._es = es
+
+    def get(self):
+        response = self._es.search(index="memex-log*", body={"query": {"match": {}}})
+        print(response)

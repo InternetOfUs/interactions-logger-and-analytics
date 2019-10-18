@@ -69,7 +69,7 @@ class LogGeneralLogs(Resource):
                 temp_log = Log.from_rep(log)
                 project_name = utils.extract_project_name(log)
                 date = utils.extract_date(log)
-                index_name = project_name + "-logging-" + date
+                index_name = "logging-" + project_name + "-" + date
                 query = self._es.index(index=index_name, doc_type='_doc', body=temp_log.to_repr())
                 log_ids.append(query['_id'])
             except:

@@ -91,7 +91,7 @@ class ManipulateMessage(Resource):
             }
         else:
             logging.warning("MESSAGES.API Starting to look up for a message in project {} with id {}".format(project, message_id))
-            index = str(project).lower() + "-message-*"
+            index = "message-" + str(project).lower() + "*"
             query = {
                 "query": {
                     "match": {
@@ -143,7 +143,7 @@ class LogMessages(Resource):
                     request_message = RequestMessage.from_rep(message)
                     project_name = utils.extract_project_name(message)
                     date = utils.extract_date(message)
-                    index_name = project_name + "-message-" + date
+                    index_name = "message-" + project_name + "-" + date
                     query = self._es.index(index=index_name, doc_type='_doc', body=request_message.to_repr())
                     message_ids.append(query['_id'])
                 except Exception as e:
@@ -154,7 +154,7 @@ class LogMessages(Resource):
                     response_message = ResponseMessage.from_rep(message)
                     project_name = utils.extract_project_name(message)
                     date = utils.extract_date(message)
-                    index_name = project_name + "-message-" + date
+                    index_name = "message-" + project_name + "-" + date
                     query = self._es.index(index=index_name, doc_type='_doc', body=response_message.to_repr())
                     message_ids.append(query['_id'])
                 except Exception as e:
@@ -165,7 +165,7 @@ class LogMessages(Resource):
                     notification_message = NotificationMessage.from_rep(message)
                     project_name = utils.extract_project_name(message)
                     date = utils.extract_date(message)
-                    index_name = project_name + "-message-" + date
+                    index_name = "message-" + project_name + "-" + date
                     query = self._es.index(index=index_name, doc_type='_doc', body=notification_message.to_repr())
                     message_ids.append(query['_id'])
                 except Exception as e:
