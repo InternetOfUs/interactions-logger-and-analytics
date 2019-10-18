@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEFAULT_VERSION="0.1.4"
+DEFAULT_VERSION="0.1.5"
 
 clean () {
     rm -R ${SCRIPT_DIR}/documentation
