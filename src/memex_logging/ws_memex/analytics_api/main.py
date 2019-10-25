@@ -6,12 +6,15 @@ from flask_restful import Resource, abort
 # for handling elasticsearch
 from elasticsearch import Elasticsearch
 
+import logging
+from memex_logging.analytic.analytic import AnalyticComputation
+
 
 class AnalyticsResourceBuilder(object):
     @staticmethod
     def routes(es: Elasticsearch):
         return [
-            (AnalyticsPerformer, '/customanalytics', (es,)),
+            (AnalyticsPerformer, '/analytics', (es,)),
             (GetNoClickPerUser, '/analytics/usercount', (es,)),
             (GetNoClickPerEvent, '/analytics/eventcount', (es,))
         ]
@@ -22,23 +25,247 @@ class AnalyticsPerformer(Resource):
     def __init__(self, es: Elasticsearch):
         self._es = es
 
+    def get(self):
+        args = request.args
+        id = args['id']
+        if id == "" or id is None:
+            abort(500, message="ANALYTIC.GET: invalid identifier")
+
+        response = self._es.search(index="analytic*", body={"query": {"match": {"_id": id}}})
+
+        if response['hits']['total'] == 0:
+            abort(404, message="resource not found")
+        else:
+            return response['hits']['hits'][0]['_source'], 200
+
     def post(self):
         analytic = request.json
-        if "timespan" not in analytic:
-            abort(400, message="Bad Request. Timespan is missing")
-        if "metric" not in analytic:
-            abort(400, message="Bad Request. Metric is missing")
 
-        # filtro i dati on the fly prima di calcolare le analytics
-        if "filters" in analytic:
-            print("a")
+        # Data model check on the fly. Call the function and decide whether it is valid or not.
 
-        json_response = {
-            "analyticId": "N_TEST IMIN",
-            "status": "ok",
-            "code": 200
-        }
+        # Object to be stored: query + results inside of `query` and `result`
+        if AnalyticComputation.analytic_validity_check(analytic):
+            metric = str(analytic['metric']).lower()
+            answer = None
+            ac = AnalyticComputation()
+            if metric == "u:total":
+                answer = ac.compute_u_total(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "u:active":
+                answer = ac.compute_u_active(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "u:engaged":
+                answer = ac.compute_u_engaged(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "u:new":
+                answer = ac.compute_u_new(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
 
+            elif metric == "m:from_user":
+                answer = ac.compute_m_from_user(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "m:conversation":
+                answer = ac.compute_m_conversation(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "m:from_bot":
+                answer = ac.compute_m_from_bot(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "m:responses":
+                answer = ac.compute_m_responses(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "m:notifications":
+                answer = ac.compute_m_notifications(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "m:unhandled":
+                answer = ac.compute_m_unhandled(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "m:notification_engagement":
+                answer = ac.compute_m_notification_engagement(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "c:total":
+                answer = ac.compute_c_total(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "c:new":
+                answer = ac.compute_c_new(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "c:length":
+                answer = ac.compute_c_length(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "c:path":
+                answer = ac.compute_c_path(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "d:fallback":
+                answer = ac.compute_d_fallback(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "d:interrupted":
+                answer = ac.compute_d_interrupted(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "d:intents":
+                answer = ac.compute_d_intents(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "d:domains":
+                answer = ac.compute_d_domains(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "b:retention":
+                answer = ac.compute_b_retention(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            elif metric == "b:response":
+                answer = ac.compute_b_response(analytic, self._es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "users": answer[1]
+                    },
+                    "status": 200
+                }
+            
+        # save analytics and put the _id to retrieve it 
+
+        index_name = "analytic-" + analytic['project']
+        query = self._es.index(index=index_name, doc_type='_doc', body=json_response)
+
+        json_response['id'] = query['_id']
         resp = Response(json.dumps(json_response), mimetype='application/json')
         resp.status_code = 200
 
@@ -140,3 +367,4 @@ class GetUsers(Resource):
     def get(self):
         response = self._es.search(index="memex-log*", body={"query": {"match": {}}})
         print(response)
+
