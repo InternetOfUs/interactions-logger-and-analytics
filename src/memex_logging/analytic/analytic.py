@@ -124,6 +124,7 @@ class AnalyticComputation:
             }
         }
         response = es.search(index="message-"+project+"*", body=body, size=0)
+        print(response)
         user_list = []
 
         for item in response['aggregations']['terms_count']['buckets']:
@@ -347,7 +348,7 @@ class AnalyticComputation:
         user_list = []
         total_counter = 0
         for item in response['aggregations']['terms_count']['buckets']:
-            user_list.append({item['key']: item['doc_count']})
+            user_list.append(item['key'])
             total_counter = total_counter + int(item['doc_count'])
 
         return total_counter, user_list
@@ -390,7 +391,7 @@ class AnalyticComputation:
         conversation_list = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
-            conversation_list.append({item['key']: item['doc_count']})
+            conversation_list.append(item['key'])
             total_len = total_len + 1
 
         return total_len, conversation_list
@@ -480,7 +481,7 @@ class AnalyticComputation:
         for item in response['aggregations']['terms_count']['buckets']:
             messages.append(item['key'])
             total_len = total_len + item['doc_count']
-
+        print(total_len, messages)
         return total_len, messages
 
     def compute_m_responses(self, analytic: dict, es: Elasticsearch, project:str):
@@ -671,7 +672,7 @@ class AnalyticComputation:
         conversation_list = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
-            conversation_list.append({item['key']: item['doc_count']})
+            conversation_list.append(item['key'])
             total_len = total_len + 1
 
         return total_len, conversation_list
@@ -1103,7 +1104,7 @@ class AnalyticComputation:
         }
 
         response = es.search(index="message-"+project+"*", body=body, size=0)
-        total_messages = response['aggregations']['type_count']['value']
+        total_messages = response['aggregations']['terms_count']['value']
 
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]

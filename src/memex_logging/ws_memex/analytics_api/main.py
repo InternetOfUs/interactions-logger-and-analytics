@@ -47,6 +47,7 @@ class AnalyticsPerformer(Resource):
         if AnalyticComputation.analytic_validity_check(analytic):
             metric = str(analytic['metric']).lower()
             answer = None
+            json_response = {}
             ac = AnalyticComputation()
             if metric == "u:total":
                 answer = ac.compute_u_total(analytic, self._es, analytic['project'])
@@ -54,7 +55,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "userId"
                     },
                     "status": 200
                 }
@@ -64,7 +66,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "userId"
                     },
                     "status": 200
                 }
@@ -74,7 +77,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "userId"
                     },
                     "status": 200
                 }
@@ -84,7 +88,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "userId"
                     },
                     "status": 200
                 }
@@ -95,17 +100,21 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "userId"
                     },
                     "status": 200
                 }
+                print(answer[0])
+                print(answer[1])
             elif metric == "m:conversation":
                 answer = ac.compute_m_conversation(analytic, self._es, analytic['project'])
                 json_response = {
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "conversationId"
                     },
                     "status": 200
                 }
@@ -115,17 +124,21 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "messageId"
                     },
                     "status": 200
                 }
+                print(answer[0])
+                print(answer[1])
             elif metric == "m:responses":
                 answer = ac.compute_m_responses(analytic, self._es, analytic['project'])
                 json_response = {
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "messageId"
                     },
                     "status": 200
                 }
@@ -135,7 +148,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "messageId"
                     },
                     "status": 200
                 }
@@ -145,7 +159,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "messageId"
                     },
                     "status": 200
                 }
@@ -155,7 +170,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "messageId"
                     },
                     "status": 200
                 }
@@ -165,7 +181,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "conversationId"
                     },
                     "status": 200
                 }
@@ -175,7 +192,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "conversationId"
                     },
                     "status": 200
                 }
@@ -183,9 +201,10 @@ class AnalyticsPerformer(Resource):
                 answer = ac.compute_c_length(analytic, self._es, analytic['project'])
                 json_response = {
                     "query": analytic,
-                    "result": {
+                    "conversations": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "object"
                     },
                     "status": 200
                 }
@@ -195,7 +214,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "conversationId"
                     },
                     "status": 200
                 }
@@ -205,7 +225,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "conversationId"
                     },
                     "status": 200
                 }
@@ -215,7 +236,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "conversationId"
                     },
                     "status": 200
                 }
@@ -225,7 +247,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "intent"
                     },
                     "status": 200
                 }
@@ -235,7 +258,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "domain"
                     },
                     "status": 200
                 }
@@ -245,7 +269,8 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "score"
                     },
                     "status": 200
                 }
@@ -255,14 +280,15 @@ class AnalyticsPerformer(Resource):
                     "query": analytic,
                     "result": {
                         "count": answer[0],
-                        "users": answer[1]
+                        "items": answer[1],
+                        "type": "score"
                     },
                     "status": 200
                 }
             
         # save analytics and put the _id to retrieve it 
 
-        index_name = "analytic-" + analytic['project']
+        index_name = "analytic-" + analytic['project'] + "-" + analytic['dimension']
         query = self._es.index(index=index_name, doc_type='_doc', body=json_response)
 
         json_response['id'] = query['_id']
