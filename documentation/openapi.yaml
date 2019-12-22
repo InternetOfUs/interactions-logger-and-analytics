@@ -832,7 +832,7 @@ components:
           example: "dialogue"
         metric:
           type: string
-          enum: ["d:fallback", "d:interrupted", "d:intents", "d:domains"]
+          enum: ["d:fallback", "d:intents", "d:domains"]
       required:
         - dimension
         - metric
@@ -845,7 +845,7 @@ components:
           example: "bot"
         metric:
           type: string
-          enum: ["b:retention", "b:response"]
+          enum: ["b:response"]
       required:
         - dimension
         - metric

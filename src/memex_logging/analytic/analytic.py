@@ -581,7 +581,6 @@ class AnalyticComputation:
         return total_len, messages
 
     def compute_m_unhandled(self, analytic: dict, es: Elasticsearch, project:str):
-        """
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -623,16 +622,12 @@ class AnalyticComputation:
         response = es.search(index="message-"+project+"*", body=body, size=0)
         messages = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            messages.append(item['key'])
-            total_len = total_len + item['doc_count']
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                messages.append(item['key'])
+                total_len = total_len + item['doc_count']
 
         return total_len, messages
-        """
-        abort(500, message="ANALYTIC.ONPROC.MUNHANDLED: cannot be used")
-
-    def compute_m_notification_engagement(self, analytic: dict, es: Elasticsearch, project:str):
-        abort(500, message="ANALYTIC.ONPROC.ENGAGEMENT: not processable")
 
     def compute_c_total(self, analytic: dict, es: Elasticsearch, project:str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
@@ -883,7 +878,7 @@ class AnalyticComputation:
         return len(paths), paths
 
     def compute_d_fallback(self, analytic: dict, es: Elasticsearch, project:str):
-        """
+
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -923,7 +918,9 @@ class AnalyticComputation:
         }
 
         response = es.search(index="message-"+project+"*", body=body, size=0)
-        total_missed = response['aggregations']['type_count']['value']
+        total_missed = 0
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            total_missed = response['aggregations']['type_count']['value']
 
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
@@ -958,17 +955,14 @@ class AnalyticComputation:
             }
         }
         response = es.search(index="message-"+project+"*", body=body, size=0)
-        total_messages = response['aggregations']['type_count']['value']
+        total_messages = 0
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+                total_messages = response['aggregations']['type_count']['value']
 
         return total_missed, total_messages
-        """
-        abort(500, message="ANALYTIC.ONPROC.FALLBACK: cannot be used")
-
-    def compute_d_interrupted(self, analytic: dict, es: Elasticsearch, project:str):
-        abort(500, message="ANALYTIC.ONPROC.INTERRUPTED: not processable")
 
     def compute_d_intents(self, analytic: dict, es: Elasticsearch, project:str):
-        """
+
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -1009,15 +1003,17 @@ class AnalyticComputation:
 
         response = es.search(index="message-"+project+"*", body=body, size=0)
         user_list = []
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                user_list.append(item['key'])
 
-        for item in response['aggregations']['terms_count']['buckets']:
-            user_list.append(item['key'])
+        value = 0
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+                value = response['aggregations']['type_count']['value']
 
-        return response['aggregations']['type_count']['value'], user_list
-        """
-        abort(500, message="ANALYTIC.ONPROC.INTENT: cannot be used")
+        return value , user_list
+
     def compute_d_domains(self, analytic: dict, es: Elasticsearch, project:str):
-        """
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -1058,16 +1054,17 @@ class AnalyticComputation:
 
         response = es.search(index="message-"+project+"*", body=body, size=0)
         user_list = []
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
+                response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                user_list.append(item['key'])
 
-        for item in response['aggregations']['terms_count']['buckets']:
-            user_list.append(item['key'])
+        value = 0
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in \
+                response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
 
-        return response['aggregations']['type_count']['value'], user_list
-        """
-        abort(500, message="ANALYTIC.ONPROC.DOMAIN: cannot be used")
-
-    def compute_b_retention(self, analytic: dict, es: Elasticsearch, project:str):
-        abort(500, message="ANALYTIC.ONPROC.RETENTION: not processable")
+        return value, user_list
 
     def compute_b_response(self, analytic: dict, es: Elasticsearch, project:str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
@@ -1104,7 +1101,11 @@ class AnalyticComputation:
         }
 
         response = es.search(index="message-"+project+"*", body=body, size=0)
-        total_messages = response['aggregations']['terms_count']['value']
+        total_messages = 0
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in \
+                response['aggregations']['type_count']:
+            total_messages = response['aggregations']['type_count']['value']
+
 
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
@@ -1140,9 +1141,11 @@ class AnalyticComputation:
         }
         response = es.search(index="message-"+project+"*", body=body, size=0)
         total_not_working = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            if item['doc_count'] == 1:
-                total_not_working = total_not_working + 1
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
+                response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                if item['doc_count'] == 1:
+                    total_not_working = total_not_working + 1
 
         return total_not_working, total_messages
 
