@@ -283,18 +283,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/Analytic'
         responses:
-          '201':
+          '200':
             description: success
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_201'
-          '405':
+                  $ref: '#/components/schemas/HTTP_200_ANALYTIC'
+          '500':
             description: malformed log
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_405'
+                  $ref: '#/components/schemas/HTTP_500_ANALYTIC'
 
     /logging/analytics/usercount:
       get:
@@ -764,34 +764,90 @@ components:
 
     # Analytics
     Analytic:
+      oneOf:
+        - $ref: '#/components/schemas/UserMetrics'
+        - $ref: '#/components/schemas/MessageMetrics'
+        - $ref: '#/components/schemas/ConversationMetrics'
+        - $ref: '#/components/schemas/DialogueMetrics'
+        - $ref: '#/components/schemas/BotMetrics'
       type: object
       properties:
+        project:
+          type: string
+          example: "memex"
         timespan:
           type: object
           oneOf:
             - $ref: '#/components/schemas/DefaultTime'
             - $ref: '#/components/schemas/CustomTime'
-        metric:
-           oneOf:
-            - $ref: '#/components/schemas/Average'
-            - $ref: '#/components/schemas/WeightedAverage'
-            - $ref: '#/components/schemas/Cardinality'
-            - $ref: '#/components/schemas/GeoBounds'
-            - $ref: '#/components/schemas/GeoCentrality'
-            - $ref: '#/components/schemas/Max'
-            - $ref: '#/components/schemas/Min'
-            - $ref: '#/components/schemas/Percentiles'
-            - $ref: '#/components/schemas/Sum'
-            - $ref: '#/components/schemas/Stats'
-            - $ref: '#/components/schemas/Extended'
-            - $ref: '#/components/schemas/ValueCount'
-            - $ref: '#/components/schemas/MedianAbsoluteDeviation'
-        filters:
-          type: array
-          items:
-            $ref: '#/components/schemas/Filter'
+
       required:
+        - project
         - timespan
+
+    UserMetrics:
+      properties:
+        dimension:
+          type: string
+          enum: ["user"]
+          example: "user"
+        metric:
+          type: string
+          enum: ["u:total", "u:active", "u:engaged", "u:new"]
+      required:
+        - dimension
+        - metric
+
+    MessageMetrics:
+      properties:
+        dimension:
+          type: string
+          enum: ["message"]
+          example: "message"
+        metric:
+          type: string
+          enum: ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:notification_engagement"]
+      required:
+        - dimension
+        - metric
+
+    ConversationMetrics:
+      properties:
+        dimension:
+          type: string
+          enum: ["conversation"]
+          example: "conversation"
+        metric:
+          type: string
+          enum: ["c:total", "c:new", "c:length", "c:path"]
+      required:
+        - dimension
+        - metric
+
+    DialogueMetrics:
+      properties:
+        dimension:
+          type: string
+          enum: ["dialogue"]
+          example: "dialogue"
+        metric:
+          type: string
+          enum: ["d:fallback", "d:intents", "d:domains"]
+      required:
+        - dimension
+        - metric
+
+    BotMetrics:
+      properties:
+        dimension:
+          type: string
+          enum: ["bot"]
+          example: "bot"
+        metric:
+          type: string
+          enum: ["b:response"]
+      required:
+        - dimension
         - metric
 
     DefaultTime:
@@ -800,9 +856,11 @@ components:
         type:
           type: string
           enum: ["DEFAULT"]
+          example: "DEFAULT"
         value:
           type: string
-          enum: ["TODAY","YESTERDAY","7D","30D"]
+          enum: ["TODAY","1D","7D","10D","30D"]
+          example: "7D"
       required:
         - type
         - value
@@ -813,6 +871,7 @@ components:
         type:
           type: string
           enum: ["CUSTOM"]
+          example: "CUSTOM"
         start:
           type: string
           format: date-time
@@ -825,291 +884,6 @@ components:
         - type
         - start
         - end
-
-    Average:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["AVG"]
-        field:
-          type: string
-          example: "accuracy"
-        missing:
-          type: string
-          example: "N/A"
-      required:
-        - type
-        - field
-
-    WeightedAverage:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["WAVG"]
-        field:
-          type: string
-          example: "accuracy"
-        missing:
-          type: string
-          example: "N/A"
-        weight:
-          type: string
-          example: "language_frequency"
-        format:
-          type: string
-          enum: ["NUMERIC","PERCENTAGE"]
-      required:
-        - type
-        - field
-        - weight
-
-    Cardinality:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["CARDINALITY"]
-        field:
-          type: string
-          example: "language"
-        precisionThreshold:
-          type: integer
-          format: int32
-          example: 100
-      required:
-        - type
-        - field
-
-    GeoBounds:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["GEOBOUNDS"]
-        field:
-          type: string
-          example: "zone"
-        wrap_longitude:
-          type: boolean
-          example: True
-          default: True
-      required:
-        - type
-        - field
-
-    GeoCentrality:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["GEOCENTRALITY"]
-        field:
-          type: string
-          example: "zone"
-      required:
-        - type
-        - field
-
-    Max:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["MAX"]
-        field:
-          type: string
-          example: "accuracy"
-        missing:
-          type: number
-          format: int32
-          example: 10
-      required:
-        - type
-        - field
-
-    Min:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["MIN"]
-        field:
-          type: string
-          example: "accuracy"
-        missing:
-          type: number
-          format: int32
-          example: 10
-      required:
-        - type
-        - field
-
-    Percentiles:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["PERCENTILES"]
-        field:
-          type: string
-          example: "age"
-        percents:
-          type: array
-          items:
-            type: number
-            example: [92.0, 85.0]
-            default: [1.0,5.0,25.0,50.0,75.0,95.0,99.0]
-      required:
-        - type
-        - field
-
-    Sum:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["SUM"]
-        field:
-          type: string
-          example: "age"
-        missing:
-          type: number
-          format: int32
-          example: 10
-      required:
-        - type
-        - field
-
-    Stats:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["STATS"]
-        field:
-          type: string
-          example: "age"
-        missing:
-          type: number
-          format: int32
-          example: 10
-      required:
-        - type
-        - field
-
-    Extended:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["ESTATS"]
-        field:
-          type: string
-          example: "weight"
-        missing:
-          type: number
-          format: int32
-          example: 10
-      required:
-        - type
-        - field
-
-    ValueCount:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["VCOUNT"]
-        field:
-          type: string
-          example: "messageID"
-      required:
-        - type
-        - field
-
-    MedianAbsoluteDeviation:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: ["MAD"]
-        field:
-          type: string
-          example: "weight"
-        compression:
-          type: number
-          format: int32
-          example: 100
-      required:
-        - type
-        - field
-
-    Filter:
-      type: object
-      properties:
-        field:
-          type: string
-          example: "language"
-        comparison:
-          oneOf:
-            - $ref: "#/components/schemas/ValueComparison"
-            - $ref: "#/components/schemas/MultiValueComparison"
-            - $ref: "#/components/schemas/NumberComparison"
-            - $ref: "#/components/schemas/RangeComparison"
-            - $ref: "#/components/schemas/FieldExistanceComparison"
-
-          enum: ["IS", "IS_NOT", "IN", "NOT_IN", "EXISTS", "NOT_EXISTS", "BETWEEN"]
-    ValueComparison:
-      type: object
-      properties:
-        operator:
-          type: string
-          enum: ["IS", "IS_NOT"]
-        value:
-          example: "IT"
-
-    MultiValueComparison:
-      type: object
-      properties:
-        operator:
-          type: string
-          enum: ["ONE_OF", "IS_NOT_ONE_OF"]
-        value:
-          type: array
-          items:
-            anyOf:
-              - type: string
-              - type: number
-
-    NumberComparison:
-      type: object
-      properties:
-        operator:
-          type: string
-          enum: ["EQ","NEQ","GR","LE","GREQ","LEQ"]
-        value:
-          type: number
-          example: 40
-
-    RangeComparison:
-      type: object
-      properties:
-        operator:
-          type: string
-          enum: ["BETWEEN", "NOT_BETWEEN"]
-        from:
-          example: 1
-        to:
-          example: 10
-
-    FieldExistanceComparison:
-      type: object
-      properties:
-        operator:
-          type: string
-          enum: ["EXIST", "NOT_EXIST"]
 
     # Responses
 
@@ -1125,6 +899,40 @@ components:
         code:
           enum: ['200']
           example: 200
+
+    HTTP_200_ANALYTIC:
+      type: object
+      properties:
+        query:
+          oneOf:
+            - $ref: '#/components/schemas/Analytic'
+        result:
+          type: object
+          properties:
+            count:
+              type: number
+              format: int32
+            items:
+              type: array
+              items:
+                type: string
+            type:
+              type: string
+              example: "messageId"
+        status:
+          type: string
+          example: '200'
+        id:
+          type: string
+          example: 'wAu4EW4BFurD9NUGZY3z'
+
+    HTTP_500_ANALYTIC:
+      type: object
+      properties:
+        message:
+          type: string
+
+
 
     HTTP_201 :
       type: object
