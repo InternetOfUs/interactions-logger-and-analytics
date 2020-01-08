@@ -780,10 +780,63 @@ components:
           oneOf:
             - $ref: '#/components/schemas/DefaultTime'
             - $ref: '#/components/schemas/CustomTime'
+        type:
+          type: string
+          enum: ["analytic"]
 
       required:
         - project
         - timespan
+        - type
+
+    Aggregation:
+      type: object
+      properties:
+        project:
+          type: string
+          example: "memex"
+        timespan:
+          type: object
+          oneOf:
+            - $ref: '#/components/schemas/DefaultTime'
+            - $ref: '#/components/schemas/CustomTime'
+        type:
+          type: string
+          enum: ["aggregation"]
+        field:
+          type: string
+          example: "messageId"
+        aggregation:
+          type: string
+          enum: ["avg", "min", "max", "sum", "stats", "extended_stats", "value_count", "cardinality", "percentiles", "percentile_ranks"]
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+      required:
+        - project
+        - timespan
+        - type
+        - field
+        - aggregation
+
+    Filter:
+      type: object
+      properties:
+        field:
+          type: string
+          example: "text"
+        operation:
+          type: string
+          enum: ["gr", "gre", "lq", "lqe", "term", "match"]
+          example: "match"
+        value:
+          type: string
+          example: "Hi"
+      required:
+        - field
+        - operation
+        - value
 
     UserMetrics:
       properties:

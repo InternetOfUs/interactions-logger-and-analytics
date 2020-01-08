@@ -2,23 +2,21 @@ from flask_restful import abort
 
 import logging
 import datetime
+from datetime import timezone
+import uuid
 
 import dateutil.parser
 
 from elasticsearch import Elasticsearch
 
+from memex_logging.models.message import RequestMessage, ResponseMessage, NotificationMessage
+
 
 class Utils:
 
     @staticmethod
-    def compute_conversation_id() -> str:
-        logging.debug("INFO@Utils - starting to compute the conversation id")
-        return None
-
-    @staticmethod
     def extract_date(data:dict) -> str:
         """
-
         :param data:
         :return:
         """
@@ -31,7 +29,8 @@ class Utils:
                 logging.error("timestamp cannot be parsed of the message cannot be parsed")
                 logging.error(data)
         else:
-            positioned = datetime.datetime.now().isoformat()
+            support_bound = datetime.datetime.now().isoformat()
+            positioned = dateutil.parser.parse(support_bound)
             return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
 
     @staticmethod
@@ -59,11 +58,37 @@ class Utils:
         else:
             return "memex"
 
-    @staticmethod
-    def get_mapping(elastic: Elasticsearch, project: str, field: str = None) -> dict:
-        index = project + "-message*"
+    def compute_conversation_id(self, elastic: Elasticsearch, message) -> str:
+        # 3 hours threshold
+        delta = 90
 
-        #response = elastic.(index=index)
-        response = elastic.indices.get_mapping(index="memex-message*")
-
-        print(response)
+        if isinstance(message, RequestMessage) or isinstance(message, ResponseMessage) or isinstance(message, NotificationMessage):
+            if message.conversation_id is None:
+                index = "message-" + str(message.project).lower() + "*"
+                body = {
+                    "query": {
+                        "match": {
+                          "userId" : message.user_id
+                        }
+                    },
+                    "size": 1,
+                    "sort": [
+                      {
+                        "timestamp": {
+                          "order": "desc"
+                        }
+                      }
+                    ]
+                }
+                response = elastic.search(index=index, body=body, size=1)
+                if response['hits']['total'] != 0:
+                    positioned = dateutil.parser.parse(response['hits']['hits'][0]['_source']['timestamp'])
+                    now = datetime.datetime.now().isoformat()
+                    positioned_now = dateutil.parser.parse(now)
+                    positioned = positioned.replace(tzinfo=timezone.utc).astimezone(tz=None)
+                    positioned_now = positioned_now.replace(tzinfo=timezone.utc).astimezone(tz=None)
+                    step = positioned_now - positioned
+                    if step.seconds > delta:
+                        message.conversation_id = uuid.uuid1()
+                    else:
+                        message.conversation_id = response['hits']['hits'][0]['_source']['conversationId']

@@ -144,6 +144,7 @@ class LogMessages(Resource):
                     project_name = utils.extract_project_name(message)
                     date = utils.extract_date(message)
                     index_name = "message-" + project_name + "-" + date
+                    utils.compute_conversation_id(self._es, request_message)
                     query = self._es.index(index=index_name, doc_type='_doc', body=request_message.to_repr())
                     message_ids.append(query['_id'])
                 except Exception as e:
