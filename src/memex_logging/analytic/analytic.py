@@ -7,6 +7,8 @@ from flask_restful import abort
 
 class AnalyticComputation:
 
+    g_index = "message-memex*"
+
     def analytic_validity_check(analytic: dict):
         logging.info("ANALYTIC.DISPLACEMENT: " + str(analytic))
 
@@ -123,7 +125,7 @@ class AnalyticComputation:
                 }
             }
         }
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         print(response)
         user_list = []
 
@@ -170,7 +172,7 @@ class AnalyticComputation:
                 }
             }
         }
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         user_list = []
 
         for item in response['aggregations']['terms_count']['buckets']:
@@ -222,7 +224,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         user_list = []
 
         for item in response['aggregations']['terms_count']['buckets']:
@@ -264,7 +266,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         users_in_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             users_in_period.append(item['key'])
@@ -294,7 +296,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         users_out_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             users_out_period.append(item['key'])
@@ -344,7 +346,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         user_list = []
         total_counter = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -387,7 +389,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         conversation_list = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -435,7 +437,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         messages = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -477,7 +479,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         for item in response['aggregations']['terms_count']['buckets']:
             messages.append(item['key'])
             total_len = total_len + item['doc_count']
@@ -523,7 +525,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         messages = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -571,7 +573,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         messages = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -619,7 +621,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         messages = []
         total_len = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -663,7 +665,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         conversation_list = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -706,7 +708,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         conv_in_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             conv_in_period.append(item['key'])
@@ -736,7 +738,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         conv_out_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             conv_out_period.append(item['key'])
@@ -781,7 +783,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         conversation_list = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -824,7 +826,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         conversation_list = []
         for item in response['aggregations']['terms_count']['buckets']:
             conversation_list.append(item['key'])
@@ -870,7 +872,7 @@ class AnalyticComputation:
                 }
             }
 
-            response = es.search(index="message-"+project+"*", body=body, size=0)
+            response = es.search(index=self.g_index, body=body, size=0)
             message_list = []
             for obj in response['aggregations']['terms_count']['buckets']:
                 message_list.append(obj['key'])
@@ -917,7 +919,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         total_missed = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_missed = response['aggregations']['type_count']['value']
@@ -954,7 +956,7 @@ class AnalyticComputation:
                 }
             }
         }
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         total_messages = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
                 total_messages = response['aggregations']['type_count']['value']
@@ -1001,7 +1003,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         user_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
@@ -1052,7 +1054,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         user_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
                 response['aggregations']['terms_count']:
@@ -1100,7 +1102,7 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         total_messages = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in \
                 response['aggregations']['type_count']:
@@ -1139,7 +1141,7 @@ class AnalyticComputation:
                 }
             }
         }
-        response = es.search(index="message-"+project+"*", body=body, size=0)
+        response = es.search(index=self.g_index, body=body, size=0)
         total_not_working = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
                 response['aggregations']['terms_count']:
@@ -1201,3 +1203,4 @@ class AnalyticComputation:
             except:
                 abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot parse ending date. User a YYYY-MM-DD format")
             return start,end
+
