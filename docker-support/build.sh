@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DEFAULT_VERSION="0.1.7"
+DEFAULT_VERSION="0.2.0"
 
 clean () {
     rm -R ${SCRIPT_DIR}/documentation
