@@ -18,6 +18,8 @@ import logging
 from flask import Flask
 from flask_restful import Api
 
+from celery import Celery
+
 from memex_logging.ws_memex.documentation_api.main import DocumentationResourceBuilder
 from memex_logging.ws_memex.messages_api.main import MessageResourceBuilder
 from memex_logging.ws_memex.logging_api.main import LoggingResourceBuilder
@@ -29,8 +31,29 @@ class WsInterface(object):
 
     def __init__(self, elastic: Elasticsearch) -> None:
         self._app = Flask(__name__)
+        self._app.config.update(
+            CELERY_BROKER_URL='redis://localhost:6379',
+            CELERY_RESULT_BACKEND='redis://localhost:6379'
+        )
         self._api = Api(app=self._app)
         self._init_modules(elastic)
+        self.make_celery(self._app)
+
+    def make_celery(app):
+        celery = Celery(
+            app.import_name,
+            backend=app.config['CELERY_RESULT_BACKEND'],
+            broker=app.config['CELERY_BROKER_URL']
+        )
+        celery.conf.update(app.config)
+
+        class ContextTask(celery.Task):
+            def __call__(self, *args, **kwargs):
+                with app.app_context():
+                    return self.run(*args, **kwargs)
+
+        celery.Task = ContextTask
+        return celery
 
     def _init_modules(self, elastic) -> None:
         active_routes = [
