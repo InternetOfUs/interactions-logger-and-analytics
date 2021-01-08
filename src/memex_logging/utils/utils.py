@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import absolute_import, annotations
+
 from flask_restful import abort
 
 import logging
@@ -29,12 +31,11 @@ from memex_logging.models.message import RequestMessage, ResponseMessage, Notifi
 class Utils:
 
     @staticmethod
-    def extract_date(data:dict) -> str:
+    def extract_date(data: dict) -> str:
         """
         :param data:
         :return:
         """
-        date = ""
         if "timestamp" in data.keys():
             try:
                 positioned = dateutil.parser.parse(data['timestamp'])
@@ -72,7 +73,8 @@ class Utils:
         else:
             return "memex"
 
-    def compute_conversation_id(self, elastic: Elasticsearch, message) -> str:
+    @staticmethod
+    def compute_conversation_id(elastic: Elasticsearch, message) -> None:
         # 3 hours threshold
         delta = 90
 
@@ -82,7 +84,7 @@ class Utils:
                 body = {
                     "query": {
                         "match": {
-                          "userId" : message.user_id
+                          "userId": message.user_id
                         }
                     },
                     "size": 1,

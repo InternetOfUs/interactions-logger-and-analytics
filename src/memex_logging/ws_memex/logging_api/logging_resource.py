@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
+from __future__ import absolute_import, annotations
 
+import json
+import logging
+
+from elasticsearch import Elasticsearch
 from flask import request, Response
 from flask_restful import Resource
-# for second-level logging
-import logging
-# for handling elasticsearch
-from elasticsearch import Elasticsearch
 
 from memex_logging.models.log import Log
 from memex_logging.utils.utils import Utils

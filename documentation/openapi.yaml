@@ -5,21 +5,22 @@ openapi: 3.0.0
 # Optional info section
 #######################
 info:
+
   title: Memorable Experience
-  description: "This document details the APIs exposed by the MemEx big data platform, realise by U-Hoppper srl within the context of the FESR-funded Memorable Experiences (MemEx) project. The platform logs all interactions among tourists and a purposefully designed chatbot.
+  description: "This document details the APIs exposed by the MemEx big data platform, realise by U-Hopper srl within the context of the FESR-funded Memorable Experiences (MemEx) project. The platform logs all interactions among tourists and a purposefully designed chatbot.
 
-    There are three kind of implemented APIs
+    There are three kind of implemented APIs:
 
-    1. messages: to store, retrieve and delete messages.
+    1. messages: to store, retrieve and delete messages;
 
-    2. logging: to store, retrieve and delete logs
+    2. logging: to store, retrieve and delete logs;
 
-    3. performances: to retrieve some performances of the system
+    3. performances: to retrieve some performances of the system.
 
 
     A part from the entities and models representing the responses, there are three main entities involved in the system: `Message`, `Log` and `Performance`.
 
-    A message can be a `ResponseMessage`, a `RequestMessage` or a `Notification`. A response message represents a response to a request message while the latter represent a message from the user. A notification is a special kind of message sent by, for example, by the local administration or the hotel.
+    A message can be a `ResponseMessage`, a `RequestMessage` or a `Notification`. A response message represents a response to a request message while the latter represent a message from the user. A notification is a special kind of message sent, for example, by the local administration or the hotel.
 
 
     Concerning `Log`, it represents a metric to track the status of the system and what drove to a particular choice.
@@ -30,10 +31,12 @@ info:
   contact:
     email: "massimiliano.luca@unitn.it"
 
-servers:
-  - url: memex.u-hopper.com
+# servers:
+#   - url: memex.u-hopper.com
+#   - url: http://0.0.0.0:80/
 
 tags:
+
   - name: message
     description: APIs to log the conversation into the database
   - name: logging
@@ -41,11 +44,10 @@ tags:
   - name: analytics
     description: APIs to retrieve useful information from the database. What follows can be used to analyze the performances of the bot
 
-
 paths:
-    # MESSAGES APIs
 
-    /logging/messages:
+    # MESSAGES APIS
+    /messages:
       post:
         tags:
           - message
@@ -70,7 +72,7 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_405'
 
-    /logging/message:
+    /message:
       get:
         tags:
           - message
@@ -107,40 +109,20 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_404'
 
-      put:
-        tags:
-          - message
-        summary: Update a message
-        description: Update a message that is already stored in the database
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: string
-            required: true
-            description: The id of the message
-        responses:
-          '200':
-            description: Message updated
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_201'
-          '404':
-            description: message not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_404'
-
       delete:
         tags:
           - message
         summary: Delete a message
         description: This method should be used to delete a message from the database
         parameters:
-          - in: path
-            name: id
+          - in: query
+            name: project
+            schema:
+              type: string
+            required: true
+            description: the name of the project related to the message you want to retrieve
+          - in: query
+            name: messageId
             schema:
               type: string
             required: true
@@ -159,11 +141,8 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_404'
 
-
-
-    # GENERAL LOGGING APIS
-
-    /logging/logs:
+    # LOG APIS
+    /logs:
       post:
         tags:
           - logging
@@ -188,7 +167,7 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_405'
 
-    /logging/log/{id}:
+    /log:
       get:
         tags:
           - logging
@@ -268,10 +247,8 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_404'
 
-    # ANALYTICS
-    # GENERAL LOGGING APIS
-
-    /logging/analytics:
+    # ANALYTICS APIS
+    /analytics:
       post:
         tags:
           - analytics
@@ -296,7 +273,7 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_500_ANALYTIC'
 
-    /logging/analytics/usercount:
+    /analytics/usercount:
       get:
         tags:
           - analytics
@@ -317,7 +294,7 @@ paths:
                 schema:
                   $ref: '#/components/schemas/200_user_count'
 
-    /logging/analytics/eventcount:
+    /analytics/eventcount:
       get:
         tags:
           - analytics
@@ -338,8 +315,8 @@ paths:
                 schema:
                   $ref: '#/components/schemas/200_event_count'
 
-    #DOCUMENTATION
-    /logging/documentation:
+    # DOCUMENTATION API
+    /documentation:
       get:
         tags:
           - documentation
@@ -356,14 +333,13 @@ components:
   ####################
   schemas:
 
-    Messages:
+    Messages: # TODO check if array of different messages allows also different types
       type: array
       items:
-        anyOf:
+        oneOf:
           - $ref: '#/components/schemas/RequestMessage'
           - $ref: '#/components/schemas/ResponseMessage'
           - $ref: '#/components/schemas/NotificationMessage'
-
 
     RequestMessage:
       type: object
@@ -384,13 +360,13 @@ components:
           type: string
           example: "2019-04-04:23.11.58"
         content:
-          oneOf:
+          oneOf: # TODO add possibly examples for the other oneOf
             - $ref: '#/components/schemas/TextualRequest'
             - $ref: '#/components/schemas/ActionRequest'
             - $ref: '#/components/schemas/AttachmentRequest'
             - $ref: '#/components/schemas/LocationRequest'
             - $ref: '#/components/schemas/UserInfoRequest'
-          example: "devo fare un bonifico di 40 euro"
+          example: {"type": "text", "value": "devo fare un bonifico di 40 euro"}
         domain:
           type: string
           example: "pagamenti"
@@ -419,7 +395,7 @@ components:
         type:
           type: string
           example: "REQUEST"
-      required:
+      required: # TODO check
         - messageId
         - channel
         - userId
@@ -449,12 +425,12 @@ components:
           type: string
           example: "2019-04-04:23.11.58"
         content:
-            anyOf:
-              - $ref: '#/components/schemas/TextualResponse'
-              - $ref: '#/components/schemas/MultiActionResponse'
-              - $ref: '#/components/schemas/AttachmentResponse'
-              - $ref: '#/components/schemas/CarouselResponse'
-              - $ref: '#/components/schemas/LocationResponse'
+          oneOf:
+            - $ref: '#/components/schemas/TextualResponse'
+            - $ref: '#/components/schemas/MultiActionResponse'
+            - $ref: '#/components/schemas/AttachmentResponse'
+            - $ref: '#/components/schemas/CarouselResponse'
+            - $ref: '#/components/schemas/LocationResponse'
         metadata:
           type: object
         project:
@@ -463,7 +439,7 @@ components:
         type:
           type: string
           example: "RESPONSE"
-      required:
+      required: # TODO check
         - messageId
         - channel
         - userId
@@ -491,12 +467,12 @@ components:
           type: string
           example: "2019-04-04:23.11.58"
         content:
-            anyOf:
-              - $ref: '#/components/schemas/TextualResponse'
-              - $ref: '#/components/schemas/ActionResponse'
-              - $ref: '#/components/schemas/AttachmentResponse'
-              - $ref: '#/components/schemas/CarouselResponse'
-              - $ref: '#/components/schemas/LocationResponse'
+          oneOf:
+            - $ref: '#/components/schemas/TextualResponse'
+            - $ref: '#/components/schemas/ActionResponse'
+            - $ref: '#/components/schemas/AttachmentResponse'
+            - $ref: '#/components/schemas/CarouselResponse'
+            - $ref: '#/components/schemas/LocationResponse'
         metadata:
           type: object
         project:
@@ -505,14 +481,13 @@ components:
         type:
           type: string
           example: "NOTIFICATION"
-      required:
+      required: # TODO check
         - messageId
         - channel
         - userId
         - timestamp
         - project
         - type
-
 
     LocationRequest:
       type: object
@@ -563,7 +538,6 @@ components:
       required:
         - type
         - value
-
 
     TextualRequest:
       type: object
@@ -634,7 +608,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ActionResponse'
-
 
     AttachmentRequest:
       type: object
@@ -721,11 +694,6 @@ components:
           format: float
           example: 0.94
 
-
-
-    # Schema for an array of Message
-
-
     Log:
       type: object
       properties:
@@ -762,7 +730,6 @@ components:
       items:
         $ref: '#/components/schemas/Log'
 
-    # Analytics
     Analytic:
       oneOf:
         - $ref: '#/components/schemas/UserMetrics'
@@ -783,7 +750,6 @@ components:
         type:
           type: string
           enum: ["analytic"]
-
       required:
         - project
         - timespan
@@ -985,8 +951,6 @@ components:
         message:
           type: string
 
-
-
     HTTP_201 :
       type: object
       properties:
@@ -1029,7 +993,6 @@ components:
           enum: ['ok']
         cose:
           enum: ['200']
-
 
     HTTP_404:
       type: object

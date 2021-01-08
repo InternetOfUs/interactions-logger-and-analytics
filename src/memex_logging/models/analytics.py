@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import annotations, absolute_import
-
-import logging
+from __future__ import absolute_import, annotations
 
 
 class Analytic:
@@ -30,7 +28,6 @@ class Analytic:
 
     @staticmethod
     def from_rep(data: dict) -> Analytic:
-        timespan = None
         if 'timespan' in data:
             if str(data['timespan']['type']).lower() == "default":
                 timespan = DefaultTime.from_rep(data['timespan'])
@@ -41,7 +38,6 @@ class Analytic:
         else:
             raise ValueError("An Analytic must contain a timespan")
 
-        metric = None
         if 'metric' in data:
             if str(data['metric']['type']).lower() == "avg":
                 metric = Average.from_rep(data['metric'])

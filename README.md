@@ -1,35 +1,54 @@
 # Memorable Experience - Logging and performances
 
-### Version 0.0.1
-- Logging end-points can be tested @ /LogMessage AND /LogMessages 
-- Performance APIs designed
-- Elasticsearch connected and 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**
 
-### Version 0.0.2
-- Parametrized parameters -hs -p for the Elasticsearch connection 
-- docker-support for the deployment
-- nginx configuration 
-- running end-points @ memex.u-hopper.com/logging/LogMessage AND memex.u-hopper.com/logging/LogMessages 
-- Utils class initialized
+- [Setup and configuration](#setup-and-configuration)
+  - [Required Python Packages](#required-python-packages)
+  - [Environment variables](#environment-variables)
+- [Usage](#usage)
+  - [Web service](#web-service)
 
-### Version 0.0.3
-- Parametrized Elasticsearch instance 
-- restfull flask introduced 
-- indexes rename
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-### Version 0.0.4
-- endpoints alignment
-- various adjustments
-- alpha release @ memex.u-hopper.com
+It is web service. How does it work?
 
-### Version 0.0.5
-- minor adjustments
-- default value of the project is memex. Whenever a message without the project value arrives, it is assigned to memex automatically
-- utility package to use the APIs is now part of the release. The utilities can be found in `memex_logging\memex_logging_lib\logging_utils.py` while the file `example.py` contains a usage example
+Need an Elasticsearch for starting and saving data.
 
-### Version 0.0.6 
-- new data models for messages 
-- new data models for logging
-- alpha version data model of analytics 
-- end-point for the documentation 
-- new version of the messages APIs
+Need a redis for celery?
+
+
+## Setup and configuration
+
+Please mark the `src` folder as source route.
+
+### Required Python Packages
+
+All required Python packages can be installed using the command:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Environment variables
+
+The web service allows to set the following environment variables:
+
+- `WS_HOST` (optional, the default value is `0.0.0.0`): the host where the web service is going to be available, can be set also using the argument `-wh` or `--whost`;
+- `WS_PORT`(optional, the default value is `80`): the port where the web service is going to be available, can be set also using the argument `-wp` or `--wport`;
+- `EL_HOST` (optional, the default value is `localhost`): the host where the Elasticsearch database is going to be available, can be set also using the argument `-eh` or `--ehost`;
+- `EL_PORT`(optional, the default value is `9200`): the port where the Elasticsearch database is going to be available, can be set also using the argument `-ep` or `--eport`;
+- `EL_USERNAME` (optional for versions of Elasticsearch < `7`): the username of the user to access the Elasticsearch database;
+- `EL_PASSWORD` (optional for versions of Elasticsearch < `7`): the password of the user to access the Elasticsearch database.
+
+
+## Usage
+
+### Web service
+
+This service can be run with the command:
+
+```bash
+python -m memex_logging.ws_memex.main
+```

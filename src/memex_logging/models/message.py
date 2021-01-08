@@ -78,7 +78,7 @@ class LocationRequest:
         }
 
     @staticmethod
-    def from_rep(data: dict)-> LocationRequest:
+    def from_rep(data: dict) -> LocationRequest:
         if 'latitude' not in data:
             raise ValueError("A LocationRequest object must contain a latitude and a longitude. Latitude is missing")
 
@@ -223,7 +223,7 @@ class AttachmentRequest:
         }
 
     @staticmethod
-    def from_rep(data: dict)-> AttachmentRequest:
+    def from_rep(data: dict) -> AttachmentRequest:
         alt = None
         if 'alternativeText' in data:
             alt = data['alternativeText']
@@ -277,11 +277,11 @@ class AttachmentResponse:
 
 
 class CarouselCardResponse:
-    def __init__(self, title: str, imageUrl: str, subtitle: str, defaultAction: dict, buttons=Optional[List[ActionResponse]]):
+    def __init__(self, title: str, image_url: str, subtitle: str, default_action: dict, buttons=Optional[List[ActionResponse]]):
         self.title = title
-        self.imageUrl = imageUrl
+        self.image_url = image_url
         self.subtitle = subtitle
-        self.default_action = defaultAction
+        self.default_action = default_action
         self.buttons = buttons
 
     def to_repr(self) -> dict:
@@ -290,7 +290,7 @@ class CarouselCardResponse:
             buttons.append(ActionResponse.to_repr(action))
         return{
             'title': self.title,
-            'imageUrl': self.imageUrl,
+            'imageUrl': self.image_url,
             'subtitle': self.subtitle,
             'defaultAction': self.default_action,
             'buttons': buttons

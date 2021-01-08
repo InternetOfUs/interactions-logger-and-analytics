@@ -12,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
+from __future__ import absolute_import, annotations
 
+import json
+import uuid
+
+import celery
+from elasticsearch import Elasticsearch
 from flask import request, Response
 from flask_restful import Resource, abort
 
-# for handling elasticsearch
-from elasticsearch import Elasticsearch
-
-import uuid
-
-import logging
 from memex_logging.analytic.analytic import AnalyticComputation
 from memex_logging.analytic.aggregation import AggregationComputation
 
@@ -72,7 +71,6 @@ class AnalyticsPerformer(Resource):
             # Object to be stored: query + results inside of `query` and `result`
             if AnalyticComputation.analytic_validity_check(analytic):
                 metric = str(analytic['metric']).lower()
-                answer = None
                 json_response = {}
                 ac = AnalyticComputation()
                 if metric == "u:total":
@@ -201,7 +199,7 @@ class AnalyticsPerformer(Resource):
                         "static_id": static_id
                     }
                 elif metric == "m:notification_engagement":
-                    answer = ac.compute_m_notification_engagement(analytic, self._es, analytic['project'])
+                    answer = ac.compute_m_notification_engagement(analytic, self._es, analytic['project'])  # does not exists
                     json_response = {
                         "query": analytic,
                         "result": {
@@ -273,7 +271,7 @@ class AnalyticsPerformer(Resource):
                         "static_id": static_id
                     }
                 elif metric == "d:interrupted":
-                    answer = ac.compute_d_interrupted(analytic, self._es, analytic['project'])
+                    answer = ac.compute_d_interrupted(analytic, self._es, analytic['project'])  # does not exists
                     json_response = {
                         "query": analytic,
                         "result": {
@@ -309,7 +307,7 @@ class AnalyticsPerformer(Resource):
                         "static_id": static_id
                     }
                 elif metric == "b:retention":
-                    answer = ac.compute_b_retention(analytic, self._es, analytic['project'])
+                    answer = ac.compute_b_retention(analytic, self._es, analytic['project'])  # does not exists
                     json_response = {
                         "query": analytic,
                         "result": {
@@ -346,7 +344,6 @@ class AnalyticsPerformer(Resource):
         elif str(analytic['type']).lower() == "aggregation":
             if AggregationComputation.aggregation_validity_check(analytic):
                 metric = str(analytic['aggregation']).lower()
-                answer = None
                 json_response = {}
                 ac = AggregationComputation()
                 if metric == "max":
@@ -440,7 +437,7 @@ class AnalyticsPerformer(Resource):
                         "static_id": static_id
                     }
                 elif metric == "percentile_ranks":
-                    answer = ac.percentile_ranks_aggr(analytic, self._es, analytic['project'])
+                    answer = ac.percentile_ranks_aggr(analytic, self._es, analytic['project'])  # does not exists
                     json_response = {
                         "query": analytic,
                         "result": {
@@ -461,14 +458,15 @@ class AnalyticsPerformer(Resource):
         else:
             abort(500, message="Invalid value for field type")
 
+
 class GetNoClickPerUser(Resource):
 
-    def __init__(self, es:Elasticsearch):
+    def __init__(self, es: Elasticsearch):
         self._es = es
 
     def get(self):
         if 'userId' in request.args:
-            response = self._es.search(index="logging-memex*",body={"query": {"match": {"metadata.userId": request.args['userId']}}})
+            response = self._es.search(index="logging-memex*", body={"query": {"match": {"metadata.userId": request.args['userId']}}})
             if response['hits']['total']['value'] != 0:
                 click_collection = {}
                 # TODO check da qualche parte su namespace per capire se sto contando un evento
@@ -508,7 +506,7 @@ class GetNoClickPerUser(Resource):
 
 class GetNoClickPerEvent(Resource):
 
-    def __init__(self, es:Elasticsearch):
+    def __init__(self, es: Elasticsearch):
         self._es = es
 
     def get(self):
@@ -550,10 +548,9 @@ class GetNoClickPerEvent(Resource):
 
 class GetUsers(Resource):
 
-    def __init__(self, es:Elasticsearch):
+    def __init__(self, es: Elasticsearch):
         self._es = es
 
     def get(self):
         response = self._es.search(index="memex-log*", body={"query": {"match": {}}})
         print(response)
-

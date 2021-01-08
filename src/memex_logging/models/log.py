@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import annotations, absolute_import
+from __future__ import absolute_import, annotations
 
 import logging
 
 
 class Log:
 
-    def __init__(self, log_id: str, project: str, component: str, authority: str, severity: str, log_content: str, timestamp: str, bot_version: str, metadata: dict) -> None:
+    def __init__(self, log_id: str, project: str, component: str, authority: str, severity: str, log_content: str,
+                 timestamp: str, bot_version: str, metadata: dict) -> None:
         self.id = log_id
         self.project = project
         self.component = component
@@ -83,4 +84,5 @@ class Log:
         if 'metadata' in data:
             metadata = data['metadata']
 
-        return Log(data['logId'],str(data['project']).lower(),str(data['component']).lower(),authority, str(data['severity']).upper(),data['logContent'],data['timestamp'],bot_version,metadata)
+        return Log(data['logId'], str(data['project']).lower(), str(data['component']).lower(), authority,
+                   str(data['severity']).upper(), data['logContent'], data['timestamp'], bot_version, metadata)

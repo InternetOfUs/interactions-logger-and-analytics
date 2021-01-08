@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from flask import Response
-from flask_restful import Resource
+from __future__ import absolute_import, annotations
 
 import os
+
+from flask import Response
+from flask_restful import Resource
 
 
 class DocumentationResourceBuilder(object):

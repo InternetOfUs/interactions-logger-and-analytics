@@ -1,10 +1,11 @@
 aniso8601==6.0.0
+celery~=3.1.25
 certifi==2019.3.9
 chardet==3.0.4
 Click==7.0
 elasticsearch==7.0.0
-Flask==1.0.2
-Flask-RESTful==0.3.7
+Flask~=1.1.2
+Flask-RESTful==0.3.8
 gunicorn==19.9.0
 idna==2.8
 itsdangerous==1.1.0
@@ -15,4 +16,4 @@ pytz==2019.1
 requests==2.21.0
 six==1.12.0
 urllib3==1.24.2
-Werkzeug==0.15.2
+Werkzeug==1.0.1

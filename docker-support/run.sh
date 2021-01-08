@@ -15,8 +15,8 @@
 # limitations under the License.
 
 echo "Verifying env variables presence"
-declare -a REQUIRED_ENV_VARS=(  "${EL_HOST}",
-                                "${EL_PORT}",
+declare -a REQUIRED_ENV_VARS=(  "${EL_HOST}"
+                                "${EL_PORT}"
                               )
 
 for e in "${REQUIRED_ENV_VARS[@]}"
@@ -28,5 +28,5 @@ do
 done
 
 echo "Running ws interface"
-python -m memex_logging.ws_memex.runner -hs ${EL_HOST} -p ${EL_PORT}
-#gunicorn -w 4 -b 0.0.0.0:80 interface:application
+python -m memex_logging.ws_memex.main
+# gunicorn -w 4 -b 0.0.0.0:80 interface:application

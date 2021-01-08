@@ -12,26 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, annotations
 
 import argparse
+import os
 
 from elasticsearch import Elasticsearch
 
 from memex_logging.ws_memex.ws import WsInterface
 
+
 if __name__ == '__main__':
 
-    argParser = argparse.ArgumentParser()
-    argParser.add_argument("-hs", "--host", type=str, dest="h", default="localhost")
-    argParser.add_argument("-p", "--port", type=str, dest="p", default="9200")
-    args = argParser.parse_args()
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("-eh", "--ehost", type=str, dest="ehost", default=os.getenv("EL_HOST", "localhost"))
+    arg_parser.add_argument("-ep", "--eport", type=int, dest="eport", default=int(os.getenv("EL_PORT", 9200)))
+    arg_parser.add_argument("-wh", "--whost", type=str, dest="whost", default=os.getenv("WS_HOST", "0.0.0.0"))
+    arg_parser.add_argument("-wp", "--wport", type=int, dest="wport", default=int(os.getenv("WS_PORT", 80)))
+    args = arg_parser.parse_args()
 
-    es = Elasticsearch([{'host': args.h, 'port': args.p}])
+    es = Elasticsearch([{'host': args.ehost, 'port': args.eport}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
 
     ws = WsInterface(es)
 
     try:
-        ws.run_server()
+        ws.run_server(args.whost, args.wport)
     except KeyboardInterrupt:
         pass

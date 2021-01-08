@@ -12,21 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, annotations
 
 import json
-
-from flask import request, Response
-from flask_restful import Resource, abort
-
-from datetime import datetime
+import logging
 
 from elasticsearch import Elasticsearch
+from flask import request, Response
+from flask_restful import Resource, abort
 
 from memex_logging.models.message import RequestMessage, ResponseMessage, NotificationMessage
 from memex_logging.utils.utils import Utils
 
-import logging
 
 class MessageResourceBuilder(object):
 
@@ -49,27 +46,30 @@ class ManipulateMessage(Resource):
     def delete(self) -> Response:
         """
         Method to delete a message of a specific project by id
-        :param project: the name of the project
-        :param messageId: the id of the message
         :return: the HTTP response
         """
-        project = request.args.get('project')
-        messageId = request.args.get('messageId')
 
-        logging.warning("MESSAGES.API Starting to delete a message in project {} with id {}".format(project, messageId))
+        project = request.args.get('project')
+        message_id = request.args.get('messageId')
+        """
+        :param project: the name of the project
+        :param messageId: the id of the message
+        """
+
+        logging.warning("MESSAGES.API Starting to delete a message in project {} with id {}".format(project, message_id))
 
         query = {
             "query": {
                 "match": {
-                    "messageId": messageId
+                    "messageId": message_id
                 }
             }
         }
-        index = str(project).lower() + "-message-*"
+        index = "message-" + str(project).lower() + "-*"
         self._es.delete_by_query(index=index, body=query)
 
         json_response = {
-            "messageId": messageId,
+            "messageId": message_id,
             "action": "deleted",
             "code": 200
         }
@@ -78,7 +78,7 @@ class ManipulateMessage(Resource):
 
         return resp
 
-    def get(self)-> Response:
+    def get(self) -> Response:
         """
         Method to obtain a message of a specific project by id
         :return: the HTTP response
@@ -105,7 +105,7 @@ class ManipulateMessage(Resource):
             }
         else:
             logging.warning("MESSAGES.API Starting to look up for a message in project {} with id {}".format(project, message_id))
-            index = "message-" + str(project).lower() + "*"
+            index = "message-" + str(project).lower() + "-*"
             query = {
                 "query": {
                     "match": {
@@ -115,7 +115,7 @@ class ManipulateMessage(Resource):
             }
 
         response = self._es.search(index=index, body=query)
-        if response['hits']['total'] == 0:
+        if len(response['hits']['hits']) == 0:
             logging.error("No resource found for id {}".format(message_id))
             abort(404, message="resource not found")
         else:

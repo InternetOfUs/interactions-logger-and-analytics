@@ -12,25 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from elasticsearch import Elasticsearch
+from __future__ import absolute_import, annotations
+
 import logging
 
+import celery
+from elasticsearch import Elasticsearch
 from flask import Flask
 from flask_restful import Api
 
-from celery import Celery
-
-from memex_logging.ws_memex.documentation_api.main import DocumentationResourceBuilder
-from memex_logging.ws_memex.messages_api.main import MessageResourceBuilder
-from memex_logging.ws_memex.logging_api.main import LoggingResourceBuilder
-from memex_logging.ws_memex.performances_api.main import PerformancesResourceBuilder
-from memex_logging.ws_memex.analytics_api.main import  AnalyticsResourceBuilder
+from memex_logging.ws_memex.analytics_api.analytics_resource import AnalyticsResourceBuilder
+from memex_logging.ws_memex.documentation_api.documentation_resource import DocumentationResourceBuilder
+from memex_logging.ws_memex.logging_api.logging_resource import LoggingResourceBuilder
+from memex_logging.ws_memex.messages_api.messagges_resource import MessageResourceBuilder
+from memex_logging.ws_memex.performances_api.performances_resource import PerformancesResourceBuilder
 
 
 class WsInterface(object):
 
     def __init__(self, elastic: Elasticsearch) -> None:
-        self._app = Flask(__name__)
+        self._app = Flask("log-ws")
         self._app.config.update(
             CELERY_BROKER_URL='redis://localhost:6379',
             CELERY_RESULT_BACKEND='redis://localhost:6379'
@@ -39,21 +40,21 @@ class WsInterface(object):
         self._init_modules(elastic)
         self.make_celery(self._app)
 
-    def make_celery(app):
-        celery = Celery(
+    def make_celery(self, app):
+        celery_instance = celery.Celery(
             app.import_name,
             backend=app.config['CELERY_RESULT_BACKEND'],
             broker=app.config['CELERY_BROKER_URL']
         )
-        celery.conf.update(app.config)
+        celery_instance.conf.update(app.config)
 
-        class ContextTask(celery.Task):
+        class ContextTask(celery_instance.Task):
             def __call__(self, *args, **kwargs):
                 with app.app_context():
                     return self.run(*args, **kwargs)
 
         celery.Task = ContextTask
-        return celery
+        return celery_instance
 
     def _init_modules(self, elastic) -> None:
         active_routes = [
