@@ -13,9 +13,9 @@ info:
 
     1. messages: to store, retrieve and delete messages;
 
-    2. logging: to store, retrieve and delete logs;
+    2. logs: to store, retrieve and delete logs;
 
-    3. performances: to retrieve some performances of the system.
+    3. analytics/performances: to retrieve some performances of the system.
 
 
     A part from the entities and models representing the responses, there are three main entities involved in the system: `Message`, `Log` and `Performance`.
@@ -64,33 +64,47 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_201'
-          '405':
+                  $ref: '#/components/schemas/HTTP_201_list'
+          '400':
             description: malformed message
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_405'
+                  $ref: '#/components/schemas/HTTP_400'
+          '500':
+            description: malformed message
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/HTTP_500'
 
     /message:
       get:
         tags:
           - message
-        summary: Retrieve a single message by specifying the trace id
-        description: This end-point can be used to retrieve all the information of a single message
+        summary: Retrieve a single message
+        description: This end-point can be used to retrieve all the information of a single message, it is necessary to specify the `messageId` and the `project`, or instead of specifying these two parameters is possible to specify only the `traceId`
         parameters:
           - in: query
             name: project
             schema:
               type: string
+            example: "MeMex"
             required: true
             description: the name of the project related to the message you want to retrieve
           - in: query
             name: messageId
             schema:
               type: string
+            example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
             required: true
             description: the id of the message you want to retrieve
+          - in: query
+            name: traceId
+            schema:
+              type: string
+            example: "bcpg8XYBHD_pmQ1jA7b8"
+            description: the trace id of the message you want to retrieve
         responses:
           '200':
             description: success
@@ -101,30 +115,38 @@ paths:
                   - $ref: '#/components/schemas/RequestMessage'
                   - $ref: '#/components/schemas/ResponseMessage'
                   - $ref: '#/components/schemas/NotificationMessage'
-
+                example: {"messageId": "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8", "channel": "FACEBOOK", "userId": "USR-JDKHEIU2-31NJDTE94", "conversationId": "CONV-DAJKWPENVOA-314CAD", "timestamp": "2020-01-19 17:21:00", "content": {"type": "text", "value": "devo fare un bonifico di 40 euro"}, "domain": "pagamenti", "intent": {"name": "bonifico", "confidence": 0.87}, "entities": [{"type": "@city", "value": "Boston", "confidence": 0.94}], "project": "MeMex", "language": "IT", "metadata": {}, "type": "REQUEST"}
+          '400':
+            description: malformed request
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/HTTP_400'
           '404':
             description: message not found
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_404'
+                  $ref: '#/components/schemas/HTTP_404_basic'
 
       delete:
         tags:
           - message
         summary: Delete a message
-        description: This method should be used to delete a message from the database
+        description: This method should be used to delete a message from the database, it is necessary to specify the `messageId` and the `project`
         parameters:
           - in: query
             name: project
             schema:
               type: string
+            example: "MeMex"
             required: true
             description: the name of the project related to the message you want to retrieve
           - in: query
             name: messageId
             schema:
               type: string
+            example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
             required: true
             description: The id of the message
         responses:
@@ -134,12 +156,12 @@ paths:
               application/json:
                 schema:
                   $ref: '#/components/schemas/HTTP_200'
-          '404':
-            description: message not found
+          '400':
+            description: malformed request
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_404'
+                  $ref: '#/components/schemas/HTTP_400'
 
     # LOG APIS
     /logs:
@@ -159,13 +181,13 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_201'
-          '405':
+                  $ref: '#/components/schemas/HTTP_201_list'
+          '400':
             description: malformed log
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_405'
+                  $ref: '#/components/schemas/HTTP_400'
 
     /log:
       get:
@@ -253,7 +275,7 @@ paths:
         tags:
           - analytics
         summary: Require an analytic
-        description: This end-point allows to retrieve an analytic from the datavase
+        description: This end-point allows to retrieve an analytic from the database
         requestBody:
           content:
             application/json:
@@ -333,7 +355,7 @@ components:
   ####################
   schemas:
 
-    Messages: # TODO check if array of different messages allows also different types
+    Messages:
       type: array
       items:
         oneOf:
@@ -358,9 +380,9 @@ components:
           example: "CONV-DAJKWPENVOA-314CAD"
         timestamp:
           type: string
-          example: "2019-04-04:23.11.58"
+          example: "2020-01-19 17:21:00"
         content:
-          oneOf: # TODO add possibly examples for the other oneOf
+          oneOf:
             - $ref: '#/components/schemas/TextualRequest'
             - $ref: '#/components/schemas/ActionRequest'
             - $ref: '#/components/schemas/AttachmentRequest'
@@ -395,7 +417,7 @@ components:
         type:
           type: string
           example: "REQUEST"
-      required: # TODO check
+      required:
         - messageId
         - channel
         - userId
@@ -408,7 +430,7 @@ components:
       properties:
         messageId:
           type: string
-          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A9"
         conversationId:
           type: string
           example: "CONV-DOWI41-DAJPRTI3"
@@ -423,7 +445,7 @@ components:
           example: "1FKNSM-GEKRO2-DANK2-FJ33-DASDJOW"
         timestamp:
           type: string
-          example: "2019-04-04:23.11.58"
+          example: "2020-01-19 17:21:00"
         content:
           oneOf:
             - $ref: '#/components/schemas/TextualResponse'
@@ -431,6 +453,7 @@ components:
             - $ref: '#/components/schemas/AttachmentResponse'
             - $ref: '#/components/schemas/CarouselResponse'
             - $ref: '#/components/schemas/LocationResponse'
+          example: {"type": "text", "value": "va bene"}
         metadata:
           type: object
         project:
@@ -439,7 +462,7 @@ components:
         type:
           type: string
           example: "RESPONSE"
-      required: # TODO check
+      required:
         - messageId
         - channel
         - userId
@@ -453,7 +476,7 @@ components:
       properties:
         messageId:
           type: string
-          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A0"
         conversationId:
           type: string
           example: "CONV-DOWI41-DAJPRTI3"
@@ -465,7 +488,7 @@ components:
           example: "USR-JDKHEIU2-31NJDTE94"
         timestamp:
           type: string
-          example: "2019-04-04:23.11.58"
+          example: "2020-01-19 17:21:00"
         content:
           oneOf:
             - $ref: '#/components/schemas/TextualResponse'
@@ -473,6 +496,7 @@ components:
             - $ref: '#/components/schemas/AttachmentResponse'
             - $ref: '#/components/schemas/CarouselResponse'
             - $ref: '#/components/schemas/LocationResponse'
+          example: {"type": "text", "value": "attenzione, hai meno di 100 euro sul conto"}
         metadata:
           type: object
         project:
@@ -481,7 +505,7 @@ components:
         type:
           type: string
           example: "NOTIFICATION"
-      required: # TODO check
+      required:
         - messageId
         - channel
         - userId
@@ -911,7 +935,7 @@ components:
       properties:
         traceId:
           type: string
-          example: "DSADK-IPOWN-3G3478"
+          example: "bcpg8XYBHD_pmQ1jA7b8"
         status:
           type: string
           example: "Object Created"
@@ -956,12 +980,27 @@ components:
       properties:
         traceId:
           type: string
-          example: "DSADK-IPOWN-3G3478"
+          example: "bcpg8XYBHD_pmQ1jA7b8"
         status:
           type: string
           example: "Object Created"
         code:
           enum: ['201']
+          example: 201
+
+    HTTP_201_list:
+      type: object
+      properties:
+        traceIds:
+          type: array
+          items:
+            type: string
+            example: "bcpg8XYBHD_pmQ1jA7b8"
+        status:
+          type: string
+          example: "Objects Created"
+        code:
+          enum: [ '201' ]
           example: 201
 
     200_event_count:
@@ -994,12 +1033,32 @@ components:
         cose:
           enum: ['200']
 
+    HTTP_400:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "Malformed request"
+        code:
+          enum: [ '400' ]
+          example: 400
+
+    HTTP_404_basic:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "Resource not found"
+        code:
+          enum: [ '404' ]
+          example: 404
+
     HTTP_404:
       type: object
       properties:
         traceId:
           type: string
-          example: "DSADK-IPOWN-3G3478"
+          example: "bcpg8XYBHD_pmQ1jA7b8"
         status:
           type: string
           example: "Cannot find message {traceId} in the database"
@@ -1007,15 +1066,12 @@ components:
           enum: ['404']
           example: 404
 
-    HTTP_405:
+    HTTP_500:
       type: object
       properties:
-        traceId:
-          type: string
-          example: "DSADK-IPOWN-3G3478"
         status:
           type: string
-          example: "Field {name} is missing in the message"
+          example: "Internal server error"
         code:
-          enum: ['405']
-          example: 405
+          enum: [ '500' ]
+          example: 500

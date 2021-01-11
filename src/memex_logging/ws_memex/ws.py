@@ -15,6 +15,7 @@
 from __future__ import absolute_import, annotations
 
 import logging
+import os
 
 import celery
 from elasticsearch import Elasticsearch
@@ -33,8 +34,8 @@ class WsInterface(object):
     def __init__(self, elastic: Elasticsearch) -> None:
         self._app = Flask("log-ws")
         self._app.config.update(
-            CELERY_BROKER_URL='redis://localhost:6379',
-            CELERY_RESULT_BACKEND='redis://localhost:6379'
+            CELERY_BROKER=os.getenv("CELERY_BROKER", None),
+            CELERY_RESULT_BACKEND=os.getenv("CELERY_RESULT_BACKEND", None)
         )
         self._api = Api(app=self._app)
         self._init_modules(elastic)
@@ -44,7 +45,7 @@ class WsInterface(object):
         celery_instance = celery.Celery(
             app.import_name,
             backend=app.config['CELERY_RESULT_BACKEND'],
-            broker=app.config['CELERY_BROKER_URL']
+            broker=app.config['CELERY_BROKER']
         )
         celery_instance.conf.update(app.config)
 

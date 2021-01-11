@@ -46,8 +46,8 @@ class Intent:
 
 
 class UserInfoRequest:
-    def __init__(self, type: str, value: str) -> None:
-        self.type = type
+    def __init__(self, info_type: str, value: str) -> None:
+        self.type = info_type
         self.value = value
 
     def to_repr(self) -> dict:
@@ -323,7 +323,7 @@ class CarouselCardResponse:
 
 
 class CarouselResponse:
-    def __init__(self, cards=List[CarouselCardResponse]):
+    def __init__(self, cards: List[CarouselCardResponse]):
         self.cards = cards
 
     def to_repr(self) -> dict:
@@ -351,8 +351,8 @@ class CarouselResponse:
 
 
 class Entity:
-    def __init__(self, type: str, value: str, confidence: float):
-        self.type = type
+    def __init__(self, entity_type: str, value: str, confidence: float):
+        self.type = entity_type
         self.value = value
         self.confidence = confidence
 
@@ -523,8 +523,9 @@ class ResponseMessage:
         self.project = project
         self.type = "RESPONSE"
 
-        if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
-            raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextualResponse")
+        if content is not None:
+            if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
+                raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextualResponse")
 
         logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
 
@@ -535,6 +536,11 @@ class ResponseMessage:
         logging.info("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
+        local_content = None
+
+        if self.content is not None:
+            local_content = self.content.to_repr()
+
         return {
             'messageId': self.message_id,
             'conversationId': self.conversation_id,
@@ -542,7 +548,7 @@ class ResponseMessage:
             'userId': self.user_id,
             'responseTo': self.response_to,
             'timestamp': self.timestamp,
-            'content': self.content.to_repr(),
+            'content': local_content,
             'metadata': self.metadata,
             'project': self.project,
             'type': self.type
@@ -577,14 +583,9 @@ class ResponseMessage:
         else:
             conversation_id = None
 
-        if 'project' in data:
-            project = data['project']
-        else:
-            project = "memex"
-
         logging.warning("MODELS.MESSAGE default parameters set up for ".format(data['messageId']))
 
-        return ResponseMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['responseTo'], data['timestamp'], content, metadata, project)
+        return ResponseMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['responseTo'], data['timestamp'], content, metadata, data['project'])
 
 
 class NotificationMessage:
@@ -602,8 +603,9 @@ class NotificationMessage:
         self.project = project
         self.type = "NOTIFICATION"
 
-        if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
-            raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextualResponse")
+        if content is not None:
+            if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
+                raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextualResponse")
 
         logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
 
@@ -614,6 +616,10 @@ class NotificationMessage:
         logging.info("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
+        local_content = None
+
+        if self.content is not None:
+            local_content = self.content.to_repr()
 
         return {
             'messageId': self.message_id,
@@ -621,7 +627,7 @@ class NotificationMessage:
             'channel': self.channel,
             'userId': self.user_id,
             'timestamp': self.timestamp,
-            'content': self.content.to_repr(),
+            'content': local_content,
             'metadata': self.metadata,
             'project': self.project,
             'type': self.type

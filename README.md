@@ -12,11 +12,17 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-It is web service. How does it work?
+It is web service. It could be used to store, retrive and delete messages (+ logs and analytics/performances but not sure they work).
 
-Need an Elasticsearch for starting and saving data.
+The web service need an Elasticsearch database for saving data.
 
-Need a redis for celery?
+It could be used a Celery (Distributed Task Queue) instance in posting the analytics.
+It requires a broker and a backend. An example to use it, having a Redis instance on the `localhost` on the port `6379`, is by setting the two env vars in this way:
+
+```python
+CELERY_BROKER='redis://localhost:6379'
+CELERY_RESULT_BACKEND='redis://localhost:6379'
+```
 
 
 ## Setup and configuration
@@ -40,7 +46,9 @@ The web service allows to set the following environment variables:
 - `EL_HOST` (optional, the default value is `localhost`): the host where the Elasticsearch database is going to be available, can be set also using the argument `-eh` or `--ehost`;
 - `EL_PORT`(optional, the default value is `9200`): the port where the Elasticsearch database is going to be available, can be set also using the argument `-ep` or `--eport`;
 - `EL_USERNAME` (optional for versions of Elasticsearch < `7`): the username of the user to access the Elasticsearch database;
-- `EL_PASSWORD` (optional for versions of Elasticsearch < `7`): the password of the user to access the Elasticsearch database.
+- `EL_PASSWORD` (optional for versions of Elasticsearch < `7`): the password of the user to access the Elasticsearch database;
+- `CELERY_BROKER` (optional, the default value is `None`): the information about the broker;
+- `CELERY_RESULT_BACKEND` (optional, the default value is `None`): the information about the result backend.
 
 
 ## Usage

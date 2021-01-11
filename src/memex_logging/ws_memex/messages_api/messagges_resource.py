@@ -30,7 +30,7 @@ class MessageResourceBuilder(object):
     @staticmethod
     def routes(es: Elasticsearch):
         return [
-            (ManipulateMessage, '/message/', (es,)),
+            (ManipulateMessage, '/message', (es,)),
             (LogMessages, '/messages', (es,))
         ]
 
@@ -49,62 +49,10 @@ class ManipulateMessage(Resource):
         :return: the HTTP response
         """
 
-        project = request.args.get('project')
-        message_id = request.args.get('messageId')
-        """
-        :param project: the name of the project
-        :param messageId: the id of the message
-        """
-
-        logging.warning("MESSAGES.API Starting to delete a message in project {} with id {}".format(project, message_id))
-
-        query = {
-            "query": {
-                "match": {
-                    "messageId": message_id
-                }
-            }
-        }
-        index = "message-" + str(project).lower() + "-*"
-        self._es.delete_by_query(index=index, body=query)
-
-        json_response = {
-            "messageId": message_id,
-            "action": "deleted",
-            "code": 200
-        }
-        resp = Response(json.dumps(json_response), mimetype='application/json')
-        resp.status_code = 200
-
-        return resp
-
-    def get(self) -> Response:
-        """
-        Method to obtain a message of a specific project by id
-        :return: the HTTP response
-        """
         if 'project' in request.args and 'messageId' in request.args:
             project = request.args.get('project')
             message_id = request.args.get('messageId')
-            is_generic = 0
-        elif 'id' in request.args:
-            message_id = request.args.get("id")
-            is_generic = 1
-        else:
-            logging.error("MESSAGES.API cannot parse query parameters correctly while elaborating a get")
-
-        if is_generic:
-            logging.warning("MESSAGES.API Starting to look up for a message with id {}".format(message_id))
-            index = "*"
-            query = {
-                "query": {
-                    "match": {
-                        "_id": message_id
-                    }
-                }
-            }
-        else:
-            logging.warning("MESSAGES.API Starting to look up for a message in project {} with id {}".format(project, message_id))
+            logging.warning("MESSAGES.API Starting to delete a message in project {} with messageId {}".format(project, message_id))
             index = "message-" + str(project).lower() + "-*"
             query = {
                 "query": {
@@ -113,24 +61,76 @@ class ManipulateMessage(Resource):
                     }
                 }
             }
+        else:
+            logging.error("MESSAGES.API cannot parse query parameters correctly while elaborating a delete")
+            resp = Response(json.dumps({"status": "Malformed request: missing required parameter, you have to specify `messageId` and the `project`", "code": 400}), mimetype='application/json')
+            resp.status_code = 400
+            return resp
+
+        self._es.delete_by_query(index=index, body=query)
+        json_response = {
+            "messageId": message_id,
+            "action": "deleted",
+            "code": 200
+        }
+        resp = Response(json.dumps(json_response), mimetype='application/json')
+        resp.status_code = 200
+        return resp
+
+    def get(self) -> Response:
+        """
+        Method to obtain a message of a specific project by id
+        :return: the HTTP response
+        """
+
+        if 'project' in request.args and 'messageId' in request.args:
+            project = request.args.get('project')
+            message_id = request.args.get('messageId')
+            logging.warning("MESSAGES.API Starting to look up for a message in project {} with messageId {}".format(project, message_id))
+            index = "message-" + str(project).lower() + "-*"
+            query = {
+                "query": {
+                    "match": {
+                        "messageId": message_id
+                    }
+                }
+            }
+        elif 'traceId' in request.args:
+            trace_id = request.args.get("traceId")
+            logging.warning("MESSAGES.API Starting to look up for a message with traceId {}".format(trace_id))
+            index = "*"
+            query = {
+                "query": {
+                    "match": {
+                        "_id": trace_id
+                    }
+                }
+            }
+        else:
+            logging.error("MESSAGES.API cannot parse query parameters correctly while elaborating a get")
+            resp = Response(json.dumps({"status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `messageId` and the `project`", "code": 400}), mimetype='application/json')
+            resp.status_code = 400
+            return resp
 
         response = self._es.search(index=index, body=query)
         if len(response['hits']['hits']) == 0:
-            logging.error("No resource found for id {}".format(message_id))
-            abort(404, message="resource not found")
+            logging.error("No resource found")
+            resp = Response(json.dumps({"status": "Resource not found`", "code": 404}), mimetype='application/json')
+            resp.status_code = 404
+            return resp
         else:
             logging.info("Succeed in retrieving the message")
             resp = Response(json.dumps(response['hits']['hits'][0]['_source']), mimetype='application/json')
             resp.status_code = 200
-
             return resp
 
 
 class LogMessages(Resource):
     """
     This class can be used to log an array of messages. The only method allowed is post
-    This method log the messages with index <project-name>-message-<yyyy>-<mm>-<dd
+    This method log the messages with index <project-name>-message-<yyyy>-<mm>-<dd>
     """
+
     def __init__(self, es: Elasticsearch):
         self._es = es
 
@@ -143,57 +143,94 @@ class LogMessages(Resource):
         logging.warning("MESSAGES.API Starting to log a new set of messages")
 
         messages_received = request.json
-        message_ids = []
+        if messages_received is None:
+            logging.error("MESSAGES.API malformed request, data is missing")
+            resp = Response(json.dumps({"status": "Malformed request: data is missing", "code": 400}), mimetype='application/json')
+            resp.status_code = 400
+            return resp
+        trace_ids = []
 
         for message in messages_received:
 
-            type = str(message['type']).lower()
-            utils = Utils()
+            try:
+                message_type = str(message['type']).lower()
+                message_id = str(message['messageId'])
+                project_name = Utils.extract_project_name(message)
+                date = Utils.extract_date(message)
+                index_name = "message-" + project_name + "-" + date
+            except KeyError as e:
+                logging.exception("MESSAGES.API request message failed to be logged due to malformed request", exc_info=e)
+                logging.error(message)
+                resp = Response(json.dumps({"status": "Malformed request: error in parsing messages", "code": 400}), mimetype='application/json')
+                resp.status_code = 400
+                return resp
+            except Exception as e:
+                logging.exception("MESSAGES.API request message failed to be logged", exc_info=e)
+                logging.error(message)
+                resp = Response(json.dumps({"status": "Internal server error: could not parsing messages", "code": 500}), mimetype='application/json')
+                resp.status_code = 500
+                return resp
 
-            id = str(message['messageId'])
-
-            if type == 'request':
+            if message_type == 'request':
                 try:
                     request_message = RequestMessage.from_rep(message)
-                    project_name = utils.extract_project_name(message)
-                    date = utils.extract_date(message)
-                    index_name = "message-" + project_name + "-" + date
-                    utils.compute_conversation_id(self._es, request_message)
+                    Utils.compute_conversation_id(self._es, request_message)
                     query = self._es.index(index=index_name, doc_type='_doc', body=request_message.to_repr())
-                    message_ids.append(query['_id'])
-                except Exception as e:
-                    logging.exception("MESSAGES.API request message with id {} failed to be logged".format(id), exc_info=e)
+                    trace_ids.append(query['_id'])
+                except KeyError as e:
+                    logging.exception("MESSAGES.API request message with id {} failed to be logged due to malformed request".format(message_id), exc_info=e)
                     logging.error(message)
-            elif type == "response":
+                    resp = Response(json.dumps({"status": "Malformed request: error in parsing data", "code": 400}), mimetype='application/json')
+                    resp.status_code = 400
+                    return resp
+                except Exception as e:
+                    logging.exception("MESSAGES.API request message with id {} failed to be logged".format(message_id), exc_info=e)
+                    logging.error(message)
+                    resp = Response(json.dumps({"status": "Internal server error: could not store messages", "code": 500}), mimetype='application/json')
+                    resp.status_code = 500
+                    return resp
+            elif message_type == "response":
                 try:
                     response_message = ResponseMessage.from_rep(message)
-                    project_name = utils.extract_project_name(message)
-                    date = utils.extract_date(message)
-                    index_name = "message-" + project_name + "-" + date
                     query = self._es.index(index=index_name, doc_type='_doc', body=response_message.to_repr())
-                    message_ids.append(query['_id'])
-                except Exception as e:
-                    logging.exception("MESSAGES.API response message with id {} failed to be logged".format(id), exc_info=e)
+                    trace_ids.append(query['_id'])
+                except KeyError as e:
+                    logging.exception("MESSAGES.API request message with id {} failed to be logged due to malformed request".format(message_id), exc_info=e)
                     logging.error(message)
-            elif type == "notification":
+                    resp = Response(json.dumps({"status": "Malformed request: error in parsing data", "code": 400}), mimetype='application/json')
+                    resp.status_code = 400
+                    return resp
+                except Exception as e:
+                    logging.exception("MESSAGES.API response message with id {} failed to be logged".format(message_id), exc_info=e)
+                    logging.error(message)
+                    resp = Response(json.dumps({"status": "Internal server error: could not store messages", "code": 500}), mimetype='application/json')
+                    resp.status_code = 500
+                    return resp
+            elif message_type == "notification":
                 try:
                     notification_message = NotificationMessage.from_rep(message)
-                    project_name = utils.extract_project_name(message)
-                    date = utils.extract_date(message)
-                    index_name = "message-" + project_name + "-" + date
                     query = self._es.index(index=index_name, doc_type='_doc', body=notification_message.to_repr())
-                    message_ids.append(query['_id'])
-                except Exception as e:
-                    logging.exception("MESSAGES.API request message with id {} failed to be logged".format(id), exc_info=e)
+                    trace_ids.append(query['_id'])
+                except KeyError as e:
+                    logging.exception("MESSAGES.API request message with id {} failed to be logged due to malformed request".format(message_id), exc_info=e)
                     logging.error(message)
+                    resp = Response(json.dumps({"status": "Malformed request: error in parsing data", "code": 400}), mimetype='application/json')
+                    resp.status_code = 400
+                    return resp
+                except Exception as e:
+                    logging.exception("MESSAGES.API request message with id {} failed to be logged".format(message_id), exc_info=e)
+                    logging.error(message)
+                    resp = Response(json.dumps({"status": "Internal server error: could not store messages", "code": 500}), mimetype='application/json')
+                    resp.status_code = 500
+                    return resp
 
         json_response = {
-            "messageId": message_ids,
+            "traceIds": trace_ids,
             "status": "ok",
-            "code": 200
+            "code": 201
         }
 
         resp = Response(json.dumps(json_response), mimetype='application/json')
-        resp.status_code = 200
+        resp.status_code = 201
 
         return resp
