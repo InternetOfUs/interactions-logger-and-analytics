@@ -51,7 +51,7 @@ paths:
       post:
         tags:
           - message
-        summary: Add a batch of messages to the database
+        summary: Add a batch of messages
         description: This end-point allows to log a set of messages into the database
         requestBody:
           content:
@@ -60,7 +60,7 @@ paths:
                 $ref: '#/components/schemas/Messages'
         responses:
           '201':
-            description: success
+            description: messages stored
             content:
               application/json:
                 schema:
@@ -105,7 +105,7 @@ paths:
             description: the trace id of the message you want to retrieve
         responses:
           '200':
-            description: success
+            description: message retrived
             content:
               application/json:
                 schema:
@@ -145,21 +145,21 @@ paths:
               type: string
             example: "MeMex"
             required: true
-            description: the name of the project related to the message you want to retrieve
+            description: the name of the project related to the message you want to delete
           - in: query
             name: messageId
             schema:
               type: string
             example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
             required: true
-            description: The id of the message
+            description: The id of the message you want to delete
         responses:
           '200':
-            description: Message removed
+            description: message deleted
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_200'
+                  $ref: '#/components/schemas/HTTP_200_MESSAGE'
           '400':
             description: malformed request
             content:
@@ -948,9 +948,22 @@ components:
           example: "bcpg8XYBHD_pmQ1jA7b8"
         status:
           type: string
-          example: "Object Created"
+          example: "Object deleted"
         code:
           enum: ['200']
+          example: 200
+
+    HTTP_200_MESSAGE:
+      type: object
+      properties:
+        messageId:
+          type: string
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+        action:
+          type: string
+          example: "deleted"
+        code:
+          enum: [ '200' ]
           example: 200
 
     HTTP_200_ANALYTIC:

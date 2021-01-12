@@ -31,7 +31,7 @@ Please mark the `src` folder as source route.
 
 ### Required Python Packages
 
-All required Python packages can be installed using the command:
+Required Python packages can be installed using the command:
 
 ```bash
 pip install -r requirements.txt
@@ -41,14 +41,14 @@ pip install -r requirements.txt
 
 The web service allows to set the following environment variables:
 
-- `WS_HOST` (optional, the default value is `0.0.0.0`): the host where the web service is going to be available, it can also be set using the argument `-wh` or `--whost` when manually running the Python service;
-- `WS_PORT`(optional, the default value is `80`): the port where the web service is going to be available, it can also be set using the argument `-wp` or `--wport` when manually running the Python service;
-- `EL_HOST` (optional, the default value is `localhost`): the host where the Elasticsearch database is going to be available, it can also be set using the argument `-eh` or `--ehost` when manually running the Python service;
-- `EL_PORT`(optional, the default value is `9200`): the port where the Elasticsearch database is going to be available, it can also be set using the argument `-ep` or `--eport` when manually running the Python service;
-- `EL_USERNAME` (optional for versions of Elasticsearch < `7`): the username of the user to access the Elasticsearch database, it can also be set using the argument `-eh` or `--ehost` when manually running the Python service;
-- `EL_PASSWORD` (optional for versions of Elasticsearch < `7`): the password of the user to access the Elasticsearch database, it can also be set using the argument `-ep` or `--eport` when manually running the Python service;
-- `CELERY_BROKER` (optional, the default value is `None`): the information about the broker to use the Celery instance, it must be in the following format: `<broker_name>://<host>:<port>`;
-- `CELERY_RESULT_BACKEND` (optional, the default value is `None`): the information about the result backend to use the Celery instance, it must be in the following format: `<backend_result_name>://<host>:<port>`.
+* `WS_HOST` (optional, the default value is `0.0.0.0`): the host where the web service is going to be available, it can also be set using the argument `-wh` or `--whost` when manually running the Python service;
+* `WS_PORT`(optional, the default value is `80`): the port where the web service is going to be available, it can also be set using the argument `-wp` or `--wport` when manually running the Python service;
+* `EL_HOST` (optional, the default value is `localhost`): the host where the Elasticsearch database is going to be available, it can also be set using the argument `-eh` or `--ehost` when manually running the Python service;
+* `EL_PORT`(optional, the default value is `9200`): the port where the Elasticsearch database is going to be available, it can also be set using the argument `-ep` or `--eport` when manually running the Python service;
+* `EL_USERNAME` (optional for versions of Elasticsearch < `7`): the username of the user to access the Elasticsearch database, it can also be set using the argument `-eh` or `--ehost` when manually running the Python service;
+* `EL_PASSWORD` (optional for versions of Elasticsearch < `7`): the password of the user to access the Elasticsearch database, it can also be set using the argument `-ep` or `--eport` when manually running the Python service;
+* `CELERY_BROKER` (optional, the default value is `None`): the information about the broker to use the Celery instance, it must be in the following format: `<broker_name>://<host>:<port>`;
+* `CELERY_RESULT_BACKEND` (optional, the default value is `None`): the information about the result backend to use the Celery instance, it must be in the following format: `<backend_result_name>://<host>:<port>`.
 
 
 ## Usage
