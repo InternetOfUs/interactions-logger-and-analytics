@@ -19,7 +19,11 @@ from typing import Optional, List
 import logging
 
 
+logger = logging.getLogger("logger.models.message")
+
+
 class Intent:
+
     def __init__(self, name: str, confidence: float) -> None:
         self.name = name
         self.confidence = confidence
@@ -46,6 +50,7 @@ class Intent:
 
 
 class UserInfoRequest:
+
     def __init__(self, info_type: str, value: str) -> None:
         self.type = info_type
         self.value = value
@@ -66,6 +71,7 @@ class UserInfoRequest:
 
 
 class LocationRequest:
+
     def __init__(self, latitude: float, longitude: float) -> None:
         self.latitude = latitude
         self.longitude = longitude
@@ -89,6 +95,7 @@ class LocationRequest:
 
 
 class ActionRequest:
+
     def __init__(self, value):
         self.value = value
 
@@ -107,6 +114,7 @@ class ActionRequest:
 
 
 class ActionResponse:
+
     def __init__(self, button_text: str, button_id: str):
         self.button_text = button_text
         self.button_id = button_id
@@ -135,6 +143,7 @@ class ActionResponse:
 
 
 class MultiActionResponse:
+
     def __init__(self, buttons=Optional[List[ActionResponse]]):
         self.buttons = buttons
 
@@ -163,6 +172,7 @@ class MultiActionResponse:
 
 
 class TextualRequest:
+
     def __init__(self, value: str):
         self.value = value
 
@@ -181,6 +191,7 @@ class TextualRequest:
 
 
 class TextualResponse:
+
     def __init__(self, value: str, buttons=Optional[List[ActionResponse]]) -> None:
         self.value = value
         self.buttons = buttons
@@ -211,6 +222,7 @@ class TextualResponse:
 
 
 class AttachmentRequest:
+
     def __init__(self, uri: str, alternative_text: str):
         self.uri = uri
         self.alternative_text = alternative_text
@@ -233,6 +245,7 @@ class AttachmentRequest:
 
 
 class AttachmentResponse:
+
     def __init__(self, uri: str, alternative_text="", buttons=Optional[List[ActionResponse]]):
         """
         Create an AttachmentResponse Object. An attachment response is a response containing only a media
@@ -277,6 +290,7 @@ class AttachmentResponse:
 
 
 class CarouselCardResponse:
+
     def __init__(self, title: str, image_url: str, subtitle: str, default_action: dict, buttons=Optional[List[ActionResponse]]):
         self.title = title
         self.image_url = image_url
@@ -323,6 +337,7 @@ class CarouselCardResponse:
 
 
 class CarouselResponse:
+
     def __init__(self, cards: List[CarouselCardResponse]):
         self.cards = cards
 
@@ -351,6 +366,7 @@ class CarouselResponse:
 
 
 class Entity:
+
     def __init__(self, entity_type: str, value: str, confidence: float):
         self.type = entity_type
         self.value = value
@@ -378,7 +394,7 @@ class RequestMessage:
 
     def __init__(self, message_id: str, channel: str, user_id: str, conversation_id: str, timestamp: str, content, domain: str,  intent: Intent, entities: list, project: str,
                  language: str, metadata: dict) -> None:
-        logging.info("MODELS.MESSAGE creating a RequestMessage object for ".format(message_id))
+        logging.debug("MODELS.MESSAGE creating a RequestMessage object for ".format(message_id))
 
         self.message_id = message_id
         self.channel = channel
@@ -396,25 +412,25 @@ class RequestMessage:
         if not isinstance(intent, Intent):
             raise ValueError('intent type should be Intent')
 
-        logging.info("MODELS.MESSAGE  intent check passed for ".format(message_id))
+        logging.debug("MODELS.MESSAGE  intent check passed for ".format(message_id))
 
         if metadata is not None:
             if not isinstance(metadata, dict):
                 raise ValueError('metadata type should be dictionary')
 
-        logging.info("MODELS.MESSAGE  metadata check passed for ".format(message_id))
+        logging.debug("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
         if content is not None:
             if not (isinstance(content, TextualRequest) or isinstance(content, ActionRequest) or isinstance(content, AttachmentRequest) or isinstance(content, LocationRequest) or isinstance(content, UserInfoRequest)):
                 raise ValueError("content should be TextRequest, ActionRequest, AttachmentRequest, UserInfoRequest or LocationRequest")
 
-        logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
+        logging.debug("MODELS.MESSAGE  content check passed for ".format(message_id))
 
         for entity in entities:
             if not isinstance(entity, Entity):
                 raise ValueError('entities should contains only object with type Entity')
 
-        logging.info("MODELS.MESSAGE  entity check passed for ".format(message_id))
+        logging.debug("MODELS.MESSAGE  entity check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
         entities = []
@@ -450,7 +466,7 @@ class RequestMessage:
     @staticmethod
     def from_rep(data: dict):
 
-        logging.info("MODELS.MESSAGE starting logging a REQUEST message {}".format(data['messageId']))
+        logging.debug("MODELS.MESSAGE starting logging a REQUEST message {}".format(data['messageId']))
 
         if 'intent' in data:
             intent = Intent.from_rep(data['intent'])
@@ -508,9 +524,10 @@ class RequestMessage:
 
 
 class ResponseMessage:
+
     def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, response_to: str, timestamp: str, content, metadata: dict, project: str):
 
-        logging.info("MODELS.MESSAGE creating a ResponseMessage object for {}".format(message_id))
+        logging.debug("MODELS.MESSAGE creating a ResponseMessage object for {}".format(message_id))
 
         self.message_id = message_id
         self.conversation_id = conversation_id
@@ -527,13 +544,13 @@ class ResponseMessage:
             if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
                 raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextualResponse")
 
-        logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
+        logging.debug("MODELS.MESSAGE  content check passed for ".format(message_id))
 
         if metadata is not None:
             if not isinstance(metadata, dict):
                 raise ValueError('metadata type should be dictionary')
 
-        logging.info("MODELS.MESSAGE  metadata check passed for ".format(message_id))
+        logging.debug("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
         local_content = None
@@ -557,7 +574,7 @@ class ResponseMessage:
     @staticmethod
     def from_rep(data: dict):
 
-        logging.info("MODELS.MESSAGE starting logging a RESPONSE message{}".format(data['messageId']))
+        logging.debug("MODELS.MESSAGE starting logging a RESPONSE message{}".format(data['messageId']))
 
         metadata = None
         if "metadata" in data:
@@ -583,15 +600,16 @@ class ResponseMessage:
         else:
             conversation_id = None
 
-        logging.warning("MODELS.MESSAGE default parameters set up for ".format(data['messageId']))
+        logging.warning("MODELS.MESSAGE default parameters set up for {}".format(data['messageId']))
 
         return ResponseMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['responseTo'], data['timestamp'], content, metadata, data['project'])
 
 
 class NotificationMessage:
+
     def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, timestamp: str, content, metadata: dict, project: str):
 
-        logging.info("MODELS.MESSAGE creating a NotificationMessage object for ".format(message_id))
+        logging.debug("MODELS.MESSAGE creating a NotificationMessage object for ".format(message_id))
 
         self.message_id = message_id
         self.conversation_id = conversation_id
@@ -607,13 +625,13 @@ class NotificationMessage:
             if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
                 raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextualResponse")
 
-        logging.info("MODELS.MESSAGE  content check passed for ".format(message_id))
+        logging.debug("MODELS.MESSAGE  content check passed for ".format(message_id))
 
         if metadata is not None:
             if not isinstance(metadata, dict):
                 raise ValueError('metadata type should be dictionary')
 
-        logging.info("MODELS.MESSAGE  metadata check passed for ".format(message_id))
+        logging.debug("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
         local_content = None
@@ -636,7 +654,7 @@ class NotificationMessage:
     @staticmethod
     def from_rep(data: dict):
 
-        logging.info("MODELS.MESSAGE starting logging a NOTIFICATION message{}".format(data['messageId']))
+        logging.debug("MODELS.MESSAGE starting logging a NOTIFICATION message{}".format(data['messageId']))
 
         metadata = None
         if "metadata" in data:
@@ -662,6 +680,6 @@ class NotificationMessage:
         else:
             conversation_id = None
 
-        logging.warning("MODELS.MESSAGE default parameters set up for ".format(data['messageId']))
+        logging.warning("MODELS.MESSAGE default parameters set up for {}".format(data['messageId']))
 
         return NotificationMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['timestamp'], content, metadata, data['project'])
