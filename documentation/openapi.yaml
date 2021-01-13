@@ -5,21 +5,22 @@ openapi: 3.0.0
 # Optional info section
 #######################
 info:
+
   title: Memorable Experience
-  description: "This document details the APIs exposed by the MemEx big data platform, realise by U-Hoppper srl within the context of the FESR-funded Memorable Experiences (MemEx) project. The platform logs all interactions among tourists and a purposefully designed chatbot.
+  description: "This document details the APIs exposed by the MemEx big data platform, realise by U-Hopper srl within the context of the FESR-funded Memorable Experiences (MemEx) project. The platform logs all interactions among tourists and a purposefully designed chatbot.
 
-    There are three kind of implemented APIs
+    There are three kind of implemented APIs:
 
-    1. messages: to store, retrieve and delete messages.
+    1. messages: to store, retrieve and delete messages;
 
-    2. logging: to store, retrieve and delete logs
+    2. logs: to store, retrieve and delete logs;
 
-    3. performances: to retrieve some performances of the system
+    3. analytics/performances: to retrieve some performances of the system.
 
 
     A part from the entities and models representing the responses, there are three main entities involved in the system: `Message`, `Log` and `Performance`.
 
-    A message can be a `ResponseMessage`, a `RequestMessage` or a `Notification`. A response message represents a response to a request message while the latter represent a message from the user. A notification is a special kind of message sent by, for example, by the local administration or the hotel.
+    A message can be a `ResponseMessage`, a `RequestMessage` or a `Notification`. A response message represents a response to a request message while the latter represent a message from the user. A notification is a special kind of message sent, for example, by the local administration or the hotel.
 
 
     Concerning `Log`, it represents a metric to track the status of the system and what drove to a particular choice.
@@ -30,10 +31,12 @@ info:
   contact:
     email: "massimiliano.luca@unitn.it"
 
-servers:
-  - url: memex.u-hopper.com
+# servers:
+#   - url: memex.u-hopper.com
+#   - url: http://0.0.0.0:80/
 
 tags:
+
   - name: message
     description: APIs to log the conversation into the database
   - name: logging
@@ -41,15 +44,14 @@ tags:
   - name: analytics
     description: APIs to retrieve useful information from the database. What follows can be used to analyze the performances of the bot
 
-
 paths:
-    # MESSAGES APIs
 
-    /logging/messages:
+    # MESSAGES APIS
+    /messages:
       post:
         tags:
           - message
-        summary: Add a batch of messages to the database
+        summary: Add a batch of messages
         description: This end-point allows to log a set of messages into the database
         requestBody:
           content:
@@ -58,40 +60,52 @@ paths:
                 $ref: '#/components/schemas/Messages'
         responses:
           '201':
-            description: success
+            description: messages stored
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_201'
-          '405':
+                  $ref: '#/components/schemas/HTTP_201_list'
+          '400':
             description: malformed message
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_405'
+                  $ref: '#/components/schemas/HTTP_400'
+          '500':
+            description: internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/HTTP_500'
 
-    /logging/message:
+    /message:
       get:
         tags:
           - message
-        summary: Retrieve a single message by specifying the trace id
-        description: This end-point can be used to retrieve all the information of a single message
+        summary: Retrieve a single message
+        description: This end-point can be used to retrieve all the information of a single message, it is necessary to specify the `messageId` and the `project`, or instead of specifying these two parameters is possible to specify only the `traceId`
         parameters:
           - in: query
             name: project
             schema:
               type: string
-            required: true
+            example: "MeMex"
             description: the name of the project related to the message you want to retrieve
           - in: query
             name: messageId
             schema:
               type: string
-            required: true
+            example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
             description: the id of the message you want to retrieve
+          - in: query
+            name: traceId
+            schema:
+              type: string
+            example: "bcpg8XYBHD_pmQ1jA7b8"
+            description: the trace id of the message you want to retrieve
         responses:
           '200':
-            description: success
+            description: message retrived
             content:
               application/json:
                 schema:
@@ -99,71 +113,68 @@ paths:
                   - $ref: '#/components/schemas/RequestMessage'
                   - $ref: '#/components/schemas/ResponseMessage'
                   - $ref: '#/components/schemas/NotificationMessage'
-
+                example: {"messageId": "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8", "channel": "FACEBOOK", "userId": "USR-JDKHEIU2-31NJDTE94", "conversationId": "CONV-DAJKWPENVOA-314CAD", "timestamp": "2020-01-19 17:21:00", "content": {"type": "text", "value": "devo fare un bonifico di 40 euro"}, "domain": "pagamenti", "intent": {"name": "bonifico", "confidence": 0.87}, "entities": [{"type": "@city", "value": "Boston", "confidence": 0.94}], "project": "MeMex", "language": "IT", "metadata": {}, "type": "REQUEST"}
+          '400':
+            description: malformed request
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/HTTP_400'
           '404':
             description: message not found
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_404'
-
-      put:
-        tags:
-          - message
-        summary: Update a message
-        description: Update a message that is already stored in the database
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: string
-            required: true
-            description: The id of the message
-        responses:
-          '200':
-            description: Message updated
+                  $ref: '#/components/schemas/HTTP_404_basic'
+          '500':
+            description: internal server error
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_201'
-          '404':
-            description: message not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_404'
+                  $ref: '#/components/schemas/HTTP_500'
 
       delete:
         tags:
           - message
         summary: Delete a message
-        description: This method should be used to delete a message from the database
+        description: This method should be used to delete a message from the database, it is necessary to specify the `messageId` and the `project`
         parameters:
-          - in: path
-            name: id
+          - in: query
+            name: project
             schema:
               type: string
+            example: "MeMex"
             required: true
-            description: The id of the message
+            description: the name of the project related to the message you want to delete
+          - in: query
+            name: messageId
+            schema:
+              type: string
+            example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+            required: true
+            description: The id of the message you want to delete
         responses:
           '200':
-            description: Message removed
+            description: message deleted
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_200'
-          '404':
-            description: message not found
+                  $ref: '#/components/schemas/HTTP_200_MESSAGE'
+          '400':
+            description: malformed request
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_404'
+                  $ref: '#/components/schemas/HTTP_400'
+          '500':
+            description: internal server error
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/HTTP_500'
 
-
-
-    # GENERAL LOGGING APIS
-
-    /logging/logs:
+    # LOG APIS
+    /logs:
       post:
         tags:
           - logging
@@ -180,15 +191,15 @@ paths:
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_201'
-          '405':
+                  $ref: '#/components/schemas/HTTP_201_list'
+          '400':
             description: malformed log
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_405'
+                  $ref: '#/components/schemas/HTTP_400'
 
-    /logging/log/{id}:
+    /log:
       get:
         tags:
           - logging
@@ -268,15 +279,13 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_404'
 
-    # ANALYTICS
-    # GENERAL LOGGING APIS
-
-    /logging/analytics:
+    # ANALYTICS APIS
+    /analytics:
       post:
         tags:
           - analytics
         summary: Require an analytic
-        description: This end-point allows to retrieve an analytic from the datavase
+        description: This end-point allows to retrieve an analytic from the database
         requestBody:
           content:
             application/json:
@@ -296,7 +305,7 @@ paths:
                 schema:
                   $ref: '#/components/schemas/HTTP_500_ANALYTIC'
 
-    /logging/analytics/usercount:
+    /analytics/usercount:
       get:
         tags:
           - analytics
@@ -317,7 +326,7 @@ paths:
                 schema:
                   $ref: '#/components/schemas/200_user_count'
 
-    /logging/analytics/eventcount:
+    /analytics/eventcount:
       get:
         tags:
           - analytics
@@ -338,8 +347,8 @@ paths:
                 schema:
                   $ref: '#/components/schemas/200_event_count'
 
-    #DOCUMENTATION
-    /logging/documentation:
+    # DOCUMENTATION API
+    /documentation:
       get:
         tags:
           - documentation
@@ -359,11 +368,10 @@ components:
     Messages:
       type: array
       items:
-        anyOf:
+        oneOf:
           - $ref: '#/components/schemas/RequestMessage'
           - $ref: '#/components/schemas/ResponseMessage'
           - $ref: '#/components/schemas/NotificationMessage'
-
 
     RequestMessage:
       type: object
@@ -382,7 +390,7 @@ components:
           example: "CONV-DAJKWPENVOA-314CAD"
         timestamp:
           type: string
-          example: "2019-04-04:23.11.58"
+          example: "2020-01-19 17:21:00"
         content:
           oneOf:
             - $ref: '#/components/schemas/TextualRequest'
@@ -390,7 +398,7 @@ components:
             - $ref: '#/components/schemas/AttachmentRequest'
             - $ref: '#/components/schemas/LocationRequest'
             - $ref: '#/components/schemas/UserInfoRequest'
-          example: "devo fare un bonifico di 40 euro"
+          example: {"type": "text", "value": "devo fare un bonifico di 40 euro"}
         domain:
           type: string
           example: "pagamenti"
@@ -432,7 +440,7 @@ components:
       properties:
         messageId:
           type: string
-          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A9"
         conversationId:
           type: string
           example: "CONV-DOWI41-DAJPRTI3"
@@ -447,14 +455,15 @@ components:
           example: "1FKNSM-GEKRO2-DANK2-FJ33-DASDJOW"
         timestamp:
           type: string
-          example: "2019-04-04:23.11.58"
+          example: "2020-01-19 17:21:00"
         content:
-            anyOf:
-              - $ref: '#/components/schemas/TextualResponse'
-              - $ref: '#/components/schemas/MultiActionResponse'
-              - $ref: '#/components/schemas/AttachmentResponse'
-              - $ref: '#/components/schemas/CarouselResponse'
-              - $ref: '#/components/schemas/LocationResponse'
+          oneOf:
+            - $ref: '#/components/schemas/TextualResponse'
+            - $ref: '#/components/schemas/MultiActionResponse'
+            - $ref: '#/components/schemas/AttachmentResponse'
+            - $ref: '#/components/schemas/CarouselResponse'
+            - $ref: '#/components/schemas/LocationResponse'
+          example: {"type": "text", "value": "va bene"}
         metadata:
           type: object
         project:
@@ -477,7 +486,7 @@ components:
       properties:
         messageId:
           type: string
-          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A0"
         conversationId:
           type: string
           example: "CONV-DOWI41-DAJPRTI3"
@@ -489,14 +498,15 @@ components:
           example: "USR-JDKHEIU2-31NJDTE94"
         timestamp:
           type: string
-          example: "2019-04-04:23.11.58"
+          example: "2020-01-19 17:21:00"
         content:
-            anyOf:
-              - $ref: '#/components/schemas/TextualResponse'
-              - $ref: '#/components/schemas/ActionResponse'
-              - $ref: '#/components/schemas/AttachmentResponse'
-              - $ref: '#/components/schemas/CarouselResponse'
-              - $ref: '#/components/schemas/LocationResponse'
+          oneOf:
+            - $ref: '#/components/schemas/TextualResponse'
+            - $ref: '#/components/schemas/ActionResponse'
+            - $ref: '#/components/schemas/AttachmentResponse'
+            - $ref: '#/components/schemas/CarouselResponse'
+            - $ref: '#/components/schemas/LocationResponse'
+          example: {"type": "text", "value": "attenzione, hai meno di 100 euro sul conto"}
         metadata:
           type: object
         project:
@@ -512,7 +522,6 @@ components:
         - timestamp
         - project
         - type
-
 
     LocationRequest:
       type: object
@@ -563,7 +572,6 @@ components:
       required:
         - type
         - value
-
 
     TextualRequest:
       type: object
@@ -634,7 +642,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ActionResponse'
-
 
     AttachmentRequest:
       type: object
@@ -721,11 +728,6 @@ components:
           format: float
           example: 0.94
 
-
-
-    # Schema for an array of Message
-
-
     Log:
       type: object
       properties:
@@ -762,7 +764,6 @@ components:
       items:
         $ref: '#/components/schemas/Log'
 
-    # Analytics
     Analytic:
       oneOf:
         - $ref: '#/components/schemas/UserMetrics'
@@ -783,7 +784,6 @@ components:
         type:
           type: string
           enum: ["analytic"]
-
       required:
         - project
         - timespan
@@ -945,12 +945,25 @@ components:
       properties:
         traceId:
           type: string
-          example: "DSADK-IPOWN-3G3478"
+          example: "bcpg8XYBHD_pmQ1jA7b8"
         status:
           type: string
-          example: "Object Created"
+          example: "Object deleted"
         code:
           enum: ['200']
+          example: 200
+
+    HTTP_200_MESSAGE:
+      type: object
+      properties:
+        messageId:
+          type: string
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+        action:
+          type: string
+          example: "deleted"
+        code:
+          enum: [ '200' ]
           example: 200
 
     HTTP_200_ANALYTIC:
@@ -985,19 +998,32 @@ components:
         message:
           type: string
 
-
-
     HTTP_201 :
       type: object
       properties:
         traceId:
           type: string
-          example: "DSADK-IPOWN-3G3478"
+          example: "bcpg8XYBHD_pmQ1jA7b8"
         status:
           type: string
           example: "Object Created"
         code:
           enum: ['201']
+          example: 201
+
+    HTTP_201_list:
+      type: object
+      properties:
+        traceIds:
+          type: array
+          items:
+            type: string
+            example: "bcpg8XYBHD_pmQ1jA7b8"
+        status:
+          type: string
+          example: "Objects Created"
+        code:
+          enum: [ '201' ]
           example: 201
 
     200_event_count:
@@ -1030,13 +1056,32 @@ components:
         cose:
           enum: ['200']
 
+    HTTP_400:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "Malformed request"
+        code:
+          enum: [ '400' ]
+          example: 400
+
+    HTTP_404_basic:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "Resource not found"
+        code:
+          enum: [ '404' ]
+          example: 404
 
     HTTP_404:
       type: object
       properties:
         traceId:
           type: string
-          example: "DSADK-IPOWN-3G3478"
+          example: "bcpg8XYBHD_pmQ1jA7b8"
         status:
           type: string
           example: "Cannot find message {traceId} in the database"
@@ -1044,15 +1089,12 @@ components:
           enum: ['404']
           example: 404
 
-    HTTP_405:
+    HTTP_500:
       type: object
       properties:
-        traceId:
-          type: string
-          example: "DSADK-IPOWN-3G3478"
         status:
           type: string
-          example: "Field {name} is missing in the message"
+          example: "Internal server error"
         code:
-          enum: ['405']
-          example: 405
+          enum: [ '500' ]
+          example: 500

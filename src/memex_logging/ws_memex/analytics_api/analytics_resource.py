@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
+from __future__ import absolute_import, annotations
 
+import json
+import uuid
+
+import celery
+from elasticsearch import Elasticsearch
 from flask import request, Response
 from flask_restful import Resource, abort
 
-# for handling elasticsearch
-from elasticsearch import Elasticsearch
-
-import logging
 from memex_logging.analytic.analytic import AnalyticComputation
 from memex_logging.analytic.aggregation import AggregationComputation
 
@@ -46,7 +47,7 @@ class AnalyticsPerformer(Resource):
         if id == "" or id is None:
             abort(500, message="ANALYTIC.GET: invalid identifier")
 
-        response = self._es.search(index="analytic*", body={"query": {"match": {"_id": id}}})
+        response = self._es.search(index="analytic*", body={"query": {"match": {"static_id.keyword": id}}})
 
         if response['hits']['total'] == 0:
             abort(404, message="resource not found")
@@ -54,8 +55,13 @@ class AnalyticsPerformer(Resource):
             return response['hits']['hits'][0]['_source'], 200
 
     def post(self):
+        static_id = uuid.uuid4()
         analytic = request.json
+        self._compute(analytic, static_id)
+        return static_id, 200
 
+    @celery.task()
+    def _compute(self, analytic, static_id):
         if 'type' not in analytic:
             abort(500, message="Type must be specified")
         elif str(analytic['type']).lower() == "analytic":
@@ -65,7 +71,6 @@ class AnalyticsPerformer(Resource):
             # Object to be stored: query + results inside of `query` and `result`
             if AnalyticComputation.analytic_validity_check(analytic):
                 metric = str(analytic['metric']).lower()
-                answer = None
                 json_response = {}
                 ac = AnalyticComputation()
                 if metric == "u:total":
@@ -77,7 +82,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "userId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "u:active":
                     answer = ac.compute_u_active(analytic, self._es, analytic['project'])
@@ -88,7 +94,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "userId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "u:engaged":
                     answer = ac.compute_u_engaged(analytic, self._es, analytic['project'])
@@ -99,7 +106,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "userId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "u:new":
                     answer = ac.compute_u_new(analytic, self._es, analytic['project'])
@@ -110,7 +118,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "userId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
 
                 elif metric == "m:from_user":
@@ -122,7 +131,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "userId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                     print(answer[0])
                     print(answer[1])
@@ -135,7 +145,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "conversationId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "m:from_bot":
                     answer = ac.compute_m_from_bot(analytic, self._es, analytic['project'])
@@ -146,7 +157,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "messageId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                     print(answer[0])
                     print(answer[1])
@@ -159,7 +171,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "messageId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "m:notifications":
                     answer = ac.compute_m_notifications(analytic, self._es, analytic['project'])
@@ -170,7 +183,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "messageId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "m:unhandled":
                     answer = ac.compute_m_unhandled(analytic, self._es, analytic['project'])
@@ -181,10 +195,11 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "messageId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "m:notification_engagement":
-                    answer = ac.compute_m_notification_engagement(analytic, self._es, analytic['project'])
+                    answer = ac.compute_m_notification_engagement(analytic, self._es, analytic['project'])  # does not exists
                     json_response = {
                         "query": analytic,
                         "result": {
@@ -192,7 +207,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "messageId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "c:total":
                     answer = ac.compute_c_total(analytic, self._es, analytic['project'])
@@ -203,7 +219,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "conversationId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "c:new":
                     answer = ac.compute_c_new(analytic, self._es, analytic['project'])
@@ -214,7 +231,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "conversationId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "c:length":
                     answer = ac.compute_c_length(analytic, self._es, analytic['project'])
@@ -225,7 +243,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "object"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "c:path":
                     answer = ac.compute_c_path(analytic, self._es, analytic['project'])
@@ -236,7 +255,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "conversationId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "d:fallback":
                     answer = ac.compute_d_fallback(analytic, self._es, analytic['project'])
@@ -247,10 +267,11 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "conversationId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "d:interrupted":
-                    answer = ac.compute_d_interrupted(analytic, self._es, analytic['project'])
+                    answer = ac.compute_d_interrupted(analytic, self._es, analytic['project'])  # does not exists
                     json_response = {
                         "query": analytic,
                         "result": {
@@ -258,7 +279,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "conversationId"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "d:intents":
                     answer = ac.compute_d_intents(analytic, self._es, analytic['project'])
@@ -269,7 +291,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "intent"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "d:domains":
                     answer = ac.compute_d_domains(analytic, self._es, analytic['project'])
@@ -280,10 +303,11 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "domain"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "b:retention":
-                    answer = ac.compute_b_retention(analytic, self._es, analytic['project'])
+                    answer = ac.compute_b_retention(analytic, self._es, analytic['project'])  # does not exists
                     json_response = {
                         "query": analytic,
                         "result": {
@@ -291,7 +315,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "score"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "b:response":
                     answer = ac.compute_b_response(analytic, self._es, analytic['project'])
@@ -302,7 +327,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "score"
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
 
             # save analytics and put the _id to retrieve it
@@ -318,7 +344,6 @@ class AnalyticsPerformer(Resource):
         elif str(analytic['type']).lower() == "aggregation":
             if AggregationComputation.aggregation_validity_check(analytic):
                 metric = str(analytic['aggregation']).lower()
-                answer = None
                 json_response = {}
                 ac = AggregationComputation()
                 if metric == "max":
@@ -328,7 +353,8 @@ class AnalyticsPerformer(Resource):
                         "result": {
                             "max": answer
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "min":
                     answer = ac.min_aggr(analytic, self._es, analytic['project'])
@@ -337,7 +363,8 @@ class AnalyticsPerformer(Resource):
                         "result": {
                             "min": answer
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "avg":
                     answer = ac.avg_aggr(analytic, self._es, analytic['project'])
@@ -346,7 +373,8 @@ class AnalyticsPerformer(Resource):
                         "result": {
                             "avg": answer
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "stats":
                     answer = ac.stats_aggr(analytic, self._es, analytic['project'])
@@ -355,7 +383,8 @@ class AnalyticsPerformer(Resource):
                         "result": {
                             "stats": answer
                         },
-                        "stats": 200
+                        "stats": 200,
+                        "static_id": static_id
                     }
                 elif metric == "sum":
                     answer = ac.sum_aggr(analytic, self._es, analytic['project'])
@@ -364,7 +393,8 @@ class AnalyticsPerformer(Resource):
                         "result": {
                             "sum": answer
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "value_count":
                     answer = ac.value_count_aggr(analytic, self._es, analytic['project'])
@@ -373,7 +403,8 @@ class AnalyticsPerformer(Resource):
                         "result": {
                             "value_count": answer
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "cardinality":
                     answer = ac.cardinality_aggr(analytic, self._es, analytic['project'])
@@ -382,7 +413,8 @@ class AnalyticsPerformer(Resource):
                         "result": {
                             "cardinality": answer
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "extended_stats":
                     answer = ac.extended_stats_aggr(analytic, self._es, analytic['project'])
@@ -391,7 +423,8 @@ class AnalyticsPerformer(Resource):
                         "result": {
                             "extended_stats": answer
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "percentiles":
                     answer = ac.percentiles_aggr(analytic, self._es, analytic['project'])
@@ -400,16 +433,18 @@ class AnalyticsPerformer(Resource):
                         "result": {
                             "percentiles": answer
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
                 elif metric == "percentile_ranks":
-                    answer = ac.percentile_ranks_aggr(analytic, self._es, analytic['project'])
+                    answer = ac.percentile_ranks_aggr(analytic, self._es, analytic['project'])  # does not exists
                     json_response = {
                         "query": analytic,
                         "result": {
                             "percentile_ranks": answer
                         },
-                        "status": 200
+                        "status": 200,
+                        "static_id": static_id
                     }
 
                 index_name = "analytic-" + analytic['project'] + "-" + analytic['aggregation']
@@ -423,14 +458,15 @@ class AnalyticsPerformer(Resource):
         else:
             abort(500, message="Invalid value for field type")
 
+
 class GetNoClickPerUser(Resource):
 
-    def __init__(self, es:Elasticsearch):
+    def __init__(self, es: Elasticsearch):
         self._es = es
 
     def get(self):
         if 'userId' in request.args:
-            response = self._es.search(index="logging-memex*",body={"query": {"match": {"metadata.userId": request.args['userId']}}})
+            response = self._es.search(index="logging-memex*", body={"query": {"match": {"metadata.userId": request.args['userId']}}})
             if response['hits']['total']['value'] != 0:
                 click_collection = {}
                 # TODO check da qualche parte su namespace per capire se sto contando un evento
@@ -470,7 +506,7 @@ class GetNoClickPerUser(Resource):
 
 class GetNoClickPerEvent(Resource):
 
-    def __init__(self, es:Elasticsearch):
+    def __init__(self, es: Elasticsearch):
         self._es = es
 
     def get(self):
@@ -512,10 +548,9 @@ class GetNoClickPerEvent(Resource):
 
 class GetUsers(Resource):
 
-    def __init__(self, es:Elasticsearch):
+    def __init__(self, es: Elasticsearch):
         self._es = es
 
     def get(self):
         response = self._es.search(index="memex-log*", body={"query": {"match": {}}})
         print(response)
-

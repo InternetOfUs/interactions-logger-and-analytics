@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import absolute_import, annotations
+
 import logging
 
-import dateutil
 import datetime
 from elasticsearch import Elasticsearch
 from flask_restful import abort
 
+
 class AggregationComputation:
     g_index = "message-memex*"
 
+    @staticmethod
     def aggregation_validity_check(analytic: dict):
         logging.info("AGGREGATION.DISPLACEMENT: " + str(analytic))
 
@@ -82,26 +85,28 @@ class AggregationComputation:
 
         return True
 
-    def max_aggr(self, analytic: dict, es: Elasticsearch, project:str):
+    def max_aggr(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        filters_dict = {"filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "lte": max_bound
-                                }
-                            }
+        filters_dict = {
+            "filter": [
+                {
+                    "range": {
+                        "timestamp": {
+                            "gte": min_bound
                         }
-                    ]}
+                    }
+                },
+                {
+                    "range": {
+                        "timestamp": {
+                            "lte": max_bound
+                        }
+                    }
+                }
+            ]
+        }
         body = {
             "query": {
                 "bool": filters_dict
@@ -117,26 +122,28 @@ class AggregationComputation:
         response = es.search(index=self.g_index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def min_aggr(self, analytic: dict, es: Elasticsearch, project:str):
+    def min_aggr(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        filters_dict = {"filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "lte": max_bound
-                                }
-                            }
+        filters_dict = {
+            "filter": [
+                {
+                    "range": {
+                        "timestamp": {
+                            "gte": min_bound
                         }
-                    ]}
+                    }
+                },
+                {
+                    "range": {
+                        "timestamp": {
+                            "lte": max_bound
+                        }
+                    }
+                }
+            ]
+        }
         body = {
             "query": {
                 "bool": filters_dict
@@ -152,26 +159,28 @@ class AggregationComputation:
         response = es.search(index=self.g_index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def avg_aggr(self, analytic: dict, es: Elasticsearch, project:str):
+    def avg_aggr(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        filters_dict = {"filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "lte": max_bound
-                                }
-                            }
+        filters_dict = {
+            "filter": [
+                {
+                    "range": {
+                        "timestamp": {
+                            "gte": min_bound
                         }
-                    ]}
+                    }
+                },
+                {
+                    "range": {
+                        "timestamp": {
+                            "lte": max_bound
+                        }
+                    }
+                }
+            ]
+        }
         body = {
             "query": {
                 "bool": filters_dict
@@ -187,26 +196,28 @@ class AggregationComputation:
         response = es.search(index=self.g_index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def cardinality_aggr(self, analytic: dict, es: Elasticsearch, project:str):
+    def cardinality_aggr(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        filters_dict = {"filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "lte": max_bound
-                                }
-                            }
+        filters_dict = {
+            "filter": [
+                {
+                    "range": {
+                        "timestamp": {
+                            "gte": min_bound
                         }
-                    ]}
+                    }
+                },
+                {
+                    "range": {
+                        "timestamp": {
+                            "lte": max_bound
+                        }
+                    }
+                }
+            ]
+        }
         body = {
             "query": {
                 "bool": filters_dict
@@ -222,26 +233,28 @@ class AggregationComputation:
         response = es.search(index=self.g_index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def extended_stats_aggr(self, analytic: dict, es: Elasticsearch, project:str):
+    def extended_stats_aggr(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        filters_dict = {"filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "lte": max_bound
-                                }
-                            }
+        filters_dict = {
+            "filter": [
+                {
+                    "range": {
+                        "timestamp": {
+                            "gte": min_bound
                         }
-                    ]}
+                    }
+                },
+                {
+                    "range": {
+                        "timestamp": {
+                            "lte": max_bound
+                        }
+                    }
+                }
+            ]
+        }
         body = {
             "query": {
                 "bool": filters_dict
@@ -257,26 +270,28 @@ class AggregationComputation:
         response = es.search(index=self.g_index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def percentiles_aggr(self, analytic: dict, es: Elasticsearch, project:str):
+    def percentiles_aggr(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        filters_dict = {"filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "lte": max_bound
-                                }
-                            }
+        filters_dict = {
+            "filter": [
+                {
+                    "range": {
+                        "timestamp": {
+                            "gte": min_bound
                         }
-                    ]}
+                    }
+                },
+                {
+                    "range": {
+                        "timestamp": {
+                            "lte": max_bound
+                        }
+                    }
+                }
+            ]
+        }
         body = {
             "query": {
                 "bool": filters_dict
@@ -292,26 +307,28 @@ class AggregationComputation:
         response = es.search(index=self.g_index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def stats_aggr(self, analytic: dict, es: Elasticsearch, project:str):
+    def stats_aggr(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        filters_dict = {"filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "lte": max_bound
-                                }
-                            }
+        filters_dict = {
+            "filter": [
+                {
+                    "range": {
+                        "timestamp": {
+                            "gte": min_bound
                         }
-                    ]}
+                    }
+                },
+                {
+                    "range": {
+                        "timestamp": {
+                            "lte": max_bound
+                        }
+                    }
+                }
+            ]
+        }
         body = {
             "query": {
                 "bool": filters_dict
@@ -327,26 +344,28 @@ class AggregationComputation:
         response = es.search(index=self.g_index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def sum_aggr(self, analytic: dict, es: Elasticsearch, project:str):
+    def sum_aggr(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        filters_dict = {"filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "lte": max_bound
-                                }
-                            }
+        filters_dict = {
+            "filter": [
+                {
+                    "range": {
+                        "timestamp": {
+                            "gte": min_bound
                         }
-                    ]}
+                    }
+                },
+                {
+                    "range": {
+                        "timestamp": {
+                            "lte": max_bound
+                        }
+                    }
+                }
+            ]
+        }
         body = {
             "query": {
                 "bool": filters_dict
@@ -362,26 +381,28 @@ class AggregationComputation:
         response = es.search(index=self.g_index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def value_count_aggr(self, analytic: dict, es: Elasticsearch, project:str):
+    def value_count_aggr(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        filters_dict = {"filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "lte": max_bound
-                                }
-                            }
+        filters_dict = {
+            "filter": [
+                {
+                    "range": {
+                        "timestamp": {
+                            "gte": min_bound
                         }
-                    ]}
+                    }
+                },
+                {
+                    "range": {
+                        "timestamp": {
+                            "lte": max_bound
+                        }
+                    }
+                }
+            ]
+        }
         body = {
             "query": {
                 "bool": filters_dict
@@ -396,7 +417,6 @@ class AggregationComputation:
         }
         response = es.search(index=self.g_index, body=body, size=0)
         return response['aggregations']['type_count']['value']
-
 
     @staticmethod
     def _support_bound_timestamp(time_object: dict):

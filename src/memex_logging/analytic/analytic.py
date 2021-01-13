@@ -12,17 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import absolute_import, annotations
+
 import logging
 
-import dateutil
 import datetime
 from elasticsearch import Elasticsearch
 from flask_restful import abort
+
 
 class AnalyticComputation:
 
     g_index = "message-memex*"
 
+    @staticmethod
     def analytic_validity_check(analytic: dict):
         logging.info("ANALYTIC.DISPLACEMENT: " + str(analytic))
 
@@ -101,7 +104,7 @@ class AnalyticComputation:
 
         return True
 
-    def compute_u_total(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_u_total(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -148,7 +151,7 @@ class AnalyticComputation:
 
         return response['aggregations']['type_count']['value'], user_list
 
-    def compute_u_active(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_u_active(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -194,17 +197,19 @@ class AnalyticComputation:
 
         return response['aggregations']['type_count']['value'], user_list
 
-    def compute_u_engaged(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_u_engaged(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        body ={
+        body = {
             "query": {
                 "bool": {
                     "must": [
-                        {"match":
-                             {"type.keyword": "NOTIFICATION"}
-                         }
+                        {
+                            "match": {
+                                "type.keyword": "NOTIFICATION"
+                            }
+                        }
                     ],
                     "filter": [
                         {
@@ -246,7 +251,7 @@ class AnalyticComputation:
 
         return response['aggregations']['type_count']['value'], user_list
 
-    def compute_u_new(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_u_new(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -321,7 +326,7 @@ class AnalyticComputation:
 
         return len(final_users), list(final_users)
 
-    def compute_m_from_user(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_m_from_user(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -329,9 +334,11 @@ class AnalyticComputation:
             "query": {
                 "bool": {
                     "must": [
-                        {"match":
-                             {"type.keyword": "REQUEST"}
-                         }
+                        {
+                            "match": {
+                                    "type.keyword": "REQUEST"
+                            }
+                        }
                     ],
                     "filter": [
                         {
@@ -369,7 +376,7 @@ class AnalyticComputation:
 
         return total_counter, user_list
 
-    def compute_m_conversation(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_m_conversation(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -412,7 +419,7 @@ class AnalyticComputation:
 
         return total_len, conversation_list
 
-    def compute_m_from_bot(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_m_from_bot(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -420,9 +427,11 @@ class AnalyticComputation:
             "query": {
                 "bool": {
                     "must": [
-                        {"match":
-                             {"type.keyword": "RESPONSE"}
-                         }
+                        {
+                            "match": {
+                                "type.keyword": "RESPONSE"
+                            }
+                        }
                     ],
                     "filter": [
                         {
@@ -462,9 +471,11 @@ class AnalyticComputation:
             "query": {
                 "bool": {
                     "must": [
-                        {"match":
-                             {"type.keyword": "NOTIFICATION"}
-                         }
+                        {
+                            "match": {
+                                "type.keyword": "NOTIFICATION"
+                            }
+                        }
                     ],
                     "filter": [
                         {
@@ -500,7 +511,7 @@ class AnalyticComputation:
         print(total_len, messages)
         return total_len, messages
 
-    def compute_m_responses(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_m_responses(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -508,9 +519,11 @@ class AnalyticComputation:
             "query": {
                 "bool": {
                     "must": [
-                        {"match":
-                             {"type.keyword": "RESPONSE"}
-                         }
+                        {
+                            "match": {
+                                "type.keyword": "RESPONSE"
+                            }
+                        }
                     ],
                     "filter": [
                         {
@@ -548,7 +561,7 @@ class AnalyticComputation:
 
         return total_len, messages
 
-    def compute_m_notifications(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_m_notifications(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -556,9 +569,11 @@ class AnalyticComputation:
             "query": {
                 "bool": {
                     "must": [
-                        {"match":
-                             {"type.keyword": "NOTIFICATION"}
-                         }
+                        {
+                            "match": {
+                                "type.keyword": "NOTIFICATION"
+                            }
+                        }
                     ],
                     "filter": [
                         {
@@ -596,7 +611,7 @@ class AnalyticComputation:
 
         return total_len, messages
 
-    def compute_m_unhandled(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_m_unhandled(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -604,9 +619,11 @@ class AnalyticComputation:
             "query": {
                 "bool": {
                     "must": [
-                        {"match":
-                             {"handled.keyword": True}
-                         }
+                        {
+                            "match": {
+                                "handled.keyword": True
+                            }
+                        }
                     ],
                     "filter": [
                         {
@@ -645,7 +662,7 @@ class AnalyticComputation:
 
         return total_len, messages
 
-    def compute_c_total(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_c_total(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -688,7 +705,7 @@ class AnalyticComputation:
 
         return total_len, conversation_list
 
-    def compute_c_new(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_c_new(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -763,7 +780,7 @@ class AnalyticComputation:
 
         return len(final_conv), list(final_conv)
 
-    def compute_c_length(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_c_length(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -806,7 +823,7 @@ class AnalyticComputation:
 
         return total_len, conversation_list
 
-    def compute_c_path(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_c_path(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -855,9 +872,11 @@ class AnalyticComputation:
                 "query": {
                     "bool": {
                         "must": [
-                            {"match":
-                                 {"conversationId.keyword": item}
-                             }
+                            {
+                                "match": {
+                                    "conversationId.keyword": item
+                                }
+                            }
                         ],
                         "filter": [
                             {
@@ -893,7 +912,7 @@ class AnalyticComputation:
             paths.append({item: message_list})
         return len(paths), paths
 
-    def compute_d_fallback(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_d_fallback(self, analytic: dict, es: Elasticsearch, project: str):
 
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
@@ -902,9 +921,11 @@ class AnalyticComputation:
             "query": {
                 "bool": {
                     "must": [
-                        {"match":
-                             {"intent.keyword": "default"}
-                         }
+                        {
+                            "match": {
+                                "intent.keyword": "default"
+                            }
+                        }
                     ],
                     "filter": [
                         {
@@ -973,16 +994,16 @@ class AnalyticComputation:
         response = es.search(index=self.g_index, body=body, size=0)
         total_messages = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
-                total_messages = response['aggregations']['type_count']['value']
+            total_messages = response['aggregations']['type_count']['value']
 
         return total_missed, total_messages
 
-    def compute_d_intents(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_d_intents(self, analytic: dict, es: Elasticsearch, project: str):
 
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        body ={
+        body = {
             "query": {
                 "bool": {
                     "filter": [
@@ -1025,15 +1046,15 @@ class AnalyticComputation:
 
         value = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
-                value = response['aggregations']['type_count']['value']
+            value = response['aggregations']['type_count']['value']
 
-        return value , user_list
+        return value, user_list
 
-    def compute_d_domains(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_d_domains(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
-        body ={
+        body = {
             "query": {
                 "bool": {
                     "filter": [
@@ -1082,7 +1103,7 @@ class AnalyticComputation:
 
         return value, user_list
 
-    def compute_b_response(self, analytic: dict, es: Elasticsearch, project:str):
+    def compute_b_response(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -1121,7 +1142,6 @@ class AnalyticComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in \
                 response['aggregations']['type_count']:
             total_messages = response['aggregations']['type_count']['value']
-
 
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
@@ -1209,12 +1229,11 @@ class AnalyticComputation:
             end = None
             try:
                 print(time_object['start'])
-                start = datetime.datetime.strptime(time_object['start'], '%Y-%m-%d') #  %H:%M:%S.%f
+                start = datetime.datetime.strptime(time_object['start'], '%Y-%m-%d')  # %H:%M:%S.%f
             except:
                 abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot parse starting date. User a YYYY-MM-DD format")
             try:
                 end = datetime.datetime.strptime(time_object['end'], '%Y-%m-%d')
             except:
                 abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot parse ending date. User a YYYY-MM-DD format")
-            return start,end
-
+            return start, end

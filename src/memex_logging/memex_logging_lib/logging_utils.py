@@ -72,8 +72,7 @@ class QuickReplyResponse:
 
 class CarouselItem:
 
-    def __init__(self, title: str, image_url: str, subtitle="", default_action = {},
-                 buttons= []) -> None:
+    def __init__(self, title: str, image_url: str, subtitle="", default_action={}, buttons=[]) -> None:
         """
         Create a CarouselResponse Object. A carousel is a scrollable list of medias. As a best-practice, carousels should be used with no more that 6 elements and when the elements can be ranked.
         :param title: the title of the slide of the carousel
@@ -705,7 +704,7 @@ class LoggingUtility:
         else:
             raise ValueError("LIB.LOGGING The message has not been logged")
 
-    def add_carousel_response(self, carousel_items: list, message_id: str,  channel: str, user_id: str,
+    def add_carousel_response(self, carousel_items: list, message_id: str, channel: str, user_id: str,
                               response_to: str, timestamp: str, conversation_id=None,
                               metadata=Optional[dict]) -> tuple:
         """
@@ -770,8 +769,8 @@ class LoggingUtility:
         return response.status_code, response.content
 
     def add_textual_notification(self, message_text: str, message_id: str, channel: str, user_id: str,
-                             response_to: str, timestamp: str, conversation_id=None, buttons=Optional[List],
-                             metadata=Optional[dict]) -> str:
+                                 response_to: str, timestamp: str, conversation_id=None, buttons=Optional[List],
+                                 metadata=Optional[dict]) -> str:
         """
         This method should be used to store a notification message.
         :param message_text: the text of the message. It is a string
@@ -853,8 +852,8 @@ class LoggingUtility:
             raise ValueError("LIB.LOGGING The message has not been logged")
 
     def add_attachment_notification(self, attachment_uri: str, message_id: str, channel: str, user_id: str,
-                                response_to: str, timestamp: str, conversation_id=None, alternative_text=None,
-                                buttons=Optional[List], metadata=Optional[dict]) -> str:
+                                    response_to: str, timestamp: str, conversation_id=None, alternative_text=None,
+                                    buttons=Optional[List], metadata=Optional[dict]) -> str:
         """
         This method should be used to store a notification message.
         :param attachment_uri: the uri of the resource associated to the message
@@ -939,9 +938,9 @@ class LoggingUtility:
             raise ValueError("LIB.LOGGING The message has not been logged")
 
     def add_quick_reply_notification(self, buttons: list, message_id: str, channel: str,
-                                 user_id: str,
-                                 response_to: str, timestamp: str, conversation_id=None,
-                                 metadata=Optional[dict]) -> tuple:
+                                     user_id: str,
+                                     response_to: str, timestamp: str, conversation_id=None,
+                                     metadata=Optional[dict]) -> tuple:
         """
         This method should be used to store a notification message.
         :param buttons: the list of the buttons
@@ -1014,9 +1013,9 @@ class LoggingUtility:
         else:
             raise ValueError("LIB.LOGGING The message has not been logged")
 
-    def add_carousel_notification(self, carousel_items: list, message_id: str,  channel: str, user_id: str,
-                              response_to: str, timestamp: str, conversation_id=None,
-                              metadata=Optional[dict]) -> tuple:
+    def add_carousel_notification(self, carousel_items: list, message_id: str, channel: str, user_id: str,
+                                  response_to: str, timestamp: str, conversation_id=None,
+                                  metadata=Optional[dict]) -> tuple:
         """
         This method should be used to store a notification message.
         :param carousel_items: a list of CarouselItem objects
@@ -1114,7 +1113,7 @@ class LoggingUtility:
 
         return response.status_code, response.json()
 
-    def add_log(self, log_id:str, component:str, severity:str, log_content:str, timestamp:str, authority:str = None,  bot_version:str = None, metadata:dict = None) -> str:
+    def add_log(self, log_id: str, component: str, severity: str, log_content: str, timestamp: str, authority: str = None,  bot_version: str = None, metadata: dict = None) -> str:
 
         logging.info("LIB.LOCATION_REQ - Starting logging a new message ")
 
