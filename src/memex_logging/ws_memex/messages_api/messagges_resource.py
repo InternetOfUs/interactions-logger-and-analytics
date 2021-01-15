@@ -52,22 +52,53 @@ class ManipulateMessage(Resource):
         :return: the HTTP response
         """
 
-        if 'project' in request.args and 'messageId' in request.args:
+        if 'project' in request.args and 'messageId' in request.args and 'userId' in request.args:
             project = request.args.get('project')
             message_id = request.args.get('messageId')
-            logging.warning("DELETE request, starting to delete a message in project {} with messageId {}".format(project, message_id))
+            user_id = request.args.get('userId')
+            logging.warning("DELETE request, starting to delete a message in project {} with messageId {} and userId {}".format(project, message_id, user_id))
             index = "message-" + str(project).lower() + "-*"
             query = {
                 "query": {
-                    "match": {
-                        "messageId": message_id
+                    "bool": {
+                        "must": [
+                            {
+                                "match_phrase": {
+                                    "messageId": message_id
+                                }
+                            },
+                            {
+                                "match_phrase": {
+                                    "userId": user_id
+                                }
+                            }
+                        ]
                     }
                 }
             }
+
+        elif 'traceId' in request.args:
+            trace_id = request.args.get("traceId")
+            logging.warning("DELETE request, starting to delete a message with traceId {}".format(trace_id))
+            index = "message-*"
+            query = {
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "match_phrase": {
+                                    "_id": trace_id
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+
         else:
             logging.error("DELETE request, cannot parse parameters correctly while elaborating the delete request")
             json_response = {
-                "status": "Malformed request: missing required parameter, you have to specify `messageId` and the `project`",
+                "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `project`, the `messageId` and the `userId`",
                 "code": 400
             }
             resp = Response(json.dumps(json_response), mimetype='application/json')
@@ -76,11 +107,10 @@ class ManipulateMessage(Resource):
 
         try:
             self._es.delete_by_query(index=index, body=query)
-            # self._es.delete(index=index, id=trace_id)
         except Exception as e:
             logging.exception("DELETE request, message failed to be deleted", exc_info=e)
             json_response = {
-                "status": "Internal server error: could not delete messages",
+                "status": "Internal server error: could not delete the message",
                 "code": 500
             }
             resp = Response(json.dumps(json_response), mimetype='application/json')
@@ -88,8 +118,7 @@ class ManipulateMessage(Resource):
             return resp
 
         json_response = {
-            "messageId": message_id,
-            "action": "deleted",
+            "status": "Ok: message deleted",
             "code": 200
         }
         resp = Response(json.dumps(json_response), mimetype='application/json')
@@ -102,33 +131,53 @@ class ManipulateMessage(Resource):
         :return: the HTTP response
         """
 
-        if 'project' in request.args and 'messageId' in request.args:
+        if 'project' in request.args and 'messageId' in request.args and 'userId' in request.args:
             project = request.args.get('project')
             message_id = request.args.get('messageId')
-            logging.warning("GET request, starting to look up for a message in project {} with messageId {}".format(project, message_id))
+            user_id = request.args.get('userId')
+            logging.warning("GET request, starting to look up for a message in project {} with messageId {} and userId {}".format(project, message_id, user_id))
             index = "message-" + str(project).lower() + "-*"
             query = {
                 "query": {
-                    "match": {
-                        "messageId": message_id
+                    "bool": {
+                        "must": [
+                            {
+                                "match_phrase": {
+                                    "messageId": message_id
+                                }
+                            },
+                            {
+                                "match_phrase": {
+                                    "userId": user_id
+                                }
+                            }
+                        ]
                     }
                 }
             }
+
         elif 'traceId' in request.args:
             trace_id = request.args.get("traceId")
             logging.warning("GET request, starting to look up for a message with traceId {}".format(trace_id))
-            index = "*"
+            index = "message-*"
             query = {
                 "query": {
-                    "match": {
-                        "_id": trace_id
+                    "bool": {
+                        "must": [
+                            {
+                                "match_phrase": {
+                                    "_id": trace_id
+                                }
+                            }
+                        ]
                     }
                 }
             }
+
         else:
             logging.error("GET request, cannot parse parameters correctly while elaborating the get request")
             json_response = {
-                "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `messageId` and the `project`",
+                "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `project`, the `messageId` and the `userId`",
                 "code": 400
             }
             resp = Response(json.dumps(json_response), mimetype='application/json')
@@ -137,11 +186,10 @@ class ManipulateMessage(Resource):
 
         try:
             response = self._es.search(index=index, body=query)
-            # response = self._es.get(index=index, id=trace_id)
         except Exception as e:
             logging.exception("GET request, message failed to be retrieved", exc_info=e)
             json_response = {
-                "status": "Internal server error: could not delete messages",
+                "status": "Internal server error: could not retrieve the message",
                 "code": 500
             }
             resp = Response(json.dumps(json_response), mimetype='application/json')
@@ -150,14 +198,16 @@ class ManipulateMessage(Resource):
 
         if len(response['hits']['hits']) == 0:
             json_response = {
-                "status": "Resource not found",
+                "status": "Not found: resource not found",
                 "code": 404
             }
             resp = Response(json.dumps(json_response), mimetype='application/json')
             resp.status_code = 404
             return resp
         else:
-            resp = Response(json.dumps(response['hits']['hits'][0]['_source']), mimetype='application/json')
+            json_response = response['hits']['hits'][0]['_source']
+            json_response["traceId"] = response['hits']['hits'][0]['_id']
+            resp = Response(json.dumps(json_response), mimetype='application/json')
             resp.status_code = 200
             return resp
 
@@ -201,7 +251,7 @@ class LogMessages(Resource):
                 date = Utils.extract_date(message)
                 index_name = "message-" + project_name + "-" + date
             except KeyError as e:
-                logging.exception(" POST request, message failed to be logged due to malformed request", exc_info=e)
+                logging.exception("POST request, message failed to be logged due to malformed request", exc_info=e)
                 logging.error(message)
                 json_response = {
                     "status": "Malformed request: error in parsing messages",
@@ -222,7 +272,7 @@ class LogMessages(Resource):
                 return resp
 
             try:
-                if message_type == 'request':
+                if message_type == "request":
                     request_message = RequestMessage.from_rep(message)
                     Utils.compute_conversation_id(self._es, request_message)
                     query = self._es.index(index=index_name, doc_type='_doc', body=request_message.to_repr())
@@ -258,7 +308,7 @@ class LogMessages(Resource):
 
         json_response = {
             "traceIds": trace_ids,
-            "status": "ok",
+            "status": "Created: messages stored",
             "code": 201
         }
         resp = Response(json.dumps(json_response), mimetype='application/json')

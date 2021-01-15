@@ -28,6 +28,9 @@ from elasticsearch import Elasticsearch
 from memex_logging.models.message import RequestMessage, ResponseMessage, NotificationMessage
 
 
+logger = logging.getLogger("logger.utils.utils")
+
+
 class Utils:
 
     @staticmethod
@@ -41,7 +44,7 @@ class Utils:
                 positioned = dateutil.parser.parse(data['timestamp'])
                 return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
             except:
-                logging.error("timestamp cannot be parsed of the message cannot be parsed")
+                logging.error("`timestamp` of the message cannot be parsed")
                 logging.error(data)
         else:
             support_bound = datetime.datetime.now().isoformat()
@@ -58,7 +61,7 @@ class Utils:
         if "traceId" in data.keys():
             return data["traceId"]
         else:
-            logging.error("ERROR@Utils - traceId not found in the message parsed")
+            logging.error("`traceId` not found in the message parsed")
             abort(400, message="Invalid message. traceId is missing")
 
     @staticmethod
