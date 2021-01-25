@@ -22,8 +22,8 @@ from elasticsearch import Elasticsearch
 from flask import request, Response
 from flask_restful import Resource, abort
 
-from memex_logging.common.analytic import AnalyticComputation
-from memex_logging.common.analytic import AggregationComputation
+from memex_logging.common.analytic.aggregation import AggregationComputation
+from memex_logging.common.analytic.analytic import AnalyticComputation
 
 
 class AnalyticsResourceBuilder(object):

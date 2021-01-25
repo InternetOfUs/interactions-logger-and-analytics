@@ -489,8 +489,12 @@ class RequestMessage(Message):
         if type(content) in self.ALLOWED_CONTENT_TYPES:
             raise ValueError("Type for parameter content is not allowed")
 
-        if not isinstance(entities, List[Entity]):
+        if not isinstance(entities, list):
             raise ValueError('entities should contains only object with type Entity')
+        else:
+            for entity in entities:
+                if not isinstance(entity, Entity):
+                    raise ValueError('entities should contains only object with type Entity')
 
     def to_repr(self) -> dict:
         entities = []
