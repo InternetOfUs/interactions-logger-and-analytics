@@ -200,7 +200,7 @@ class LogMessages(Resource):
                 project_name = Utils.extract_project_name(message)
                 date = Utils.extract_date(message)
                 index_name = "message-" + project_name + "-" + date
-            except KeyError as e:
+            except (KeyError, ValueError) as e:
                 logging.exception(" POST request, message failed to be logged due to malformed request", exc_info=e)
                 logging.error(message)
                 json_response = {

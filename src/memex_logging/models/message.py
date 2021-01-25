@@ -24,9 +24,15 @@ logger = logging.getLogger("logger.models.message")
 
 class Intent:
 
-    def __init__(self, name: str, confidence: float) -> None:
-        self.name = name
-        self.confidence = confidence
+    def __init__(self, name: Optional[str], confidence: Optional[float] = None) -> None:
+        """
+        The intent expressed by a user.
+
+        :param Optional[str] name: the label identifying the intent
+        :param Optional[float] confidence: the confidence
+        """
+        self.name: Optional[str] = name
+        self.confidence: Optional[str] = confidence
 
     def to_repr(self) -> dict:
         return {
@@ -36,17 +42,17 @@ class Intent:
 
     @staticmethod
     def from_rep(data: dict) -> Intent:
-        name = None
-
-        if 'name' in data:
-            name = data['name']
-
-        confidence = None
-
-        if 'confidence' in data:
-            confidence = data['confidence']
-
+        name = data.get("name", None)
+        confidence = data.get("confidence", None)
         return Intent(name, confidence)
+
+    @staticmethod
+    def empty() -> Intent:
+        # TODO having an intent with no name does not make any sense, this should be removed
+        return Intent(None, None)
+
+    def __eq__(self, o: Intent) -> bool:
+        return isinstance(o, Intent) and o.name == self.name and o.confidence == self.confidence
 
 
 class UserInfoRequest:
@@ -96,8 +102,8 @@ class LocationRequest:
 
 class ActionRequest:
 
-    def __init__(self, value):
-        self.value = value
+    def __init__(self, value: str) -> None:
+        self.value: str = value
 
     def to_repr(self) -> dict:
         return {
@@ -107,10 +113,12 @@ class ActionRequest:
 
     @staticmethod
     def from_rep(data: dict) -> ActionRequest:
-        if 'value' in data:
-            return ActionRequest(data['value'])
-        else:
-            raise ValueError("An ActionRequest object must contain a value")
+        return ActionRequest(
+            data.get("value")
+        )
+
+    def __eq__(self, o: ActionRequest) -> bool:
+        return isinstance(o, ActionRequest) and o.value == self.value
 
 
 class ActionResponse:
@@ -390,29 +398,33 @@ class Entity:
         return Entity(data['type'], data['value'], data['confidence'])
 
 
-class RequestMessage:
+class Message:
 
-    def __init__(self, message_id: str, channel: str, user_id: str, conversation_id: str, timestamp: str, content, domain: str,  intent: Intent, entities: list, project: str,
-                 language: str, metadata: dict) -> None:
-        logging.debug("MODELS.MESSAGE creating a RequestMessage object for ".format(message_id))
-
+    def __init__(self, message_id: str, channel: str, user_id: str, conversation_id: str, content, project: str, metadata: dict, timestamp: str) -> None:
         self.message_id = message_id
         self.channel = channel
         self.user_id = user_id
         self.conversation_id = conversation_id
-        self.timestamp = timestamp
         self.content = content
+        self.timestamp = timestamp
+        self.project = project
+        self.metadata = metadata
+
+
+class RequestMessage(Message):
+
+    def __init__(self, message_id: str, channel: str, user_id: str, conversation_id: Optional[str], timestamp: str,
+                 content, domain: str,  intent: Intent, entities: list, project: str, language: str, metadata: dict) -> None:
+
+        super().__init__(message_id, channel, user_id, conversation_id, content, project, metadata, timestamp)
+
         self.domain = domain
         self.intent = intent
         self.entities = entities
-        self.project = project
         self.language = language
-        self.metadata = metadata
 
         if not isinstance(intent, Intent):
             raise ValueError('intent type should be Intent')
-
-        logging.debug("MODELS.MESSAGE  intent check passed for ".format(message_id))
 
         if metadata is not None:
             if not isinstance(metadata, dict):
@@ -465,27 +477,10 @@ class RequestMessage:
 
     @staticmethod
     def from_rep(data: dict):
-
-        logging.debug("MODELS.MESSAGE starting logging a REQUEST message {}".format(data['messageId']))
-
-        if 'intent' in data:
-            intent = Intent.from_rep(data['intent'])
-        else:
-            intent_value = {
-                'name': None,
-                'confidence': None
-            }
-            intent = Intent.from_rep(intent_value)
-
-        if 'domain' in data:
-            domain = data['domain']
-        else:
-            domain = None
-
-        if 'conversationId' in data:
-            conversation_id = data['conversationId']
-        else:
-            conversation_id = None
+        raw_intent = data.get("intent", None)
+        intent = Intent.empty()
+        if raw_intent:
+            intent = Intent.from_rep(raw_intent)
 
         content = None
         user_info_fields = ['firstName', 'lastName', 'profilePic', 'locale', 'timezone', 'gender', 'isPaymentEnable', 'userId']
@@ -501,26 +496,25 @@ class RequestMessage:
             elif str(data['content']['type']).lower() in user_info_fields:
                 content = UserInfoRequest.from_rep(data['content'])
             else:
-                raise ValueError("An unknown content type is in the message body")
+                raise ValueError(f"Unsupported content type {data['content']} was provided")
 
-        entities = []
-        if "entities" in data:
-            for entity in data['entities']:
-                e = Entity.from_rep(entity)
-                entities.append(e)
+        raw_entities = data.get("entities", [])
+        entities = [Entity.from_rep(raw_entity) for raw_entity in raw_entities]
 
-        metadata = None
-        if "metadata" in data:
-            metadata = data['metadata']
-
-        language = None
-        if "language" in data:
-            language = data['language']
-
-        logging.warning("MODELS.MESSAGE default parameters set up for {}".format(data['messageId']))
-
-        return RequestMessage(data['messageId'], data['channel'], data['userId'], conversation_id, data['timestamp'], content, domain, intent, entities,
-                              data['project'], language, metadata)
+        return RequestMessage(
+            data['messageId'],
+            data['channel'],
+            data['userId'],
+            data.get("conversationId", None),
+            data['timestamp'],
+            content,
+            data.get("domain", None),
+            intent,
+            entities,
+            data['project'],
+            data.get("language", None),
+            data.get("metadata", None)
+        )
 
 
 class ResponseMessage:
