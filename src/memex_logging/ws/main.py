@@ -21,7 +21,7 @@ import os
 from elasticsearch import Elasticsearch
 
 from memex_logging.common.log.logging import get_logging_configuration
-from memex_logging.ws_memex.ws import WsInterface
+from memex_logging.ws.ws import WsInterface
 
 
 logging.config.dictConfig(get_logging_configuration("logger"))

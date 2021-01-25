@@ -14,6 +14,9 @@
 
 from __future__ import absolute_import, annotations
 
+from abc import ABC, abstractmethod
+from datetime import datetime
+from enum import Enum
 from typing import Optional, List
 
 import logging
@@ -398,9 +401,33 @@ class Entity:
         return Entity(data['type'], data['value'], data['confidence'])
 
 
-class Message:
+class MessageType(Enum):
 
-    def __init__(self, message_id: str, channel: str, user_id: str, conversation_id: str, content, project: str, metadata: dict, timestamp: str) -> None:
+    REQUEST = "request"
+    RESPONSE = "response"
+    NOTIFICATION = "notification"
+
+
+class Message(ABC):
+    """
+    A generic message that can be send within a conversation.
+    This can and should be used in one of its extended forms:
+      - RequestMessage
+      - ResponseMessage
+      - NotificationMessage
+    """
+
+    def __init__(self, message_id: str, channel: str, user_id: str, conversation_id: str, content, project: str, metadata: dict, timestamp: datetime) -> None:
+        """
+        :param str message_id: the message id
+        :param str channel: the channel where the message is sent
+        :param str user_id: the identifier of the user sending the message
+        :param Optional[str] conversation_id: the conversation identifier
+        :param content: the content of the message
+        :param str project: the project associated to the conversation
+        :param dict metadata: any metadata (key/value) associated to the message
+        :param datetime timestamp: the datetime of the instant the message was sent
+        """
         self.message_id = message_id
         self.channel = channel
         self.user_id = user_id
@@ -410,11 +437,40 @@ class Message:
         self.project = project
         self.metadata = metadata
 
+    @staticmethod
+    def from_repr(raw_data: dict) -> Message:
+        message_type = raw_data.get("type")
+
+        if message_type == MessageType.REQUEST.value:
+            return RequestMessage.from_rep(raw_data)
+        elif message_type == MessageType.RESPONSE.value:
+            return ResponseMessage.from_rep(raw_data)
+        elif message_type == MessageType.NOTIFICATION.value:
+            return NotificationMessage.from_rep(raw_data)
+        else:
+            logger.error(f"Not supported message type {message_type}")
+
+    @staticmethod
+    def timestamp_str_to_datetime(timestamp_str: str) -> datetime:
+        return datetime.fromisoformat(timestamp_str)
+
+    @abstractmethod
+    def to_repr(self) -> dict:
+        pass
+
 
 class RequestMessage(Message):
 
-    def __init__(self, message_id: str, channel: str, user_id: str, conversation_id: Optional[str], timestamp: str,
-                 content, domain: str,  intent: Intent, entities: list, project: str, language: str, metadata: dict) -> None:
+    ALLOWED_CONTENT_TYPES = [
+        TextualRequest,
+        ActionRequest,
+        AttachmentRequest,
+        LocationRequest,
+        UserInfoRequest
+    ]
+
+    def __init__(self, message_id: str, channel: str, user_id: str, conversation_id: Optional[str], timestamp: datetime,
+                 content, domain: str,  intent: Intent, entities: List[Entity], project: str, language: str, metadata: dict) -> None:
 
         super().__init__(message_id, channel, user_id, conversation_id, content, project, metadata, timestamp)
 
@@ -424,25 +480,17 @@ class RequestMessage(Message):
         self.language = language
 
         if not isinstance(intent, Intent):
-            raise ValueError('intent type should be Intent')
+            raise ValueError('Parameter intent should be a Intent')
 
         if metadata is not None:
             if not isinstance(metadata, dict):
-                raise ValueError('metadata type should be dictionary')
+                raise ValueError('Parameter metadata should be a dict')
 
-        logging.debug("MODELS.MESSAGE  metadata check passed for ".format(message_id))
+        if type(content) in self.ALLOWED_CONTENT_TYPES:
+            raise ValueError("Type for parameter content is not allowed")
 
-        if content is not None:
-            if not (isinstance(content, TextualRequest) or isinstance(content, ActionRequest) or isinstance(content, AttachmentRequest) or isinstance(content, LocationRequest) or isinstance(content, UserInfoRequest)):
-                raise ValueError("content should be TextRequest, ActionRequest, AttachmentRequest, UserInfoRequest or LocationRequest")
-
-        logging.debug("MODELS.MESSAGE  content check passed for ".format(message_id))
-
-        for entity in entities:
-            if not isinstance(entity, Entity):
-                raise ValueError('entities should contains only object with type Entity')
-
-        logging.debug("MODELS.MESSAGE  entity check passed for ".format(message_id))
+        if not isinstance(entities, List[Entity]):
+            raise ValueError('entities should contains only object with type Entity')
 
     def to_repr(self) -> dict:
         entities = []
@@ -464,7 +512,7 @@ class RequestMessage(Message):
             'channel': self.channel,
             'userId': self.user_id,
             'conversationId': self.conversation_id,
-            'timestamp': self.timestamp,
+            'timestamp': self.timestamp.isoformat(),
             'content': local_content,
             'domain': self.domain,
             'intent': local_intent,
@@ -472,7 +520,7 @@ class RequestMessage(Message):
             'project': self.project,
             'language': self.language,
             'metadata': self.metadata,
-            'type': 'REQUEST'
+            'type': MessageType.REQUEST.value
         }
 
     @staticmethod
@@ -506,7 +554,7 @@ class RequestMessage(Message):
             data['channel'],
             data['userId'],
             data.get("conversationId", None),
-            data['timestamp'],
+            Message.timestamp_str_to_datetime(data['timestamp']),
             content,
             data.get("domain", None),
             intent,
@@ -517,34 +565,21 @@ class RequestMessage(Message):
         )
 
 
-class ResponseMessage:
+class ResponseMessage(Message):
 
-    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, response_to: str, timestamp: str, content, metadata: dict, project: str):
+    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, response_to: str, timestamp: datetime, content, metadata: dict, project: str):
 
-        logging.debug("MODELS.MESSAGE creating a ResponseMessage object for {}".format(message_id))
+        super().__init__(message_id, channel, user_id, conversation_id, content, project, metadata, timestamp)
 
-        self.message_id = message_id
-        self.conversation_id = conversation_id
-        self.channel = channel
-        self.user_id = user_id
         self.response_to = response_to
-        self.timestamp = timestamp
-        self.content = content
-        self.metadata = metadata
-        self.project = project
-        self.type = "RESPONSE"
 
         if content is not None:
             if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
                 raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextualResponse")
 
-        logging.debug("MODELS.MESSAGE  content check passed for ".format(message_id))
-
         if metadata is not None:
             if not isinstance(metadata, dict):
                 raise ValueError('metadata type should be dictionary')
-
-        logging.debug("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
         local_content = None
@@ -558,11 +593,11 @@ class ResponseMessage:
             'channel': self.channel,
             'userId': self.user_id,
             'responseTo': self.response_to,
-            'timestamp': self.timestamp,
+            'timestamp': self.timestamp.isoformat(),
             'content': local_content,
             'metadata': self.metadata,
             'project': self.project,
-            'type': self.type
+            'type': MessageType.RESPONSE.value
         }
 
     @staticmethod
@@ -596,36 +631,22 @@ class ResponseMessage:
 
         logging.warning("MODELS.MESSAGE default parameters set up for {}".format(data['messageId']))
 
-        return ResponseMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['responseTo'], data['timestamp'], content, metadata, data['project'])
+        return ResponseMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['responseTo'], Message.timestamp_str_to_datetime(data['timestamp']), content, metadata, data['project'])
 
 
-class NotificationMessage:
+class NotificationMessage(Message):
 
-    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, timestamp: str, content, metadata: dict, project: str):
+    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, timestamp: datetime, content, metadata: dict, project: str):
 
-        logging.debug("MODELS.MESSAGE creating a NotificationMessage object for ".format(message_id))
-
-        self.message_id = message_id
-        self.conversation_id = conversation_id
-        self.channel = channel
-        self.user_id = user_id
-        self.timestamp = timestamp
-        self.content = content
-        self.metadata = metadata
-        self.project = project
-        self.type = "NOTIFICATION"
+        super().__init__(message_id, channel, user_id, conversation_id, content, project, metadata, timestamp)
 
         if content is not None:
             if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationRequest)):
                 raise ValueError("response should contains only elements from QuickReplyResponse, CarouselResponse, AttachmentResponse, TextualResponse")
 
-        logging.debug("MODELS.MESSAGE  content check passed for ".format(message_id))
-
         if metadata is not None:
             if not isinstance(metadata, dict):
                 raise ValueError('metadata type should be dictionary')
-
-        logging.debug("MODELS.MESSAGE  metadata check passed for ".format(message_id))
 
     def to_repr(self) -> dict:
         local_content = None
@@ -638,11 +659,11 @@ class NotificationMessage:
             'conversationId': self.conversation_id,
             'channel': self.channel,
             'userId': self.user_id,
-            'timestamp': self.timestamp,
+            'timestamp': self.timestamp.isoformat(),
             'content': local_content,
             'metadata': self.metadata,
             'project': self.project,
-            'type': self.type
+            'type': MessageType.NOTIFICATION.value
         }
 
     @staticmethod
@@ -676,4 +697,4 @@ class NotificationMessage:
 
         logging.warning("MODELS.MESSAGE default parameters set up for {}".format(data['messageId']))
 
-        return NotificationMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['timestamp'], content, metadata, data['project'])
+        return NotificationMessage(data['messageId'], conversation_id, data['channel'], data['userId'], Message.timestamp_str_to_datetime(data['timestamp']), content, metadata, data['project'])

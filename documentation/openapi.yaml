@@ -390,7 +390,8 @@ components:
           example: "CONV-DAJKWPENVOA-314CAD"
         timestamp:
           type: string
-          example: "2020-01-19 17:21:00"
+          description: Timestamp expressed in ISO format
+          example: "2021-01-25T14:18:36.141378"
         content:
           oneOf:
             - $ref: '#/components/schemas/TextualRequest'

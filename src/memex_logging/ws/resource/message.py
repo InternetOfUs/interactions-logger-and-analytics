@@ -21,7 +21,7 @@ from elasticsearch import Elasticsearch
 from flask import request, Response
 from flask_restful import Resource
 
-from memex_logging.models.message import RequestMessage, ResponseMessage, NotificationMessage
+from memex_logging.common.model.message import RequestMessage, ResponseMessage, NotificationMessage, Message
 from memex_logging.utils.utils import Utils
 
 
@@ -33,23 +33,19 @@ class MessageResourceBuilder(object):
     @staticmethod
     def routes(es: Elasticsearch):
         return [
-            (ManipulateMessage, '/message', (es,)),
-            (LogMessages, '/messages', (es,))
+            (MessageInterface, '/message', (es,)),
+            (MessagesInterface, '/messages', (es,))
         ]
 
 
-class ManipulateMessage(Resource):
-    """
-    This class can be used to log a single message. The only message allowed is post
-    """
+class MessageInterface(Resource):
 
     def __init__(self, es: Elasticsearch) -> None:
         self._es = es
 
     def delete(self) -> Response:
         """
-        Method to delete a message of a specific project by id
-        :return: the HTTP response
+        Delete a specific message.
         """
 
         if 'project' in request.args and 'messageId' in request.args:
@@ -98,8 +94,7 @@ class ManipulateMessage(Resource):
 
     def get(self) -> Response:
         """
-        Method to obtain a message of a specific project by id
-        :return: the HTTP response
+        Get details of a message.
         """
 
         if 'project' in request.args and 'messageId' in request.args:
@@ -162,22 +157,15 @@ class ManipulateMessage(Resource):
             return resp
 
 
-class LogMessages(Resource):
-    """
-    This class can be used to log an array of messages. The only method allowed is post
-    This method log the messages with index <project-name>-message-<yyyy>-<mm>-<dd>
-    """
+class MessagesInterface(Resource):
 
     def __init__(self, es: Elasticsearch):
         self._es = es
 
     def post(self) -> Response:
         """
-        Add a batch of messages to the database. Pass a JSON array in the body of the request
-        :return: the HTTP response
+        Register a batch of messages.
         """
-
-        logging.warning("Starting to log a new set of messages")
 
         messages_received = request.json
         if messages_received is None:
@@ -192,75 +180,34 @@ class LogMessages(Resource):
 
         trace_ids = []
 
-        for message in messages_received:
+        try:
+            messages = [Message.from_repr(m_r) for m_r in messages_received]
+        except (KeyError, ValueError) as e:
+            logger.exception("Error while parsing input message data", exc_info=e)
+            return {
+                "message": "Could not parse malformed data"
+            }, 400
+        except Exception as e:
+            logger.exception("Something went wrong while parsing message list", exc_info=e)
+            return {
+                "message": "Something went wrong"
+            }, 500
 
+        for message in messages:
             try:
-                message_type = str(message['type']).lower()
-                message_id = str(message['messageId'])
-                project_name = Utils.extract_project_name(message)
-                date = Utils.extract_date(message)
-                index_name = "message-" + project_name + "-" + date
-            except (KeyError, ValueError) as e:
-                logging.exception(" POST request, message failed to be logged due to malformed request", exc_info=e)
-                logging.error(message)
-                json_response = {
-                    "status": "Malformed request: error in parsing messages",
-                    "code": 400
-                }
-                resp = Response(json.dumps(json_response), mimetype='application/json')
-                resp.status_code = 400
-                return resp
+                index_name = Utils.generate_index(message.project, "message", message.timestamp)
+                query = self._es.index(index=index_name, doc_type='_doc', body=message.to_repr())
+                trace_ids.append(query['_id'])
             except Exception as e:
-                logging.exception("POST request, message failed to be logged", exc_info=e)
+                logging.exception(f"Could not save message with id {message.id} could not be saved", exc_info=e)
                 logging.error(message)
-                json_response = {
-                    "status": "Internal server error: could not parse messages",
-                    "code": 500
-                }
-                resp = Response(json.dumps(json_response), mimetype='application/json')
-                resp.status_code = 500
-                return resp
-
-            try:
-                if message_type == 'request':
-                    request_message = RequestMessage.from_rep(message)
-                    Utils.compute_conversation_id(self._es, request_message)
-                    query = self._es.index(index=index_name, doc_type='_doc', body=request_message.to_repr())
-                    trace_ids.append(query['_id'])
-                elif message_type == "response":
-                    response_message = ResponseMessage.from_rep(message)
-                    query = self._es.index(index=index_name, doc_type='_doc', body=response_message.to_repr())
-                    trace_ids.append(query['_id'])
-                elif message_type == "notification":
-                    notification_message = NotificationMessage.from_rep(message)
-                    query = self._es.index(index=index_name, doc_type='_doc', body=notification_message.to_repr())
-                    trace_ids.append(query['_id'])
-            except KeyError as e:
-                logging.exception("POST request, message with id {} failed to be logged due to malformed request".format(message_id), exc_info=e)
-                logging.error(message)
-                json_response = {
-                    "status": "Malformed request: error in parsing messages",
-                    "code": 400
-                }
-                resp = Response(json.dumps(json_response), mimetype='application/json')
-                resp.status_code = 400
-                return resp
-            except Exception as e:
-                logging.exception("POST request, message with id {} failed to be logged".format(message_id), exc_info=e)
-                logging.error(message)
-                json_response = {
+                return {
                     "status": "Internal server error: could not store messages",
                     "code": 500
-                }
-                resp = Response(json.dumps(json_response), mimetype='application/json')
-                resp.status_code = 500
-                return resp
+                }, 500
 
-        json_response = {
+        return {
             "traceIds": trace_ids,
             "status": "ok",
             "code": 201
-        }
-        resp = Response(json.dumps(json_response), mimetype='application/json')
-        resp.status_code = 201
-        return resp
+        }, 201

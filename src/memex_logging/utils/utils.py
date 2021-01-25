@@ -14,28 +14,37 @@
 
 from __future__ import absolute_import, annotations
 
-from flask_restful import abort
-
+from datetime import datetime
 import logging
-import datetime
-from datetime import timezone
 import uuid
+from datetime import timezone
 
 import dateutil.parser
-
 from elasticsearch import Elasticsearch
+from flask_restful import abort
 
-from memex_logging.models.message import RequestMessage, ResponseMessage, NotificationMessage
+from memex_logging.common.model.message import RequestMessage, ResponseMessage, NotificationMessage
 
 
 class Utils:
 
     @staticmethod
+    def generate_index(project: str, data_type: str, dt: datetime) -> str:
+        """
+        Generate the Elasticsearch index associated to the message data.
+
+        :param str project: the project data is associated to
+        :param str data_type: the type of data
+        :param datetime dt: the datetime of the data
+        :return: the generated EL index
+        """
+        formatted_date = dt.strftime("%Y-%m-%d")
+        index_name = f"{data_type}-{project}-{formatted_date}"
+        return index_name
+
+    # TODO stop using this and remove!!!!!
+    @staticmethod
     def extract_date(data: dict) -> str:
-        """
-        :param data:
-        :return:
-        """
         if "timestamp" in data.keys():
             try:
                 positioned = dateutil.parser.parse(data['timestamp'])

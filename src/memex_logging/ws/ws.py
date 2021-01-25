@@ -22,11 +22,11 @@ from elasticsearch import Elasticsearch
 from flask import Flask
 from flask_restful import Api
 
-from memex_logging.ws_memex.analytics_api.analytics_resource import AnalyticsResourceBuilder
-from memex_logging.ws_memex.documentation_api.documentation_resource import DocumentationResourceBuilder
-from memex_logging.ws_memex.logging_api.logging_resource import LoggingResourceBuilder
-from memex_logging.ws_memex.messages_api.messagges_resource import MessageResourceBuilder
-from memex_logging.ws_memex.performances_api.performances_resource import PerformancesResourceBuilder
+from memex_logging.ws.resource.analytics_resource import AnalyticsResourceBuilder
+from memex_logging.ws.resource.documentation_resource import DocumentationResourceBuilder
+from memex_logging.ws.resource.logging_resource import LoggingResourceBuilder
+from memex_logging.ws.resource.messagges_resource import MessageResourceBuilder
+from memex_logging.ws.resource.performances_resource import PerformancesResourceBuilder
 
 
 class WsInterface(object):
