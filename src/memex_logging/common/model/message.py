@@ -439,7 +439,7 @@ class Message(ABC):
 
     @staticmethod
     def from_repr(raw_data: dict) -> Message:
-        message_type = raw_data.get("type")
+        message_type = raw_data.get("type").lower()
 
         if message_type == MessageType.REQUEST.value:
             return RequestMessage.from_rep(raw_data)
@@ -449,6 +449,7 @@ class Message(ABC):
             return NotificationMessage.from_rep(raw_data)
         else:
             logger.error(f"Not supported message type {message_type}")
+            raise TypeError(f"Unable to build a Message from type [{message_type}]")
 
     @staticmethod
     def timestamp_str_to_datetime(timestamp_str: str) -> datetime:
@@ -486,8 +487,9 @@ class RequestMessage(Message):
             if not isinstance(metadata, dict):
                 raise ValueError('Parameter metadata should be a dict')
 
-        if type(content) in self.ALLOWED_CONTENT_TYPES:
-            raise ValueError("Type for parameter content is not allowed")
+        # TODO fix check
+        # if type(content) in self.ALLOWED_CONTENT_TYPES:
+        #     raise ValueError(f"Type for parameter content is not allowed - {type(content)}")
 
         if not isinstance(entities, list):
             raise ValueError('entities should contains only object with type Entity')

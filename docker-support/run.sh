@@ -23,4 +23,4 @@ echo "Running service..."
 #
 
 
-python -m memex_logging.ws_memex.main
+python -m memex_logging.ws.main

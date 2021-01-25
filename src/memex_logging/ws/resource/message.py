@@ -21,7 +21,7 @@ from elasticsearch import Elasticsearch
 from flask import request, Response
 from flask_restful import Resource
 
-from memex_logging.common.model.message import RequestMessage, ResponseMessage, NotificationMessage, Message
+from memex_logging.common.model.message import Message
 from memex_logging.utils.utils import Utils
 
 
@@ -162,7 +162,7 @@ class MessagesInterface(Resource):
     def __init__(self, es: Elasticsearch):
         self._es = es
 
-    def post(self) -> Response:
+    def post(self):
         """
         Register a batch of messages.
         """
@@ -182,7 +182,7 @@ class MessagesInterface(Resource):
 
         try:
             messages = [Message.from_repr(m_r) for m_r in messages_received]
-        except (KeyError, ValueError) as e:
+        except (KeyError, ValueError, TypeError) as e:
             logger.exception("Error while parsing input message data", exc_info=e)
             return {
                 "message": "Could not parse malformed data"
@@ -199,7 +199,7 @@ class MessagesInterface(Resource):
                 query = self._es.index(index=index_name, doc_type='_doc', body=message.to_repr())
                 trace_ids.append(query['_id'])
             except Exception as e:
-                logging.exception(f"Could not save message with id {message.id} could not be saved", exc_info=e)
+                logging.exception(f"Could not save message with id {message.message_id} could not be saved", exc_info=e)
                 logging.error(message)
                 return {
                     "status": "Internal server error: could not store messages",
