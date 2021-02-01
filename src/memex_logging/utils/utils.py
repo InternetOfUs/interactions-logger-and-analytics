@@ -14,18 +14,15 @@
 
 from __future__ import absolute_import, annotations
 
-from flask_restful import abort
-
+from datetime import datetime, timezone
 import logging
-import datetime
-from datetime import timezone
 import uuid
 
 import dateutil.parser
-
 from elasticsearch import Elasticsearch
+from flask_restful import abort
 
-from memex_logging.models.message import RequestMessage, ResponseMessage, NotificationMessage
+from memex_logging.common.model.message import RequestMessage, ResponseMessage, NotificationMessage
 
 
 logger = logging.getLogger("logger.utils.utils")
@@ -34,11 +31,22 @@ logger = logging.getLogger("logger.utils.utils")
 class Utils:
 
     @staticmethod
+    def generate_index(project: str, data_type: str, dt: datetime) -> str:
+        """
+        Generate the Elasticsearch index associated to the message data.
+
+        :param str project: the project data is associated to
+        :param str data_type: the type of data
+        :param datetime dt: the datetime of the data
+        :return: the generated EL index
+        """
+        formatted_date = dt.strftime("%Y-%m-%d")
+        index_name = f"{data_type}-{project}-{formatted_date}"
+        return index_name
+
+    # TODO stop using this and remove!!!!!
+    @staticmethod
     def extract_date(data: dict) -> str:
-        """
-        :param data:
-        :return:
-        """
         if "timestamp" in data.keys():
             try:
                 positioned = dateutil.parser.parse(data['timestamp'])
@@ -47,7 +55,7 @@ class Utils:
                 logging.error("`timestamp` of the message cannot be parsed")
                 logging.error(data)
         else:
-            support_bound = datetime.datetime.now().isoformat()
+            support_bound = datetime.now().isoformat()
             positioned = dateutil.parser.parse(support_bound)
             return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
 
@@ -102,7 +110,7 @@ class Utils:
                 response = elastic.search(index=index, body=body, size=1)
                 if response['hits']['total'] != 0:
                     positioned = dateutil.parser.parse(response['hits']['hits'][0]['_source']['timestamp'])
-                    now = datetime.datetime.now().isoformat()
+                    now = datetime.now().isoformat()
                     positioned_now = dateutil.parser.parse(now)
                     positioned = positioned.replace(tzinfo=timezone.utc).astimezone(tz=None)
                     positioned_now = positioned_now.replace(tzinfo=timezone.utc).astimezone(tz=None)

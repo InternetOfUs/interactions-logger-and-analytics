@@ -416,7 +416,8 @@ components:
           example: "CONV-DAJKWPENVOA-314CAD"
         timestamp:
           type: string
-          example: "2020-01-19 17:21:00"
+          description: Timestamp expressed in ISO format
+          example: "2021-01-25T14:18:36.141378"
         content:
           oneOf:
             - $ref: '#/components/schemas/TextualRequest'
@@ -452,8 +453,8 @@ components:
           type: object
         type:
           type: string
-          enum: [ "REQUEST" ]
-          example: "REQUEST"
+          enum: [ "request" ]
+          example: "request"
       required:
         - messageId
         - channel
@@ -498,8 +499,8 @@ components:
           example: "MemEx"
         type:
           type: string
-          enum: [ "RESPONSE" ]
-          example: "RESPONSE"
+          enum: [ "response" ]
+          example: "response"
       required:
         - messageId
         - channel
@@ -542,8 +543,8 @@ components:
           example: "MemEx"
         type:
           type: string
-          enum: [ "NOTIFICATION" ]
-          example: "NOTIFICATION"
+          enum: [ "notification" ]
+          example: "notification"
       required:
         - messageId
         - channel

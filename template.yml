@@ -1,0 +1,32 @@
+---
+
+- name: Setup Python project.
+  hosts: 127.0.0.1
+  connection: local
+  vars:
+    project_type: python
+    project_path: .
+    project_features:
+      - test
+      - docker
+      - ci_cd
+    project_python_submodules: []
+
+    docker_image_name: wenet/logging
+    docker_python_services:
+      - name: logger
+        main_module: memex_logging.ws.main
+        required_env_variables:
+          - ${EL_HOST}
+          - ${EL_PORT}
+    docker_registry: public.registry.u-hopper.com
+
+    ci_stages:
+      - build
+      - test
+      - push
+    ci_environments:
+      - staging
+
+  roles:
+    - uh.project_template

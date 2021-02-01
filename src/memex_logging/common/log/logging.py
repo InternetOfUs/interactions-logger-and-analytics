@@ -71,6 +71,11 @@ def get_logging_configuration(service_name: str):
                 "level": log_level,
                 "handlers": log_handlers,
                 "propagate": 0
+            },
+            "logger": {
+                "level": log_level,
+                "handlers": log_handlers,
+                "propagate": 0
             }
         }
     }
