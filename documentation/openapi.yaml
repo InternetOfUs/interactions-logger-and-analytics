@@ -7,7 +7,9 @@ openapi: 3.0.0
 info:
 
   title: Memorable Experience
-  description: "This document details the APIs exposed by the MemEx big data platform, realise by U-Hopper srl within the context of the FESR-funded Memorable Experiences (MemEx) project. The platform logs all interactions among tourists and a purposefully designed chatbot.
+  description: "
+
+    This document details the APIs exposed by the MemEx big data platform, realise by U-Hopper srl within the context of the FESR-funded Memorable Experiences (MemEx) project. The platform logs all interactions among tourists and a purposefully designed chatbot.
 
     There are three kind of implemented APIs:
 
@@ -27,7 +29,7 @@ info:
 
     "
 
-  version: '0.0.5'
+  version: "0.0.5"
   contact:
     email: "massimiliano.luca@unitn.it"
 
@@ -83,7 +85,7 @@ paths:
         tags:
           - message
         summary: Retrieve a single message
-        description: This end-point can be used to retrieve all the information of a single message, it is necessary to specify the `messageId` and the `project`, or instead of specifying these two parameters is possible to specify only the `traceId`
+        description: This end-point allows to retrieve all the information of a single message from the database, it is necessary to specify the `project`, the `messageId` and the `userId`, or instead of specifying these three parameters is possible to specify only the `traceId`
         parameters:
           - in: query
             name: project
@@ -98,6 +100,12 @@ paths:
             example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
             description: the id of the message you want to retrieve
           - in: query
+            name: userId
+            schema:
+              type: string
+            example: "USR-JDKHEIU2-31NJDTE94"
+            description: the id of the user you want to retrieve
+          - in: query
             name: traceId
             schema:
               type: string
@@ -109,11 +117,7 @@ paths:
             content:
               application/json:
                 schema:
-                  oneOf:
-                  - $ref: '#/components/schemas/RequestMessage'
-                  - $ref: '#/components/schemas/ResponseMessage'
-                  - $ref: '#/components/schemas/NotificationMessage'
-                example: {"messageId": "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8", "channel": "FACEBOOK", "userId": "USR-JDKHEIU2-31NJDTE94", "conversationId": "CONV-DAJKWPENVOA-314CAD", "timestamp": "2020-01-19 17:21:00", "content": {"type": "text", "value": "devo fare un bonifico di 40 euro"}, "domain": "pagamenti", "intent": {"name": "bonifico", "confidence": 0.87}, "entities": [{"type": "@city", "value": "Boston", "confidence": 0.94}], "project": "MeMex", "language": "IT", "metadata": {}, "type": "REQUEST"}
+                  $ref: '#/components/schemas/MessageRetrieved'
           '400':
             description: malformed request
             content:
@@ -137,29 +141,39 @@ paths:
         tags:
           - message
         summary: Delete a message
-        description: This method should be used to delete a message from the database, it is necessary to specify the `messageId` and the `project`
+        description: This end-point allows to delete a message from the database, it is necessary to specify the `project`, the `messageId` and the `userId`, or instead of specifying these three parameters is possible to specify only the `traceId`
         parameters:
           - in: query
             name: project
             schema:
               type: string
             example: "MeMex"
-            required: true
             description: the name of the project related to the message you want to delete
           - in: query
             name: messageId
             schema:
               type: string
             example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
-            required: true
             description: The id of the message you want to delete
+          - in: query
+            name: userId
+            schema:
+              type: string
+            example: "USR-JDKHEIU2-31NJDTE94"
+            description: the id of the user you want to delete
+          - in: query
+            name: traceId
+            schema:
+              type: string
+            example: "bcpg8XYBHD_pmQ1jA7b8"
+            description: the traceId of the message you want to delete
         responses:
           '200':
             description: message deleted
             content:
               application/json:
                 schema:
-                  $ref: '#/components/schemas/HTTP_200_MESSAGE'
+                  $ref: '#/components/schemas/HTTP_200_basic'
           '400':
             description: malformed request
             content:
@@ -373,6 +387,18 @@ components:
           - $ref: '#/components/schemas/ResponseMessage'
           - $ref: '#/components/schemas/NotificationMessage'
 
+    MessageRetrieved:
+      type: object
+      oneOf:
+        - $ref: '#/components/schemas/RequestMessage'
+        - $ref: '#/components/schemas/ResponseMessage'
+        - $ref: '#/components/schemas/NotificationMessage'
+      properties:
+        traceId:
+          type: string
+          example: "bcpg8XYBHD_pmQ1jA7b8"
+      example: { "messageId": "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8", "channel": "FACEBOOK", "userId": "USR-JDKHEIU2-31NJDTE94", "conversationId": "CONV-DAJKWPENVOA-314CAD", "timestamp": "2020-01-19 17:21:00", "content": { "type": "text", "value": "devo fare un bonifico di 40 euro" }, "domain": "pagamenti", "intent": { "name": "bonifico", "confidence": 0.87 }, "entities": [ { "type": "@city", "value": "Boston", "confidence": 0.94 } ], "project": "MeMex", "language": "IT", "metadata": { }, "type": "REQUEST", "traceId": "bcpg8XYBHD_pmQ1jA7b8" }
+
     RequestMessage:
       type: object
       properties:
@@ -399,7 +425,7 @@ components:
             - $ref: '#/components/schemas/AttachmentRequest'
             - $ref: '#/components/schemas/LocationRequest'
             - $ref: '#/components/schemas/UserInfoRequest'
-          example: {"type": "text", "value": "devo fare un bonifico di 40 euro"}
+          example: { "type": "text", "value": "devo fare un bonifico di 40 euro" }
         domain:
           type: string
           example: "pagamenti"
@@ -427,7 +453,8 @@ components:
           type: object
         type:
           type: string
-          example: "REQUEST"
+          enum: [ "request" ]
+          example: "request"
       required:
         - messageId
         - channel
@@ -464,15 +491,16 @@ components:
             - $ref: '#/components/schemas/AttachmentResponse'
             - $ref: '#/components/schemas/CarouselResponse'
             - $ref: '#/components/schemas/LocationResponse'
-          example: {"type": "text", "value": "va bene"}
+          example: { "type": "text", "value": "va bene" }
         metadata:
           type: object
         project:
           type: string
-          example: 'MemEx'
+          example: "MemEx"
         type:
           type: string
-          example: "RESPONSE"
+          enum: [ "response" ]
+          example: "response"
       required:
         - messageId
         - channel
@@ -507,7 +535,7 @@ components:
             - $ref: '#/components/schemas/AttachmentResponse'
             - $ref: '#/components/schemas/CarouselResponse'
             - $ref: '#/components/schemas/LocationResponse'
-          example: {"type": "text", "value": "attenzione, hai meno di 100 euro sul conto"}
+          example: { "type": "text", "value": "attenzione, hai meno di 100 euro sul conto" }
         metadata:
           type: object
         project:
@@ -515,7 +543,8 @@ components:
           example: "MemEx"
         type:
           type: string
-          example: "NOTIFICATION"
+          enum: [ "notification" ]
+          example: "notification"
       required:
         - messageId
         - channel
@@ -529,13 +558,15 @@ components:
       properties:
         type:
           type: string
-          example: 'location'
+          example: "location"
         longitude:
-          type: string
-          example: '47.3123451'
+          type: number
+          format: float
+          example: 47.3123451
         latitude:
-          type: string
-          example: '9.321151'
+          type: number
+          format: float
+          example: 9.321151
       required:
         - type
         - longitude
@@ -546,13 +577,15 @@ components:
       properties:
         type:
           type: string
-          example: 'location'
+          example: "location"
         longitude:
-          type: string
-          example: '49.3128319'
+          type: number
+          format: float
+          example: 47.3123451
         latitude:
-          type: string
-          example: '8.3189321'
+          type: number
+          format: float
+          example: 9.321151
         buttons:
             type: array
             items:
@@ -567,9 +600,11 @@ components:
       properties:
         type:
           type: string
-          enum: ['firstName','lastName','profilePic','locale','timezone','gender','isPaymentEnable','userId']
+          enum: [ "firstName", "lastName", "profilePic", "locale", "timezone", "gender", "isPaymentEnable", "userId" ]
+          example: "firstName"
         value:
           type: string
+          example: "Matteo"
       required:
         - type
         - value
@@ -689,12 +724,12 @@ components:
           cards:
             type: array
             items:
-              $ref: '#/components/schemas/Card'
+              $ref: '#/components/schemas/CarouselCardResponse'
         required:
           - type
           - cards
 
-    Card:
+    CarouselCardResponse:
       type: object
       properties:
           title:
@@ -708,6 +743,7 @@ components:
             example: "you should hike"
           defaultAction:
             type: object
+            example: {}
           buttons:
             type: array
             items:
@@ -728,6 +764,10 @@ components:
           type: number
           format: float
           example: 0.94
+      required:
+        - type
+        - value
+        - confidence
 
     Log:
       type: object
@@ -746,7 +786,7 @@ components:
           example: "nlu"
         severity:
           type: string
-          enum: ['error','warning','info','debug']
+          enum: [ "error", "warning", "info", "debug" ]
           example: "error"
         logContent:
           type: string
@@ -941,6 +981,16 @@ components:
 
     # Responses
 
+    HTTP_200_basic:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "Ok"
+        code:
+          enum: [ '200' ]
+          example: 200
+
     HTTP_200:
       type: object
       properties:
@@ -950,19 +1000,6 @@ components:
         status:
           type: string
           example: "Object deleted"
-        code:
-          enum: ['200']
-          example: 200
-
-    HTTP_200_MESSAGE:
-      type: object
-      properties:
-        messageId:
-          type: string
-          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
-        action:
-          type: string
-          example: "deleted"
         code:
           enum: [ '200' ]
           example: 200
@@ -999,7 +1036,7 @@ components:
         message:
           type: string
 
-    HTTP_201 :
+    HTTP_201:
       type: object
       properties:
         traceId:
@@ -1009,7 +1046,7 @@ components:
           type: string
           example: "Object Created"
         code:
-          enum: ['201']
+          enum: [ '201' ]
           example: 201
 
     HTTP_201_list:
@@ -1022,7 +1059,7 @@ components:
             example: "bcpg8XYBHD_pmQ1jA7b8"
         status:
           type: string
-          example: "Objects Created"
+          example: "Created"
         code:
           enum: [ '201' ]
           example: 201
@@ -1040,7 +1077,7 @@ components:
         status:
           enum: ['ok']
         cose:
-          enum: ['200']
+          enum: [ '200' ]
 
     200_user_count:
       type: object
@@ -1055,7 +1092,7 @@ components:
         status:
           enum: ['ok']
         cose:
-          enum: ['200']
+          enum: [ '200' ]
 
     HTTP_400:
       type: object
@@ -1072,7 +1109,7 @@ components:
       properties:
         status:
           type: string
-          example: "Resource not found"
+          example: "Not found"
         code:
           enum: [ '404' ]
           example: 404
@@ -1087,7 +1124,7 @@ components:
           type: string
           example: "Cannot find message {traceId} in the database"
         code:
-          enum: ['404']
+          enum: [ '404' ]
           example: 404
 
     HTTP_500:

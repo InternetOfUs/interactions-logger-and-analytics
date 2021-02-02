@@ -14,16 +14,18 @@
 
 from __future__ import absolute_import, annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import uuid
-from datetime import timezone
 
 import dateutil.parser
 from elasticsearch import Elasticsearch
 from flask_restful import abort
 
 from memex_logging.common.model.message import RequestMessage, ResponseMessage, NotificationMessage
+
+
+logger = logging.getLogger("logger.utils.utils")
 
 
 class Utils:
@@ -50,10 +52,10 @@ class Utils:
                 positioned = dateutil.parser.parse(data['timestamp'])
                 return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
             except:
-                logging.error("timestamp cannot be parsed of the message cannot be parsed")
+                logging.error("`timestamp` of the message cannot be parsed")
                 logging.error(data)
         else:
-            support_bound = datetime.datetime.now().isoformat()
+            support_bound = datetime.now().isoformat()
             positioned = dateutil.parser.parse(support_bound)
             return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
 
@@ -67,7 +69,7 @@ class Utils:
         if "traceId" in data.keys():
             return data["traceId"]
         else:
-            logging.error("ERROR@Utils - traceId not found in the message parsed")
+            logging.error("`traceId` not found in the message parsed")
             abort(400, message="Invalid message. traceId is missing")
 
     @staticmethod
@@ -108,7 +110,7 @@ class Utils:
                 response = elastic.search(index=index, body=body, size=1)
                 if response['hits']['total'] != 0:
                     positioned = dateutil.parser.parse(response['hits']['hits'][0]['_source']['timestamp'])
-                    now = datetime.datetime.now().isoformat()
+                    now = datetime.now().isoformat()
                     positioned_now = dateutil.parser.parse(now)
                     positioned = positioned.replace(tzinfo=timezone.utc).astimezone(tz=None)
                     positioned_now = positioned_now.replace(tzinfo=timezone.utc).astimezone(tz=None)

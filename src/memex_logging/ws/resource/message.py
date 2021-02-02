@@ -14,18 +14,17 @@
 
 from __future__ import absolute_import, annotations
 
-import json
 import logging
 
 from elasticsearch import Elasticsearch
-from flask import request, Response
+from flask import request
 from flask_restful import Resource
 
 from memex_logging.common.model.message import Message
 from memex_logging.utils.utils import Utils
 
 
-logger = logging.getLogger("logger.messages_api")
+logger = logging.getLogger("logger.resource.message")
 
 
 class MessageResourceBuilder(object):
@@ -43,118 +42,144 @@ class MessageInterface(Resource):
     def __init__(self, es: Elasticsearch) -> None:
         self._es = es
 
-    def delete(self) -> Response:
+    def delete(self):
         """
         Delete a specific message.
         """
 
-        if 'project' in request.args and 'messageId' in request.args:
+        if 'project' in request.args and 'messageId' in request.args and 'userId' in request.args:
             project = request.args.get('project')
             message_id = request.args.get('messageId')
-            logging.warning("DELETE request, starting to delete a message in project {} with messageId {}".format(project, message_id))
+            user_id = request.args.get('userId')
             index = "message-" + str(project).lower() + "-*"
             query = {
                 "query": {
-                    "match": {
-                        "messageId": message_id
+                    "bool": {
+                        "must": [
+                            {
+                                "match_phrase": {
+                                    "messageId": message_id
+                                }
+                            },
+                            {
+                                "match_phrase": {
+                                    "userId": user_id
+                                }
+                            }
+                        ]
                     }
                 }
             }
-        else:
-            logging.error("DELETE request, cannot parse parameters correctly while elaborating the delete request")
-            json_response = {
-                "status": "Malformed request: missing required parameter, you have to specify `messageId` and the `project`",
-                "code": 400
+
+        elif 'traceId' in request.args:
+            trace_id = request.args.get("traceId")
+            index = "message-*"
+            query = {
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "match_phrase": {
+                                    "_id": trace_id
+                                }
+                            }
+                        ]
+                    }
+                }
             }
-            resp = Response(json.dumps(json_response), mimetype='application/json')
-            resp.status_code = 400
-            return resp
+
+        else:
+            logging.error("Cannot parse parameters correctly while elaborating the delete request")
+            return {
+                "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `project`, the `messageId` and the `userId`",
+                "code": 400
+            }, 400
 
         try:
             self._es.delete_by_query(index=index, body=query)
-            # self._es.delete(index=index, id=trace_id)
         except Exception as e:
-            logging.exception("DELETE request, message failed to be deleted", exc_info=e)
-            json_response = {
-                "status": "Internal server error: could not delete messages",
+            logging.exception("Message failed to be deleted", exc_info=e)
+            return {
+                "status": "Internal server error: could not delete the message",
                 "code": 500
-            }
-            resp = Response(json.dumps(json_response), mimetype='application/json')
-            resp.status_code = 500
-            return resp
+            }, 500
 
-        json_response = {
-            "messageId": message_id,
-            "action": "deleted",
+        return {
+            "status": "Ok: message deleted",
             "code": 200
-        }
-        resp = Response(json.dumps(json_response), mimetype='application/json')
-        resp.status_code = 200
-        return resp
+        }, 200
 
-    def get(self) -> Response:
+    def get(self):
         """
         Get details of a message.
         """
 
-        if 'project' in request.args and 'messageId' in request.args:
+        if 'project' in request.args and 'messageId' in request.args and 'userId' in request.args:
             project = request.args.get('project')
             message_id = request.args.get('messageId')
-            logging.warning("GET request, starting to look up for a message in project {} with messageId {}".format(project, message_id))
+            user_id = request.args.get('userId')
             index = "message-" + str(project).lower() + "-*"
             query = {
                 "query": {
-                    "match": {
-                        "messageId": message_id
+                    "bool": {
+                        "must": [
+                            {
+                                "match_phrase": {
+                                    "messageId": message_id
+                                }
+                            },
+                            {
+                                "match_phrase": {
+                                    "userId": user_id
+                                }
+                            }
+                        ]
                     }
                 }
             }
+
         elif 'traceId' in request.args:
             trace_id = request.args.get("traceId")
-            logging.warning("GET request, starting to look up for a message with traceId {}".format(trace_id))
-            index = "*"
+            index = "message-*"
             query = {
                 "query": {
-                    "match": {
-                        "_id": trace_id
+                    "bool": {
+                        "must": [
+                            {
+                                "match_phrase": {
+                                    "_id": trace_id
+                                }
+                            }
+                        ]
                     }
                 }
             }
+
         else:
-            logging.error("GET request, cannot parse parameters correctly while elaborating the get request")
-            json_response = {
-                "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `messageId` and the `project`",
+            logging.error("Cannot parse parameters correctly while elaborating the get request")
+            return {
+                "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `project`, the `messageId` and the `userId`",
                 "code": 400
-            }
-            resp = Response(json.dumps(json_response), mimetype='application/json')
-            resp.status_code = 400
-            return resp
+            }, 400
 
         try:
             response = self._es.search(index=index, body=query)
-            # response = self._es.get(index=index, id=trace_id)
         except Exception as e:
-            logging.exception("GET request, message failed to be retrieved", exc_info=e)
-            json_response = {
-                "status": "Internal server error: could not delete messages",
+            logging.exception("Message failed to be retrieved", exc_info=e)
+            return {
+                "status": "Internal server error: could not retrieve the message",
                 "code": 500
-            }
-            resp = Response(json.dumps(json_response), mimetype='application/json')
-            resp.status_code = 500
-            return resp
+            }, 500
 
         if len(response['hits']['hits']) == 0:
-            json_response = {
-                "status": "Resource not found",
+            return {
+                "status": "Not found: resource not found",
                 "code": 404
-            }
-            resp = Response(json.dumps(json_response), mimetype='application/json')
-            resp.status_code = 404
-            return resp
+            }, 404
         else:
-            resp = Response(json.dumps(response['hits']['hits'][0]['_source']), mimetype='application/json')
-            resp.status_code = 200
-            return resp
+            json_response = response['hits']['hits'][0]['_source']
+            json_response["traceId"] = response['hits']['hits'][0]['_id']
+            return json_response, 200
 
 
 class MessagesInterface(Resource):
@@ -169,14 +194,11 @@ class MessagesInterface(Resource):
 
         messages_received = request.json
         if messages_received is None:
-            logging.error("POST request, message failed to be logged due to missing data")
-            json_response = {
+            logging.error("Message failed to be logged due to missing data")
+            return {
                 "status": "Malformed request: data is missing",
                 "code": 400
-            }
-            resp = Response(json.dumps(json_response), mimetype='application/json')
-            resp.status_code = 400
-            return resp
+            }, 400
 
         trace_ids = []
 
@@ -185,12 +207,14 @@ class MessagesInterface(Resource):
         except (KeyError, ValueError, TypeError) as e:
             logger.exception("Error while parsing input message data", exc_info=e)
             return {
-                "message": "Could not parse malformed data"
+                "status": "Malformed request: could not parse malformed data",
+                "code": 400
             }, 400
         except Exception as e:
             logger.exception("Something went wrong while parsing message list", exc_info=e)
             return {
-                "message": "Something went wrong"
+                "status": "Internal server error: something went wrong in parsing messages",
+                "code": 500
             }, 500
 
         for message in messages:
@@ -202,12 +226,12 @@ class MessagesInterface(Resource):
                 logging.exception(f"Could not save message with id {message.message_id} could not be saved", exc_info=e)
                 logging.error(message)
                 return {
-                    "status": "Internal server error: could not store messages",
+                    "status": "Internal server error: something went wrong in storing messages",
                     "code": 500
                 }, 500
 
         return {
             "traceIds": trace_ids,
-            "status": "ok",
+            "status": "Created: messages stored",
             "code": 201
         }, 201
