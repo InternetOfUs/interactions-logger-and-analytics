@@ -27,6 +27,7 @@
       - push
     ci_environments:
       - staging
+      - production
 
   roles:
     - uh.project_template
