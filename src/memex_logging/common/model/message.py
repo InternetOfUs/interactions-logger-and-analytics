@@ -74,8 +74,10 @@ class UserInfoRequest:
     def from_rep(data: dict) -> UserInfoRequest:
         if 'type' not in data:
             raise ValueError("A UserInfoRequest must contain a type. 'type' is missing")
+
         if 'value' not in data:
             raise ValueError("A UserInfoRequest must contain a value. 'value' is missing")
+
         return UserInfoRequest(data['type'], data['value'])
 
 
@@ -112,7 +114,6 @@ class LocationResponse:
 
     def to_repr(self) -> dict:
         buttons = []
-
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
                 raise ValueError("the elements in the button list should be instances of ActionResponse")
@@ -139,6 +140,7 @@ class LocationResponse:
             for action in data['buttons']:
                 a = ActionResponse.from_rep(action)
                 buttons.append(a)
+
         return LocationResponse(data['latitude'], data['longitude'], buttons)
 
 
@@ -178,14 +180,12 @@ class ActionResponse:
 
     @staticmethod
     def from_rep(data: dict) -> ActionResponse:
-
         if "buttonText" in data:
             button_text = data['buttonText']
         else:
             raise ValueError("An action must have the Text of the button")
 
         button_id = None
-
         if "buttonId" in data:
             button_id = data['buttonId']
 
@@ -199,7 +199,6 @@ class MultiActionResponse:
 
     def to_repr(self) -> dict:
         buttons = []
-
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
                 raise ValueError("the elements in the button list should be instances of ActionResponse")
@@ -218,6 +217,7 @@ class MultiActionResponse:
             for action in data['buttons']:
                 a = ActionResponse.from_rep(action)
                 buttons.append(a)
+
         return MultiActionResponse(buttons)
 
 
@@ -248,7 +248,6 @@ class TextualResponse:
 
     def to_repr(self) -> dict:
         buttons = []
-
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
                 raise ValueError("the elements in the button list should be instances of ActionResponse")
@@ -268,6 +267,7 @@ class TextualResponse:
             for action in data['buttons']:
                 a = ActionResponse.from_rep(action)
                 buttons.append(a)
+
         return TextualResponse(data['value'], buttons)
 
 
@@ -289,8 +289,10 @@ class AttachmentRequest:
         alt = None
         if 'alternativeText' in data:
             alt = data['alternativeText']
+
         if 'uri' not in data:
             raise ValueError("An AttachmentRequest object must contain an uri")
+
         return AttachmentRequest(data['uri'], alt)
 
 
@@ -331,11 +333,14 @@ class AttachmentResponse:
             for action in data['buttons']:
                 a = ActionResponse.from_rep(action)
                 buttons.append(a)
+
         alt = None
         if 'alternativeText' in data:
             alt = data['alternativeText']
+
         if 'uri' not in data:
             raise ValueError("An AttachmentRequest object must contain an uri")
+
         return AttachmentResponse(data['uri'], alt, buttons)
 
 
@@ -352,6 +357,7 @@ class CarouselCardResponse:
         buttons = []
         for action in self.buttons:
             buttons.append(ActionResponse.to_repr(action))
+
         return {
             'title': self.title,
             'imageUrl': self.image_url,
@@ -433,10 +439,13 @@ class Entity:
     def from_rep(data: dict) -> Entity:
         if 'type' not in data:
             raise ValueError("An Entity must contain a type")
+
         if 'value' not in data:
             raise ValueError("An Entity must contain a value")
+
         if 'confidence' not in data:
             raise ValueError("An Entity must contain a confidence")
+
         return Entity(data['type'], data['value'], data['confidence'])
 
 
@@ -456,25 +465,30 @@ class Message(ABC):
       - NotificationMessage
     """
 
-    def __init__(self, message_id: str, channel: str, user_id: str, conversation_id: str, content, project: str, metadata: dict, timestamp: datetime) -> None:
+    def __init__(self, message_id: str, conversation_id: Optional[str], channel: str, user_id: str, timestamp: datetime,
+                 content, metadata: Optional[dict], project: str) -> None:
         """
         :param str message_id: the message id
+        :param Optional[str] conversation_id: the conversation identifier
         :param str channel: the channel where the message is sent
         :param str user_id: the identifier of the user sending the message
-        :param Optional[str] conversation_id: the conversation identifier
-        :param content: the content of the message
-        :param str project: the project associated to the conversation
-        :param dict metadata: any metadata (key/value) associated to the message
         :param datetime timestamp: the datetime of the instant the message was sent
+        :param content: the content of the message
+        :param Optional[dict] metadata: any metadata (key/value) associated to the message
+        :param str project: the project associated to the conversation
         """
         self.message_id = message_id
+        self.conversation_id = conversation_id
         self.channel = channel
         self.user_id = user_id
-        self.conversation_id = conversation_id
-        self.content = content
         self.timestamp = timestamp
-        self.project = project
+        self.content = content
         self.metadata = metadata
+        self.project = project
+
+        if metadata is not None:
+            if not isinstance(metadata, dict):
+                raise ValueError('Parameter metadata should be a dict')
 
     @staticmethod
     def from_repr(raw_data: dict) -> Message:
@@ -509,10 +523,11 @@ class RequestMessage(Message):
         UserInfoRequest
     ]
 
-    def __init__(self, message_id: str, channel: str, user_id: str, conversation_id: Optional[str], timestamp: datetime,
-                 content, domain: str,  intent: Intent, entities: List[Entity], project: str, language: str, metadata: dict) -> None:
+    def __init__(self, message_id: str, conversation_id: Optional[str], channel: str, user_id: str, timestamp: datetime,
+                 content, domain: Optional[str], intent: Intent, entities: List[Entity], language: Optional[str],
+                 metadata: Optional[dict], project: str) -> None:
 
-        super().__init__(message_id, channel, user_id, conversation_id, content, project, metadata, timestamp)
+        super().__init__(message_id, conversation_id, channel, user_id, timestamp, content, metadata, project)
 
         self.domain = domain
         self.intent = intent
@@ -522,13 +537,9 @@ class RequestMessage(Message):
         if not isinstance(intent, Intent):
             raise ValueError('Parameter intent should be a Intent')
 
-        if metadata is not None:
-            if not isinstance(metadata, dict):
-                raise ValueError('Parameter metadata should be a dict')
-
-        # TODO fix check
-        # if type(content) in self.ALLOWED_CONTENT_TYPES:
-        #     raise ValueError(f"Type for parameter content is not allowed - {type(content)}")
+        if content is not None:
+            if type(content) not in self.ALLOWED_CONTENT_TYPES:
+                raise ValueError(f"Type for parameter content is not allowed - {type(content)}")
 
         if not isinstance(entities, list):
             raise ValueError('entities should be a list')
@@ -543,28 +554,26 @@ class RequestMessage(Message):
             entities.append(entity.to_repr())
 
         local_content = None
-
         if self.content is not None:
             local_content = self.content.to_repr()
 
         local_intent = None
-
         if self.intent is not None:
             local_intent = self.intent.to_repr()
 
         return {
             'messageId': self.message_id,
+            'conversationId': self.conversation_id,
             'channel': self.channel,
             'userId': self.user_id,
-            'conversationId': self.conversation_id,
             'timestamp': self.timestamp.isoformat(),
             'content': local_content,
             'domain': self.domain,
             'intent': local_intent,
             'entities': entities,
-            'project': self.project,
             'language': self.language,
             'metadata': self.metadata,
+            'project': self.project,
             'type': MessageType.REQUEST.value
         }
 
@@ -596,39 +605,43 @@ class RequestMessage(Message):
 
         return RequestMessage(
             data['messageId'],
+            data.get("conversationId", None),
             data['channel'],
             data['userId'],
-            data.get("conversationId", None),
             Message.timestamp_str_to_datetime(data['timestamp']),
             content,
             data.get("domain", None),
             intent,
             entities,
-            data['project'],
             data.get("language", None),
-            data.get("metadata", None)
+            data.get("metadata", None),
+            data['project']
         )
 
 
 class ResponseMessage(Message):
 
-    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, response_to: str, timestamp: datetime, content, metadata: dict, project: str):
+    ALLOWED_CONTENT_TYPES = [
+        MultiActionResponse,
+        CarouselResponse,
+        AttachmentResponse,
+        TextualResponse,
+        LocationResponse
+    ]
 
-        super().__init__(message_id, channel, user_id, conversation_id, content, project, metadata, timestamp)
+    def __init__(self, message_id: str, conversation_id: Optional[str], channel: str, user_id: str, response_to: str,
+                 timestamp: datetime, content, metadata: Optional[dict], project: str):
+
+        super().__init__(message_id, conversation_id, channel, user_id, timestamp, content, metadata, project)
 
         self.response_to = response_to
 
         if content is not None:
-            if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationResponse)):
-                raise ValueError("response should contains only elements from MultiActionResponse, CarouselResponse, AttachmentResponse, TextualResponse or LocationResponse")
-
-        if metadata is not None:
-            if not isinstance(metadata, dict):
-                raise ValueError('metadata type should be dictionary')
+            if type(content) not in self.ALLOWED_CONTENT_TYPES:
+                raise ValueError(f"Type for parameter content is not allowed - {type(content)}")
 
     def to_repr(self) -> dict:
         local_content = None
-
         if self.content is not None:
             local_content = self.content.to_repr()
 
@@ -647,11 +660,6 @@ class ResponseMessage(Message):
 
     @staticmethod
     def from_rep(data: dict) -> ResponseMessage:
-
-        metadata = None
-        if "metadata" in data:
-            metadata = data["metadata"]
-
         content = None
         if 'content' in data:
             if str(data['content']['type']).lower() == 'text':
@@ -665,29 +673,39 @@ class ResponseMessage(Message):
             elif str(data['content']['type']).lower() == 'carousel':
                 content = CarouselResponse.from_rep(data['content'])
             else:
-                raise ValueError("an unknown type of content is in the body of the message")
+                raise ValueError(f"Unsupported content type {data['content']} was provided")
 
-        if 'conversationId' in data:
-            conversation_id = data['conversationId']
-        else:
-            conversation_id = None
-
-        return ResponseMessage(data['messageId'], conversation_id, data['channel'], data['userId'], data['responseTo'], Message.timestamp_str_to_datetime(data['timestamp']), content, metadata, data['project'])
+        return ResponseMessage(
+            data['messageId'],
+            data.get("conversationId", None),
+            data['channel'],
+            data['userId'],
+            data['responseTo'],
+            Message.timestamp_str_to_datetime(data['timestamp']),
+            content,
+            data.get("metadata", None),
+            data['project']
+        )
 
 
 class NotificationMessage(Message):
 
-    def __init__(self, message_id: str, conversation_id: str, channel: str, user_id: str, timestamp: datetime, content, metadata: dict, project: str):
+    ALLOWED_CONTENT_TYPES = [
+        MultiActionResponse,
+        CarouselResponse,
+        AttachmentResponse,
+        TextualResponse,
+        LocationResponse
+    ]
 
-        super().__init__(message_id, channel, user_id, conversation_id, content, project, metadata, timestamp)
+    def __init__(self, message_id: str, conversation_id: Optional[str], channel: str, user_id: str, timestamp: datetime,
+                 content, metadata: Optional[dict], project: str):
+
+        super().__init__(message_id, conversation_id, channel, user_id, timestamp, content, metadata, project)
 
         if content is not None:
-            if not (isinstance(content, MultiActionResponse) or isinstance(content, CarouselResponse) or isinstance(content, AttachmentResponse) or isinstance(content, TextualResponse) or isinstance(content, LocationResponse)):
-                raise ValueError("response should contains only elements from MultiActionResponse, CarouselResponse, AttachmentResponse, TextualResponse or LocationResponse")
-
-        if metadata is not None:
-            if not isinstance(metadata, dict):
-                raise ValueError('metadata type should be dictionary')
+            if type(content) not in self.ALLOWED_CONTENT_TYPES:
+                raise ValueError(f"Type for parameter content is not allowed - {type(content)}")
 
     def to_repr(self) -> dict:
         local_content = None
@@ -709,11 +727,6 @@ class NotificationMessage(Message):
 
     @staticmethod
     def from_rep(data: dict) -> NotificationMessage:
-
-        metadata = None
-        if "metadata" in data:
-            metadata = data["metadata"]
-
         content = None
         if 'content' in data:
             if str(data['content']['type']).lower() == 'text':
@@ -727,11 +740,15 @@ class NotificationMessage(Message):
             elif str(data['content']['type']).lower() == 'carousel':
                 content = CarouselResponse.from_rep(data['content'])
             else:
-                raise ValueError("an unknown type of content is in the body of the message")
+                raise ValueError(f"Unsupported content type {data['content']} was provided")
 
-        if 'conversationId' in data:
-            conversation_id = data['conversationId']
-        else:
-            conversation_id = None
-
-        return NotificationMessage(data['messageId'], conversation_id, data['channel'], data['userId'], Message.timestamp_str_to_datetime(data['timestamp']), content, metadata, data['project'])
+        return NotificationMessage(
+            data['messageId'],
+            data.get("conversationId", None),
+            data['channel'],
+            data['userId'],
+            Message.timestamp_str_to_datetime(data['timestamp']),
+            content,
+            data.get("metadata", None),
+            data['project']
+        )

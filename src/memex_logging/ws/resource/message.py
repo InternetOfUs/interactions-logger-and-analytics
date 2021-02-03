@@ -15,6 +15,7 @@
 from __future__ import absolute_import, annotations
 
 import logging
+from datetime import datetime
 
 from elasticsearch import Elasticsearch
 from flask import request
@@ -235,3 +236,87 @@ class MessagesInterface(Resource):
             "status": "Created: messages stored",
             "code": 201
         }, 201
+
+    def get(self):
+        """
+        Get details of a message.
+        """
+
+        if 'project' in request.args and 'fromTime' in request.args and 'toTime' in request.args:
+            project = request.args.get('project')
+            from_time = datetime.fromisoformat(request.args.get('fromTime'))
+            to_time = datetime.fromisoformat(request.args.get('toTime'))
+
+            if from_time > to_time:
+                return {
+                           "status": "Malformed request: `fromTime` is greater than `toTime`",
+                           "code": 400
+                       }, 400
+            elif from_time.strftime('%Y-%m-%d') == to_time.strftime('%Y-%m-%d'):
+                index = "message-" + str(project).lower() + f"-{from_time.strftime('%Y-%m-%d')}"
+            else:
+                index = "message-" + str(project).lower() + "-*"
+
+            query = {
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "range": {
+                                    "timestamp": {
+                                        "gte": from_time.isoformat(),
+                                        "lte": to_time.isoformat()
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        else:
+            logging.error("Cannot parse parameters correctly while elaborating the get request")
+            return {
+                "status": "Malformed request: missing required parameter, you have to specify the `project`, the `fromTime` and the `toTime`",
+                "code": 400
+            }, 400
+
+        if 'userId' in request.args:
+            user_id = request.args.get('userId')
+            query["query"]["bool"]["must"].append(
+                {
+                    "match_phrase": {
+                        "userId": user_id
+                    }
+                }
+            )
+
+        if 'channel' in request.args:
+            channel = request.args.get('channel')
+            query["query"]["bool"]["must"].append(
+                {
+                    "match_phrase": {
+                        "channel": channel
+                    }
+                }
+            )
+
+        if 'type' in request.args:
+            message_type = request.args.get('type')
+            query["query"]["bool"]["must"].append(
+                {
+                    "match_phrase": {
+                        "type": message_type
+                    }
+                }
+            )
+
+        try:
+            response = self._es.search(index=index, body=query)
+        except Exception as e:
+            logging.exception("Message failed to be retrieved", exc_info=e)
+            return {
+                "status": "Internal server error: could not retrieve the message",
+                "code": 500
+            }, 500
+
+        return [element['_source'] for element in response['hits']['hits']], 200

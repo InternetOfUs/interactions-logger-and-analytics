@@ -41,7 +41,7 @@ class Utils:
         :return: the generated EL index
         """
         formatted_date = dt.strftime("%Y-%m-%d")
-        index_name = f"{data_type}-{project}-{formatted_date}"
+        index_name = f"{data_type.lower()}-{project.lower()}-{formatted_date}"
         return index_name
 
     # TODO stop using this and remove!!!!!

@@ -48,329 +48,394 @@ tags:
 
 paths:
 
-    # MESSAGES APIS
-    /messages:
-      post:
-        tags:
-          - message
-        summary: Add a batch of messages
-        description: This end-point allows to log a set of messages into the database
-        requestBody:
+  # MESSAGES APIS
+  /messages:
+    post:
+      tags:
+        - message
+      summary: Add a batch of messages
+      description: This end-point allows to log a set of messages into the database
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Messages'
+      responses:
+        '201':
+          description: messages stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_201_list'
+        '400':
+          description: malformed message
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_400'
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_500'
+
+    get:
+      tags:
+        - message
+      summary: Retrieve a list of messages
+      description: This end-point allows to retrieve all the messages from the database of a project within a time range, plus the possibility to specify other optional filters. It is necessary to specify the `project`, the `fromTime` and the `toTime`. Optionally you can specify also `type`, `channel` and `userId`.
+      parameters:
+        - in: query
+          name: project
+          schema:
+            type: string
+          example: "MeMex"
+          description: the name of the project related to the messages you want to retrieve
+          required: true
+        - in: query
+          name: fromTime
+          schema:
+            type: string
+          example: "2021-01-25T14:18:36.141378"
+          description: the timestamp expressed in ISO format from which you want to retrieve the messages
+          required: true
+        - in: query
+          name: toTime
+          schema:
+            type: string
+          example: "2021-01-25T14:28:36.141378"
+          description: the timestamp expressed in ISO format up to which you want to retrieve the messages
+          required: true
+        - in: query
+          name: userId
+          schema:
+            type: string
+          example: "USR-JDKHEIU2-31NJDTE94"
+          description: the id of the user related to the messages you want to retrieve
+        - in: query
+          name: channel
+          schema:
+            type: string
+          example: "FACEBOOK"
+          description: the channel from which you want to retrieve  the messages
+        - in: query
+          name: type
+          schema:
+            type: string
+          example: "request"
+          description: the type of the messages you want to retrieve
+      responses:
+        '200':
+          description: messages retrived
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Messages'
-        responses:
-          '201':
-            description: messages stored
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_201_list'
-          '400':
-            description: malformed message
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_400'
-          '500':
-            description: internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_500'
-
-    /message:
-      get:
-        tags:
-          - message
-        summary: Retrieve a single message
-        description: This end-point allows to retrieve all the information of a single message from the database, it is necessary to specify the `project`, the `messageId` and the `userId`, or instead of specifying these three parameters is possible to specify only the `traceId`
-        parameters:
-          - in: query
-            name: project
-            schema:
-              type: string
-            example: "MeMex"
-            description: the name of the project related to the message you want to retrieve
-          - in: query
-            name: messageId
-            schema:
-              type: string
-            example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
-            description: the id of the message you want to retrieve
-          - in: query
-            name: userId
-            schema:
-              type: string
-            example: "USR-JDKHEIU2-31NJDTE94"
-            description: the id of the user you want to retrieve
-          - in: query
-            name: traceId
-            schema:
-              type: string
-            example: "bcpg8XYBHD_pmQ1jA7b8"
-            description: the trace id of the message you want to retrieve
-        responses:
-          '200':
-            description: message retrived
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/MessageRetrieved'
-          '400':
-            description: malformed request
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_400'
-          '404':
-            description: message not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_404_basic'
-          '500':
-            description: internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_500'
-
-      delete:
-        tags:
-          - message
-        summary: Delete a message
-        description: This end-point allows to delete a message from the database, it is necessary to specify the `project`, the `messageId` and the `userId`, or instead of specifying these three parameters is possible to specify only the `traceId`
-        parameters:
-          - in: query
-            name: project
-            schema:
-              type: string
-            example: "MeMex"
-            description: the name of the project related to the message you want to delete
-          - in: query
-            name: messageId
-            schema:
-              type: string
-            example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
-            description: The id of the message you want to delete
-          - in: query
-            name: userId
-            schema:
-              type: string
-            example: "USR-JDKHEIU2-31NJDTE94"
-            description: the id of the user you want to delete
-          - in: query
-            name: traceId
-            schema:
-              type: string
-            example: "bcpg8XYBHD_pmQ1jA7b8"
-            description: the traceId of the message you want to delete
-        responses:
-          '200':
-            description: message deleted
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_200_basic'
-          '400':
-            description: malformed request
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_400'
-          '500':
-            description: internal server error
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_500'
-
-    # LOG APIS
-    /logs:
-      post:
-        tags:
-          - logging
-        summary: Add a batch of messages to the database
-        description: This end-point allows to log a set of messages into the database
-        requestBody:
+        '400':
+          description: malformed request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Logs'
-        responses:
-          '201':
-            description: success
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_201_list'
-          '400':
-            description: malformed log
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_400'
-
-    /log:
-      get:
-        tags:
-          - logging
-        summary: Retrieve a single log by specifying the trace id
-        description: This end-point can be used to retrieve all the information of a single log
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: string
-            required: true
-            description: The trace id of the log
-        responses:
-          '200':
-            description: success
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Log'
-
-          '404':
-            description: log not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_404'
-
-      put:
-        tags:
-          - logging
-        summary: Update an already existing log
-        description: This method should be used to update existing logs
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: string
-            required: true
-            description: The id of the log
-        responses:
-          '200':
-            description: Log updated
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_201'
-          '404':
-            description: Log not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_404'
-
-      delete:
-        tags:
-          - logging
-        summary: Delete a log
-        description: This method should be used to delete a log from the database
-        parameters:
-          - in: path
-            name: id
-            schema:
-              type: string
-            required: true
-            description: The  id of the log
-        responses:
-          '200':
-            description: Log removed
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_200'
-          '404':
-            description: Log not found
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_404'
-
-    # ANALYTICS APIS
-    /analytics:
-      post:
-        tags:
-          - analytics
-        summary: Require an analytic
-        description: This end-point allows to retrieve an analytic from the database
-        requestBody:
+                $ref: '#/components/schemas/HTTP_400'
+        '500':
+          description: internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Analytic'
-        responses:
-          '200':
-            description: success
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_200_ANALYTIC'
-          '500':
-            description: malformed log
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/HTTP_500_ANALYTIC'
+                $ref: '#/components/schemas/HTTP_500'
 
-    /analytics/usercount:
-      get:
-        tags:
-          - analytics
-        parameters:
-          - in: query
-            name: userId
+  /message:
+    get:
+      tags:
+        - message
+      summary: Retrieve a single message
+      description: This end-point allows to retrieve all the information of a single message from the database, it is necessary to specify the `project`, the `messageId` and the `userId`, or instead of specifying these three parameters is possible to specify only the `traceId`
+      parameters:
+        - in: query
+          name: project
+          schema:
+            type: string
+          example: "MeMex"
+          description: the name of the project related to the message you want to retrieve
+        - in: query
+          name: messageId
+          schema:
+            type: string
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+          description: the id of the message you want to retrieve
+        - in: query
+          name: userId
+          schema:
+            type: string
+          example: "USR-JDKHEIU2-31NJDTE94"
+          description: the id of the user related to the message you want to retrieve
+        - in: query
+          name: traceId
+          schema:
+            type: string
+          example: "bcpg8XYBHD_pmQ1jA7b8"
+          description: the trace id of the message you want to retrieve
+      responses:
+        '200':
+          description: message retrived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageRetrieved'
+        '400':
+          description: malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_400'
+        '404':
+          description: message not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_404_basic'
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_500'
+
+    delete:
+      tags:
+        - message
+      summary: Delete a message
+      description: This end-point allows to delete a message from the database, it is necessary to specify the `project`, the `messageId` and the `userId`, or instead of specifying these three parameters is possible to specify only the `traceId`
+      parameters:
+        - in: query
+          name: project
+          schema:
+            type: string
+          example: "MeMex"
+          description: the name of the project related to the message you want to delete
+        - in: query
+          name: messageId
+          schema:
+            type: string
+          example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+          description: The id of the message you want to delete
+        - in: query
+          name: userId
+          schema:
+            type: string
+          example: "USR-JDKHEIU2-31NJDTE94"
+          description: the id of the user related to the message you want to delete
+        - in: query
+          name: traceId
+          schema:
+            type: string
+          example: "bcpg8XYBHD_pmQ1jA7b8"
+          description: the traceId of the message you want to delete
+      responses:
+        '200':
+          description: message deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_200_basic'
+        '400':
+          description: malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_400'
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_500'
+
+  # LOG APIS
+  /logs:
+    post:
+      tags:
+        - logging
+      summary: Add a batch of messages to the database
+      description: This end-point allows to log a set of messages into the database
+      requestBody:
+        content:
+          application/json:
             schema:
-              type: string
-            required: true
-            description: the identifier of the user for which you want to count the clicks
-        summary: Retrieve the number click based on a user identifier
-        description: Retrieve the number click based on a user identifier
-        responses:
-          '200':
-            description: success
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/200_user_count'
+              $ref: '#/components/schemas/Logs'
+      responses:
+        '201':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_201_list'
+        '400':
+          description: malformed log
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_400'
 
-    /analytics/eventcount:
-      get:
-        tags:
-          - analytics
-        parameters:
-          - in: query
-            name: eventId
+  /log:
+    get:
+      tags:
+        - logging
+      summary: Retrieve a single log by specifying the trace id
+      description: This end-point can be used to retrieve all the information of a single log
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The trace id of the log
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Log'
+
+        '404':
+          description: log not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_404'
+
+    put:
+      tags:
+        - logging
+      summary: Update an already existing log
+      description: This method should be used to update existing logs
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The id of the log
+      responses:
+        '200':
+          description: Log updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_201'
+        '404':
+          description: Log not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_404'
+
+    delete:
+      tags:
+        - logging
+      summary: Delete a log
+      description: This method should be used to delete a log from the database
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The  id of the log
+      responses:
+        '200':
+          description: Log removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_200'
+        '404':
+          description: Log not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_404'
+
+  # ANALYTICS APIS
+  /analytics:
+    post:
+      tags:
+        - analytics
+      summary: Require an analytic
+      description: This end-point allows to retrieve an analytic from the database
+      requestBody:
+        content:
+          application/json:
             schema:
-              type: string
-            required: true
-            description: the identifier of the evnet for which you want to count the clicks
-        summary: Retrieve the number click based on an event identifier
-        description: Retrieve the number click based on an event identifier
-        responses:
-          '200':
-            description: success
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/200_event_count'
+              $ref: '#/components/schemas/Analytic'
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_200_ANALYTIC'
+        '500':
+          description: malformed log
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_500_ANALYTIC'
 
-    # DOCUMENTATION API
-    /documentation:
-      get:
-        tags:
-          - documentation
-        summary: Retrieve the documentation
-        description: Retrieve the documentation in a yaml format
-        responses:
-          '200':
-            description: success
+  /analytics/usercount:
+    get:
+      tags:
+        - analytics
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+          required: true
+          description: the identifier of the user for which you want to count the clicks
+      summary: Retrieve the number click based on a user identifier
+      description: Retrieve the number click based on a user identifier
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/200_user_count'
+
+  /analytics/eventcount:
+    get:
+      tags:
+        - analytics
+      parameters:
+        - in: query
+          name: eventId
+          schema:
+            type: string
+          required: true
+          description: the identifier of the evnet for which you want to count the clicks
+      summary: Retrieve the number click based on an event identifier
+      description: Retrieve the number click based on an event identifier
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/200_event_count'
+
+  # DOCUMENTATION API
+  /documentation:
+    get:
+      tags:
+        - documentation
+      summary: Retrieve the documentation
+      description: Retrieve the documentation in a yaml format
+      responses:
+        '200':
+          description: success
 
 components:
 
@@ -397,7 +462,7 @@ components:
         traceId:
           type: string
           example: "bcpg8XYBHD_pmQ1jA7b8"
-      example: { "messageId": "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8", "channel": "FACEBOOK", "userId": "USR-JDKHEIU2-31NJDTE94", "conversationId": "CONV-DAJKWPENVOA-314CAD", "timestamp": "2020-01-19 17:21:00", "content": { "type": "text", "value": "devo fare un bonifico di 40 euro" }, "domain": "pagamenti", "intent": { "name": "bonifico", "confidence": 0.87 }, "entities": [ { "type": "@city", "value": "Boston", "confidence": 0.94 } ], "project": "MeMex", "language": "IT", "metadata": { }, "type": "REQUEST", "traceId": "bcpg8XYBHD_pmQ1jA7b8" }
+      example: { "messageId": "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8", "channel": "FACEBOOK", "userId": "USR-JDKHEIU2-31NJDTE94", "conversationId": "CONV-DAJKWPENVOA-314CAD", "timestamp": "2021-01-25T14:18:36.141378", "content": { "type": "text", "value": "devo fare un bonifico di 40 euro" }, "domain": "pagamenti", "intent": { "name": "bonifico", "confidence": 0.87 }, "entities": [ { "type": "@city", "value": "Boston", "confidence": 0.94 } ], "project": "MeMex", "language": "IT", "metadata": { }, "type": "REQUEST", "traceId": "bcpg8XYBHD_pmQ1jA7b8" }
 
     RequestMessage:
       type: object
@@ -405,15 +470,15 @@ components:
         messageId:
           type: string
           example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8"
+        conversationId:
+          type: string
+          example: "CONV-DAJKWPENVOA-314CAD"
         channel:
           type: string
           example: "FACEBOOK"
         userId:
           type: string
           example: "USR-JDKHEIU2-31NJDTE94"
-        conversationId:
-          type: string
-          example: "CONV-DAJKWPENVOA-314CAD"
         timestamp:
           type: string
           description: Timestamp expressed in ISO format
@@ -443,14 +508,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Entity'
-        project:
-          type: string
-          example: "MeMex"
         language:
           type: string
           example: "IT"
         metadata:
           type: object
+          example: {}
+        project:
+          type: string
+          example: "MeMex"
         type:
           type: string
           enum: [ "request" ]
@@ -483,7 +549,8 @@ components:
           example: "1FKNSM-GEKRO2-DANK2-FJ33-DASDJOW"
         timestamp:
           type: string
-          example: "2020-01-19 17:21:00"
+          description: Timestamp expressed in ISO format
+          example: "2021-01-25T14:18:36.141378"
         content:
           oneOf:
             - $ref: '#/components/schemas/TextualResponse'
@@ -494,6 +561,7 @@ components:
           example: { "type": "text", "value": "va bene" }
         metadata:
           type: object
+          example: {}
         project:
           type: string
           example: "MemEx"
@@ -527,7 +595,8 @@ components:
           example: "USR-JDKHEIU2-31NJDTE94"
         timestamp:
           type: string
-          example: "2020-01-19 17:21:00"
+          description: Timestamp expressed in ISO format
+          example: "2021-01-25T14:18:36.141378"
         content:
           oneOf:
             - $ref: '#/components/schemas/TextualResponse'
@@ -538,6 +607,7 @@ components:
           example: { "type": "text", "value": "attenzione, hai meno di 100 euro sul conto" }
         metadata:
           type: object
+          example: {}
         project:
           type: string
           example: "MemEx"
@@ -793,12 +863,14 @@ components:
           example: "bot stopped"
         timestamp:
           type: string
-          example: "2019-07-04T08:33:48.35408Z"
+          description: Timestamp expressed in ISO format
+          example: "2021-01-25T14:18:36.141378"
         botVersion:
           type: string
           example: "mem-1.0.2"
         metadata:
           type: object
+          example: {}
 
     Logs:
       type: array
