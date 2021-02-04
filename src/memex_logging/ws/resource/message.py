@@ -21,8 +21,9 @@ from elasticsearch import Elasticsearch
 from flask import request
 from flask_restful import Resource
 
+from memex_logging.common.dao.conmon import EntryNotFound
+from memex_logging.common.dao.message import MessageDao
 from memex_logging.common.model.message import Message
-from memex_logging.utils.utils import Utils
 
 
 logger = logging.getLogger("logger.resource.message")
@@ -41,7 +42,7 @@ class MessageResourceBuilder(object):
 class MessageInterface(Resource):
 
     def __init__(self, es: Elasticsearch) -> None:
-        self._es = es
+        self._message_dao = MessageDao(es)
 
     def delete(self):
         """
@@ -52,42 +53,14 @@ class MessageInterface(Resource):
             project = request.args.get('project')
             message_id = request.args.get('messageId')
             user_id = request.args.get('userId')
-            index = "message-" + str(project).lower() + "-*"
-            query = {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "match_phrase": {
-                                    "messageId": message_id
-                                }
-                            },
-                            {
-                                "match_phrase": {
-                                    "userId": user_id
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
+            index = self._message_dao.generate_index(project=project)
+            query = self._message_dao.build_query_by_message_id(message_id)
+            query = self._message_dao.add_user_id_to_query(query, user_id)
 
         elif 'traceId' in request.args:
             trace_id = request.args.get("traceId")
-            index = "message-*"
-            query = {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "match_phrase": {
-                                    "_id": trace_id
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
+            index = self._message_dao.generate_index()
+            query = self._message_dao.build_query_by_id(trace_id)
 
         else:
             logging.error("Cannot parse parameters correctly while elaborating the delete request")
@@ -97,7 +70,7 @@ class MessageInterface(Resource):
             }, 400
 
         try:
-            self._es.delete_by_query(index=index, body=query)
+            self._message_dao.delete(index, query)
         except Exception as e:
             logging.exception("Message failed to be deleted", exc_info=e)
             return {
@@ -119,42 +92,14 @@ class MessageInterface(Resource):
             project = request.args.get('project')
             message_id = request.args.get('messageId')
             user_id = request.args.get('userId')
-            index = "message-" + str(project).lower() + "-*"
-            query = {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "match_phrase": {
-                                    "messageId": message_id
-                                }
-                            },
-                            {
-                                "match_phrase": {
-                                    "userId": user_id
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
+            index = self._message_dao.generate_index(project=project)
+            query = self._message_dao.build_query_by_message_id(message_id)
+            query = self._message_dao.add_user_id_to_query(query, user_id)
 
         elif 'traceId' in request.args:
             trace_id = request.args.get("traceId")
-            index = "message-*"
-            query = {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "match_phrase": {
-                                    "_id": trace_id
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
+            index = self._message_dao.generate_index()
+            query = self._message_dao.build_query_by_id(trace_id)
 
         else:
             logging.error("Cannot parse parameters correctly while elaborating the get request")
@@ -164,7 +109,12 @@ class MessageInterface(Resource):
             }, 400
 
         try:
-            response = self._es.search(index=index, body=query)
+            response = self._message_dao.get(index, query)
+        except EntryNotFound:
+            return {
+                       "status": "Not found: resource not found",
+                       "code": 404
+                   }, 404
         except Exception as e:
             logging.exception("Message failed to be retrieved", exc_info=e)
             return {
@@ -172,21 +122,15 @@ class MessageInterface(Resource):
                 "code": 500
             }, 500
 
-        if len(response['hits']['hits']) == 0:
-            return {
-                "status": "Not found: resource not found",
-                "code": 404
-            }, 404
-        else:
-            json_response = response['hits']['hits'][0]['_source']
-            json_response["traceId"] = response['hits']['hits'][0]['_id']
-            return json_response, 200
+        json_response = response[0].to_repr()
+        json_response["traceId"] = response[1]
+        return json_response, 200
 
 
 class MessagesInterface(Resource):
 
     def __init__(self, es: Elasticsearch):
-        self._es = es
+        self._message_dao = MessageDao(es)
 
     def post(self):
         """
@@ -220,9 +164,9 @@ class MessagesInterface(Resource):
 
         for message in messages:
             try:
-                index_name = Utils.generate_index(message.project, "message", message.timestamp)
-                query = self._es.index(index=index_name, doc_type='_doc', body=message.to_repr())
-                trace_ids.append(query['_id'])
+                index = self._message_dao.generate_index(message.project, message.timestamp)
+                trace_id = self._message_dao.add(index, message)
+                trace_ids.append(trace_id)
             except Exception as e:
                 logging.exception(f"Could not save message with id {message.message_id} could not be saved", exc_info=e)
                 logging.error(message)
@@ -239,7 +183,7 @@ class MessagesInterface(Resource):
 
     def get(self):
         """
-        Get details of a message.
+        Retrieve a list of messages.
         """
 
         if 'project' in request.args and 'fromTime' in request.args and 'toTime' in request.args:
@@ -252,27 +196,12 @@ class MessagesInterface(Resource):
                            "status": "Malformed request: `fromTime` is greater than `toTime`",
                            "code": 400
                        }, 400
-            elif from_time.strftime('%Y-%m-%d') == to_time.strftime('%Y-%m-%d'):
-                index = "message-" + str(project).lower() + f"-{from_time.strftime('%Y-%m-%d')}"
+            elif from_time.date() == to_time.date():
+                index = self._message_dao.generate_index(project=project, dt=from_time)
             else:
-                index = "message-" + str(project).lower() + "-*"
+                index = self._message_dao.generate_index(project=project)
 
-            query = {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "range": {
-                                    "timestamp": {
-                                        "gte": from_time.isoformat(),
-                                        "lte": to_time.isoformat()
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
+            query = self._message_dao.build_time_range_query(from_time, to_time)
         else:
             logging.error("Cannot parse parameters correctly while elaborating the get request")
             return {
@@ -282,36 +211,18 @@ class MessagesInterface(Resource):
 
         if 'userId' in request.args:
             user_id = request.args.get('userId')
-            query["query"]["bool"]["must"].append(
-                {
-                    "match_phrase": {
-                        "userId": user_id
-                    }
-                }
-            )
+            query = self._message_dao.add_user_id_to_query(query, user_id)
 
         if 'channel' in request.args:
             channel = request.args.get('channel')
-            query["query"]["bool"]["must"].append(
-                {
-                    "match_phrase": {
-                        "channel": channel
-                    }
-                }
-            )
+            query = self._message_dao.add_channel_to_query(query, channel)
 
         if 'type' in request.args:
             message_type = request.args.get('type')
-            query["query"]["bool"]["must"].append(
-                {
-                    "match_phrase": {
-                        "type": message_type
-                    }
-                }
-            )
+            query = self._message_dao.add_message_type_to_query(query, message_type)
 
         try:
-            response = self._es.search(index=index, body=query)
+            messages = self._message_dao.search(index, query)
         except Exception as e:
             logging.exception("Message failed to be retrieved", exc_info=e)
             return {
@@ -319,4 +230,4 @@ class MessagesInterface(Resource):
                 "code": 500
             }, 500
 
-        return [element['_source'] for element in response['hits']['hits']], 200
+        return [message.to_repr() for message in messages], 200

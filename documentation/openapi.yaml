@@ -53,7 +53,7 @@ paths:
     post:
       tags:
         - message
-      summary: Add a batch of messages
+      summary: Register a batch of messages
       description: This end-point allows to log a set of messages into the database
       requestBody:
         content:
@@ -149,7 +149,7 @@ paths:
     get:
       tags:
         - message
-      summary: Retrieve a single message
+      summary: Get details of a message
       description: This end-point allows to retrieve all the information of a single message from the database, it is necessary to specify the `project`, the `messageId` and the `userId`, or instead of specifying these three parameters is possible to specify only the `traceId`
       parameters:
         - in: query
@@ -205,7 +205,7 @@ paths:
     delete:
       tags:
         - message
-      summary: Delete a message
+      summary: Delete a specific message
       description: This end-point allows to delete a message from the database, it is necessary to specify the `project`, the `messageId` and the `userId`, or instead of specifying these three parameters is possible to specify only the `traceId`
       parameters:
         - in: query

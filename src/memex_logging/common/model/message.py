@@ -14,13 +14,11 @@
 
 from __future__ import absolute_import, annotations
 
+import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List
-
-import logging
-
 
 logger = logging.getLogger("logger.common.model.message")
 
