@@ -80,7 +80,7 @@ class LogGeneralLogs(Resource):
             utils = Utils()
 
             try:
-                temp_log = Log.from_rep(log)
+                temp_log = Log.from_repr(log)
                 project_name = utils.extract_project_name(log)
                 date = utils.extract_date(log)
                 index_name = "logging-" + project_name + "-" + date

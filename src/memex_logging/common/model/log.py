@@ -45,7 +45,7 @@ class Log:
         }
 
     @staticmethod
-    def from_rep(data: dict) -> Log:
+    def from_repr(data: dict) -> Log:
 
         if 'logId' not in data:
             logging.error("MODEL.LOG logId must be defined")

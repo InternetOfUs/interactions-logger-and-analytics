@@ -473,6 +473,7 @@ components:
         conversationId:
           type: string
           example: "CONV-DAJKWPENVOA-314CAD"
+          nullable: true
         channel:
           type: string
           example: "FACEBOOK"
@@ -491,19 +492,24 @@ components:
             - $ref: '#/components/schemas/LocationRequest'
             - $ref: '#/components/schemas/UserInfoRequest'
           example: { "type": "text", "value": "devo fare un bonifico di 40 euro" }
+          nullable: true
         domain:
           type: string
           example: "pagamenti"
+          nullable: true
         intent:
           type: object
           properties:
             name:
               type: string
               example: "bonifico"
+              nullable: true
             confidence:
               type: number
               format: float
               example: 0.87
+              nullable: true
+          nullable: true
         entities:
           type: array
           items:
@@ -511,9 +517,11 @@ components:
         language:
           type: string
           example: "IT"
+          nullable: true
         metadata:
           type: object
           example: {}
+          nullable: true
         project:
           type: string
           example: "MeMex"
@@ -538,6 +546,7 @@ components:
         conversationId:
           type: string
           example: "CONV-DOWI41-DAJPRTI3"
+          nullable: true
         channel:
           type: string
           example: "FACEBOOK"
@@ -559,9 +568,11 @@ components:
             - $ref: '#/components/schemas/CarouselResponse'
             - $ref: '#/components/schemas/LocationResponse'
           example: { "type": "text", "value": "va bene" }
+          nullable: true
         metadata:
           type: object
           example: {}
+          nullable: true
         project:
           type: string
           example: "MemEx"
@@ -587,6 +598,7 @@ components:
         conversationId:
           type: string
           example: "CONV-DOWI41-DAJPRTI3"
+          nullable: true
         channel:
           type: string
           example: "FACEBOOK"
@@ -605,9 +617,11 @@ components:
             - $ref: '#/components/schemas/CarouselResponse'
             - $ref: '#/components/schemas/LocationResponse'
           example: { "type": "text", "value": "attenzione, hai meno di 100 euro sul conto" }
+          nullable: true
         metadata:
           type: object
           example: {}
+          nullable: true
         project:
           type: string
           example: "MemEx"
@@ -657,9 +671,9 @@ components:
           format: float
           example: 9.321151
         buttons:
-            type: array
-            items:
-              $ref: '#/components/schemas/ActionResponse'
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionResponse'
       required:
         - type
         - longitude
@@ -734,6 +748,7 @@ components:
         buttonId:
           type: string
           example: "BTN-DAJKSOD142-ADFGWE2"
+          nullable: true
       required:
         - type
         - buttonText
@@ -761,6 +776,7 @@ components:
         alternativeText:
           type: string
           example: "An hotel"
+          nullable: true
       required:
         - type
         - uri
@@ -777,6 +793,7 @@ components:
         alternativeText:
           type: string
           example: "An hotel"
+          nullable: true
         buttons:
           type: array
           items:
@@ -808,12 +825,15 @@ components:
           imageUrl:
             type: string
             example: "http://www.google.com/logo.png"
+            nullable: true
           subtitle:
             type: string
             example: "you should hike"
+            nullable: true
           defaultAction:
             type: object
             example: {}
+            nullable: true
           buttons:
             type: array
             items:
