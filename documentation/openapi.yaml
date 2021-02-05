@@ -118,7 +118,7 @@ paths:
           schema:
             type: string
           example: "FACEBOOK"
-          description: the channel from which you want to retrieve  the messages
+          description: the channel from which you want to retrieve the messages
         - in: query
           name: type
           schema:

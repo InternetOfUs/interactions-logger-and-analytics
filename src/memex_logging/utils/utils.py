@@ -60,6 +60,10 @@ class Utils:
     # TODO stop using this and remove!!!!!
     @staticmethod
     def extract_date(data: dict) -> str:
+        """
+        Extract the date of the message from the message
+        """
+
         if "timestamp" in data.keys():
             try:
                 positioned = dateutil.parser.parse(data['timestamp'])
@@ -75,10 +79,9 @@ class Utils:
     @staticmethod
     def extract_trace_id(data: dict) -> str:
         """
-        Extract the id of the message from the message
-        :param data:
-        :return:
+        Extract the trace_id of the message from the message
         """
+
         if "traceId" in data.keys():
             return data["traceId"]
         else:
@@ -89,9 +92,8 @@ class Utils:
     def extract_project_name(data: dict) -> str:
         """
         Extract the name of the project to use the right index on elastic
-        :param data:
-        :return:
         """
+
         if "project" in data.keys():
             return str(data["project"]).lower()
         else:
