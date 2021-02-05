@@ -34,12 +34,12 @@ class Utils:
     @staticmethod
     def generate_index(data_type: str, project: Optional[str] = None, dt: Optional[datetime] = None) -> str:
         """
-        Generate the Elasticsearch index associated to the message data, the format is `data_type-project-%Y-%m-%d`.
+        Generate the Elasticsearch index, the format is `data_type-project-%Y-%m-%d`.
 
         :param str data_type: the type of data
-        :param Optional[str] project: the project data is associated to
+        :param Optional[str] project: the project associated to the data
         :param Optional[datetime] dt: the datetime of the data
-        :return: the generated EL index
+        :return: the generated Elasticsearch index
         :raise ValueError: when there is a datetime but not a project
         """
 

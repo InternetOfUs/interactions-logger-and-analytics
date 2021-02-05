@@ -131,7 +131,7 @@ class MessagesInterface(Resource):
 
         try:
             messages = [Message.from_repr(m_r) for m_r in messages_received]
-        except (KeyError, ValueError, TypeError) as e:
+        except (KeyError, ValueError, TypeError, AttributeError) as e:
             logger.exception("Error while parsing input message data", exc_info=e)
             return {
                 "status": "Malformed request: could not parse malformed data",
@@ -146,7 +146,7 @@ class MessagesInterface(Resource):
 
         for message in messages:
             try:
-                trace_id = self._dao_collector.message_dao.add_message(message)
+                trace_id = self._dao_collector.message_dao.add_messages(message)
                 trace_ids.append(trace_id)
             except Exception as e:
                 logging.exception(f"Could not save message with id {message.message_id} could not be saved", exc_info=e)
@@ -174,7 +174,7 @@ class MessagesInterface(Resource):
         except Exception as e:
             logging.error("Cannot parse parameters correctly while elaborating the get request", exc_info=e)
             return {
-                "status": "Malformed request: missing required parameter, you have to specify the `project`, the `fromTime` and the `toTime`",
+                "status": "Malformed request: missing required parameter, you have to specify the `project`, the `fromTime` (in ISO format) and the `toTime` (in ISO format)",
                 "code": 400
             }, 400
 
@@ -183,7 +183,7 @@ class MessagesInterface(Resource):
         message_type = request.args.get('type', None)
 
         try:
-            messages = self._dao_collector.message_dao.search_message(project, from_time, to_time, user_id=user_id, channel=channel, message_type=message_type)
+            messages = self._dao_collector.message_dao.search_messages(project, from_time, to_time, user_id=user_id, channel=channel, message_type=message_type)
         except ValueError:
             logger.error("`fromTime` is greater than `toTime`")
             return {

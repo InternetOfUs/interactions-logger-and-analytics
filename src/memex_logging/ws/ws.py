@@ -80,3 +80,6 @@ class WsInterface(object):
 
     def run_server(self, host: str = "0.0.0.0", port: int = 80):
         self._app.run(host=host, port=port, debug=False)
+
+    def get_application(self):
+        return self._app

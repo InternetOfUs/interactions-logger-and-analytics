@@ -89,7 +89,7 @@ class MessageDao(CommonDao):
         )
         return query
 
-    def add_message(self, message: Message, doc_type: str = "_doc") -> str:
+    def add_messages(self, message: Message, doc_type: str = "_doc") -> str:
         """
         Add a message to Elasticsearch
 
@@ -98,13 +98,33 @@ class MessageDao(CommonDao):
         :return: the trace_id of the added massage
         """
 
-        index = self._generate_index(message.project, message.timestamp)
+        index = self._generate_index(project=message.project, dt=message.timestamp)
         return self.add(index, message.to_repr(), doc_type=doc_type)
+
+    def _build_query_based_on_parameters(self, trace_id: Optional[str] = None, message_id: Optional[str] = None, user_id: Optional[str] = None) -> dict:
+        """
+        Build query for Elasticsearch based on parameters, specifying only the `trace_id` or the `message_id` and the `user_id`
+
+        :param Optional[str] trace_id: the trace_id of the message to retrieve
+        :param Optional[str] message_id: the id of the message to retrieve
+        :param Optional[str] user_id: the id of the user of the message to retrieve
+        :return: the query based on the parameters
+        :raise EntryNotFound: when could not find any message
+        :raise ValueError: when specified neither the `trace_id` or the `message_id` and the `user_id`
+        """
+
+        if trace_id:
+            return self._build_query_by_id(trace_id)
+        elif message_id and user_id:
+            query = self._build_query_by_message_id(message_id)
+            return self._add_user_id_to_query(query, user_id)
+        else:
+            raise ValueError("Missing required parameter: you have to specify only the `trace_id` or the `message_id` and the `user_id`")
 
     def get_message(self, project: Optional[str] = None, message_id: Optional[str] = None,
                     user_id: Optional[str] = None, trace_id: Optional[str] = None) -> Tuple[Message, str]:
         """
-        Retrieve a message from Elasticsearch specifying only the `trace_id` or the the `message_id` and the `user_id`
+        Retrieve a message from Elasticsearch specifying only the `trace_id` or the `project`, the `message_id` and the `user_id`
 
         :param Optional[str] project: the project from which to retrieve the message
         :param Optional[str] message_id: the id of the message to retrieve
@@ -112,18 +132,11 @@ class MessageDao(CommonDao):
         :param Optional[str] trace_id: the trace_id of the message to retrieve
         :return: a tuple containing the message and the trace_id of that massage
         :raise EntryNotFound: when could not find any message
+        :raise ValueError: when specified neither the `trace_id` or the `message_id` and the `user_id`
         """
 
         index = self._generate_index(project=project)
-
-        if message_id and user_id:
-            query = self._build_query_by_message_id(message_id)
-            query = self._add_user_id_to_query(query, user_id)
-        elif trace_id:
-            query = self._build_query_by_id(trace_id)
-        else:
-            raise ValueError("Missing required parameter, you have to specify only the `trace_id` or the the `message_id` and the `user_id`")
-
+        query = self._build_query_based_on_parameters(trace_id=trace_id, message_id=message_id, user_id=user_id)
         response = self.get(index, query)
         message = Message.from_repr(response[0])
         trace_id = response[1]
@@ -132,28 +145,39 @@ class MessageDao(CommonDao):
     def delete_message(self, project: Optional[str] = None, message_id: Optional[str] = None,
                        user_id: Optional[str] = None, trace_id: Optional[str] = None) -> None:
         """
-        Delete a message from Elasticsearch specifying only the `trace_id` or the the `message_id` and the `user_id`
+        Delete a message from Elasticsearch specifying only the `trace_id` or the `project`, the `message_id` and the `user_id`
 
         :param Optional[str] project: the project from which to delete the message
         :param Optional[str] message_id: the id of the message to delete
         :param Optional[str] user_id: the id of the user of the message to delete
         :param Optional[str] trace_id: the trace_id of the message to delete
+        :raise ValueError: when specified neither the `trace_id` or the `message_id` and the `user_id`
         """
 
         index = self._generate_index(project=project)
-
-        if message_id and user_id:
-            query = self._build_query_by_message_id(message_id)
-            query = self._add_user_id_to_query(query, user_id)
-        elif trace_id:
-            query = self._build_query_by_id(trace_id)
-        else:
-            raise ValueError("Missing required parameter, you have to specify only the `trace_id` or the the `message_id` and the `user_id`")
-
+        query = self._build_query_based_on_parameters(trace_id=trace_id, message_id=message_id, user_id=user_id)
         self.delete(index, query)
 
-    def search_message(self, project: str, from_time: datetime, to_time: datetime, user_id: Optional[str] = None,
-                       channel: Optional[str] = None, message_type: Optional[str] = None) -> List[Message]:
+    def _generate_index_based_on_time_range(self, project: str, from_time: datetime, to_time: datetime) -> str:
+        """
+        Generate the Elasticsearch index associated to the message based on time range
+
+        :param str project: the project associated to the message
+        :param datetime from_time: the time from which to search for messages
+        :param datetime to_time: the time up to which to search for messages
+        :return: the generated Elasticsearch index
+        :raise ValueError: when `fromTime` is greater than `toTime`
+        """
+
+        if from_time > to_time:
+            raise ValueError("`fromTime` is greater than `toTime`: `fromTime` must be is smaller than `toTime`")
+        elif from_time.date() == to_time.date():
+            return self._generate_index(project=project, dt=from_time)
+        else:
+            return self._generate_index(project=project)
+
+    def search_messages(self, project: str, from_time: datetime, to_time: datetime, user_id: Optional[str] = None,
+                        channel: Optional[str] = None, message_type: Optional[str] = None) -> List[Message]:
         """
         Search messages in Elasticsearch
 
@@ -164,15 +188,10 @@ class MessageDao(CommonDao):
         :param Optional[str] channel: the channel from which to search for messages
         :param Optional[str] message_type: the type of the messages to search for
         :return: a list containing the messages
+        :raise ValueError: when `fromTime` is greater than `toTime`
         """
 
-        if from_time > to_time:
-            raise ValueError("`fromTime` is greater than `toTime`")
-        elif from_time.date() == to_time.date():
-            index = self._generate_index(project=project, dt=from_time)
-        else:
-            index = self._generate_index(project=project)
-
+        index = self._generate_index_based_on_time_range(project, from_time, to_time)
         query = self._build_time_range_query(from_time, to_time)
 
         if user_id:

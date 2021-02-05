@@ -115,7 +115,7 @@ class LocationResponse:
         buttons = []
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
-                raise ValueError("the elements in the button list should be instances of ActionResponse")
+                raise ValueError("The elements in the button list should be instances of ActionResponse")
             else:
                 buttons.append(button.to_repr())
 
@@ -206,7 +206,7 @@ class MultiActionResponse:
         buttons = []
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
-                raise ValueError("the elements in the button list should be instances of ActionResponse")
+                raise ValueError("The elements in the button list should be instances of ActionResponse")
             else:
                 buttons.append(button.to_repr())
 
@@ -261,7 +261,7 @@ class TextualResponse:
         buttons = []
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
-                raise ValueError("the elements in the button list should be instances of ActionResponse")
+                raise ValueError("The elements in the button list should be instances of ActionResponse")
             else:
                 buttons.append(button.to_repr())
 
@@ -330,7 +330,7 @@ class AttachmentResponse:
         buttons = []
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
-                raise ValueError("the elements in the button list should be instances of ActionResponse")
+                raise ValueError("The elements in the button list should be instances of ActionResponse")
             else:
                 buttons.append(button.to_repr())
 
@@ -393,7 +393,7 @@ class CarouselCardResponse:
                 buttons.append(a)
 
         if 'title' not in data:
-            raise ValueError("each card should have a title")
+            raise ValueError("Each card should have a title")
 
         image_url = None
         if 'imageUrl' in data:
@@ -422,7 +422,7 @@ class CarouselResponse:
         cards = []
         for card in self.cards:
             if not isinstance(card, CarouselCardResponse):
-                raise ValueError("each card should be instances of CarouselCardResponse")
+                raise ValueError("Each card should be instances of CarouselCardResponse")
             else:
                 cards.append(card.to_repr())
 
@@ -503,6 +503,7 @@ class Message(ABC):
         :param Optional[dict] metadata: any metadata (key/value) associated to the message
         :param str project: the project associated to the conversation
         """
+
         self.message_id = message_id
         self.conversation_id = conversation_id
         self.channel = channel
@@ -514,7 +515,7 @@ class Message(ABC):
 
         if metadata is not None:
             if not isinstance(metadata, dict):
-                raise ValueError('Parameter metadata should be a dict')
+                raise ValueError("Parameter `metadata` should be a dict")
 
     @staticmethod
     def from_repr(raw_data: dict) -> Message:
@@ -562,18 +563,18 @@ class RequestMessage(Message):
 
         if intent is not None:
             if not isinstance(intent, Intent):
-                raise ValueError('Parameter intent should be a Intent')
+                raise ValueError("Parameter `intent` should be a Intent")
 
         if content is not None:
             if type(content) not in self.ALLOWED_CONTENT_TYPES:
-                raise ValueError(f"Type for parameter content is not allowed - {type(content)}")
+                raise ValueError(f"Type for parameter `content` is not allowed - {type(content)}")
 
         if not isinstance(entities, list):
-            raise ValueError('entities should be a list')
+            raise ValueError("Parameter `entities` should be a list")
         else:
             for entity in entities:
                 if not isinstance(entity, Entity):
-                    raise ValueError('entities should contain only Entity objects')
+                    raise ValueError("Parameter `entities` should contain only Entity objects")
 
     def to_repr(self) -> dict:
         entities = []
@@ -664,7 +665,7 @@ class ResponseMessage(Message):
 
         if content is not None:
             if type(content) not in self.ALLOWED_CONTENT_TYPES:
-                raise ValueError(f"Type for parameter content is not allowed - {type(content)}")
+                raise ValueError(f"Type for parameter `content` is not allowed - {type(content)}")
 
     def to_repr(self) -> dict:
         local_content = None
@@ -731,7 +732,7 @@ class NotificationMessage(Message):
 
         if content is not None:
             if type(content) not in self.ALLOWED_CONTENT_TYPES:
-                raise ValueError(f"Type for parameter content is not allowed - {type(content)}")
+                raise ValueError(f"Type for parameter `content` is not allowed - {type(content)}")
 
     def to_repr(self) -> dict:
         local_content = None

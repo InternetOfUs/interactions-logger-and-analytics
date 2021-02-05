@@ -37,6 +37,15 @@ class CommonDao:
         self._base_index = base_index
 
     def _generate_index(self, project: Optional[str] = None, dt: Optional[datetime] = None) -> str:
+        """
+        Generate the Elasticsearch index associated to the message, the format is `data_type-project-%Y-%m-%d`.
+
+        :param Optional[str] project: the project associated to the message
+        :param Optional[datetime] dt: the datetime of the message
+        :return: the generated Elasticsearch index
+        :raise ValueError: when there is a datetime but not a project
+        """
+
         return Utils.generate_index(self._base_index, project=project, dt=dt)
 
     @staticmethod
