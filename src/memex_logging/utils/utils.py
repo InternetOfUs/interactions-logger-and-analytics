@@ -17,6 +17,7 @@ from __future__ import absolute_import, annotations
 from datetime import datetime, timezone
 import logging
 import uuid
+from typing import Optional
 
 import dateutil.parser
 from elasticsearch import Elasticsearch
@@ -31,22 +32,38 @@ logger = logging.getLogger("logger.utils.utils")
 class Utils:
 
     @staticmethod
-    def generate_index(project: str, data_type: str, dt: datetime) -> str:
+    def generate_index(data_type: str, project: Optional[str] = None, dt: Optional[datetime] = None) -> str:
         """
-        Generate the Elasticsearch index associated to the message data.
+        Generate the Elasticsearch index, the format is `data_type-project-%Y-%m-%d`.
 
-        :param str project: the project data is associated to
         :param str data_type: the type of data
-        :param datetime dt: the datetime of the data
-        :return: the generated EL index
+        :param Optional[str] project: the project associated to the data
+        :param Optional[datetime] dt: the datetime of the data
+        :return: the generated Elasticsearch index
+        :raise ValueError: when there is a datetime but not a project
         """
-        formatted_date = dt.strftime("%Y-%m-%d")
-        index_name = f"{data_type}-{project}-{formatted_date}"
+
+        if project:
+            if dt:
+                formatted_date = dt.strftime("%Y-%m-%d")
+                index_name = f"{data_type.lower()}-{project.lower()}-{formatted_date}"
+            else:
+                index_name = f"{data_type.lower()}-{project.lower()}-*"
+        else:
+            if dt:
+                raise ValueError("There is a datetime but not a project")
+            else:
+                index_name = f"{data_type.lower()}-*"
+
         return index_name
 
     # TODO stop using this and remove!!!!!
     @staticmethod
     def extract_date(data: dict) -> str:
+        """
+        Extract the date of the message from the message
+        """
+
         if "timestamp" in data.keys():
             try:
                 positioned = dateutil.parser.parse(data['timestamp'])
@@ -62,10 +79,9 @@ class Utils:
     @staticmethod
     def extract_trace_id(data: dict) -> str:
         """
-        Extract the id of the message from the message
-        :param data:
-        :return:
+        Extract the trace_id of the message from the message
         """
+
         if "traceId" in data.keys():
             return data["traceId"]
         else:
@@ -76,9 +92,8 @@ class Utils:
     def extract_project_name(data: dict) -> str:
         """
         Extract the name of the project to use the right index on elastic
-        :param data:
-        :return:
         """
+
         if "project" in data.keys():
             return str(data["project"]).lower()
         else:

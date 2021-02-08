@@ -15,13 +15,14 @@
 from __future__ import absolute_import, annotations
 
 import logging
+from datetime import datetime
 
-from elasticsearch import Elasticsearch
 from flask import request
 from flask_restful import Resource
 
+from memex_logging.common.dao.collector import DaoCollector
+from memex_logging.common.dao.conmon import EntryNotFound
 from memex_logging.common.model.message import Message
-from memex_logging.utils.utils import Utils
 
 
 logger = logging.getLogger("logger.resource.message")
@@ -30,73 +31,71 @@ logger = logging.getLogger("logger.resource.message")
 class MessageResourceBuilder(object):
 
     @staticmethod
-    def routes(es: Elasticsearch):
+    def routes(dao_collector: DaoCollector):
         return [
-            (MessageInterface, '/message', (es,)),
-            (MessagesInterface, '/messages', (es,))
+            (MessageInterface, '/message', (dao_collector,)),
+            (MessagesInterface, '/messages', (dao_collector,))
         ]
 
 
 class MessageInterface(Resource):
 
-    def __init__(self, es: Elasticsearch) -> None:
-        self._es = es
+    def __init__(self, dao_collector: DaoCollector) -> None:
+        self._dao_collector = dao_collector
+
+    def get(self):
+        """
+        Get details of a message.
+        """
+
+        project = request.args.get('project', None)
+        message_id = request.args.get('messageId', None)
+        user_id = request.args.get('userId', None)
+        trace_id = request.args.get('traceId', None)
+
+        try:
+            message, trace_id = self._dao_collector.message_dao.get_message(project=project, message_id=message_id, user_id=user_id, trace_id=trace_id)
+        except ValueError:
+            logging.error("Missing required parameters")
+            return {
+                "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `project`, the `messageId` and the `userId`",
+                "code": 400
+            }, 400
+        except EntryNotFound:
+            logger.debug("Resource not found")
+            return {
+                "status": "Not found: resource not found",
+                "code": 404
+            }, 404
+        except Exception as e:
+            logging.exception("Message failed to be retrieved", exc_info=e)
+            return {
+                "status": "Internal server error: could not retrieve the message",
+                "code": 500
+            }, 500
+
+        json_response = message.to_repr()
+        json_response["traceId"] = trace_id
+        return json_response, 200
 
     def delete(self):
         """
         Delete a specific message.
         """
 
-        if 'project' in request.args and 'messageId' in request.args and 'userId' in request.args:
-            project = request.args.get('project')
-            message_id = request.args.get('messageId')
-            user_id = request.args.get('userId')
-            index = "message-" + str(project).lower() + "-*"
-            query = {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "match_phrase": {
-                                    "messageId": message_id
-                                }
-                            },
-                            {
-                                "match_phrase": {
-                                    "userId": user_id
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
+        project = request.args.get('project', None)
+        message_id = request.args.get('messageId', None)
+        user_id = request.args.get('userId', None)
+        trace_id = request.args.get('traceId', None)
 
-        elif 'traceId' in request.args:
-            trace_id = request.args.get("traceId")
-            index = "message-*"
-            query = {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "match_phrase": {
-                                    "_id": trace_id
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-
-        else:
-            logging.error("Cannot parse parameters correctly while elaborating the delete request")
+        try:
+            self._dao_collector.message_dao.delete_message(project=project, message_id=message_id, user_id=user_id, trace_id=trace_id)
+        except ValueError:
+            logging.error("Missing required parameters")
             return {
                 "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `project`, the `messageId` and the `userId`",
                 "code": 400
             }, 400
-
-        try:
-            self._es.delete_by_query(index=index, body=query)
         except Exception as e:
             logging.exception("Message failed to be deleted", exc_info=e)
             return {
@@ -109,83 +108,11 @@ class MessageInterface(Resource):
             "code": 200
         }, 200
 
-    def get(self):
-        """
-        Get details of a message.
-        """
-
-        if 'project' in request.args and 'messageId' in request.args and 'userId' in request.args:
-            project = request.args.get('project')
-            message_id = request.args.get('messageId')
-            user_id = request.args.get('userId')
-            index = "message-" + str(project).lower() + "-*"
-            query = {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "match_phrase": {
-                                    "messageId": message_id
-                                }
-                            },
-                            {
-                                "match_phrase": {
-                                    "userId": user_id
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-
-        elif 'traceId' in request.args:
-            trace_id = request.args.get("traceId")
-            index = "message-*"
-            query = {
-                "query": {
-                    "bool": {
-                        "must": [
-                            {
-                                "match_phrase": {
-                                    "_id": trace_id
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-
-        else:
-            logging.error("Cannot parse parameters correctly while elaborating the get request")
-            return {
-                "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `project`, the `messageId` and the `userId`",
-                "code": 400
-            }, 400
-
-        try:
-            response = self._es.search(index=index, body=query)
-        except Exception as e:
-            logging.exception("Message failed to be retrieved", exc_info=e)
-            return {
-                "status": "Internal server error: could not retrieve the message",
-                "code": 500
-            }, 500
-
-        if len(response['hits']['hits']) == 0:
-            return {
-                "status": "Not found: resource not found",
-                "code": 404
-            }, 404
-        else:
-            json_response = response['hits']['hits'][0]['_source']
-            json_response["traceId"] = response['hits']['hits'][0]['_id']
-            return json_response, 200
-
 
 class MessagesInterface(Resource):
 
-    def __init__(self, es: Elasticsearch):
-        self._es = es
+    def __init__(self, dao_collector: DaoCollector) -> None:
+        self._dao_collector = dao_collector
 
     def post(self):
         """
@@ -204,7 +131,7 @@ class MessagesInterface(Resource):
 
         try:
             messages = [Message.from_repr(m_r) for m_r in messages_received]
-        except (KeyError, ValueError, TypeError) as e:
+        except (KeyError, ValueError, TypeError, AttributeError) as e:
             logger.exception("Error while parsing input message data", exc_info=e)
             return {
                 "status": "Malformed request: could not parse malformed data",
@@ -219,9 +146,8 @@ class MessagesInterface(Resource):
 
         for message in messages:
             try:
-                index_name = Utils.generate_index(message.project, "message", message.timestamp)
-                query = self._es.index(index=index_name, doc_type='_doc', body=message.to_repr())
-                trace_ids.append(query['_id'])
+                trace_id = self._dao_collector.message_dao.add_messages(message)
+                trace_ids.append(trace_id)
             except Exception as e:
                 logging.exception(f"Could not save message with id {message.message_id} could not be saved", exc_info=e)
                 logging.error(message)
@@ -235,3 +161,40 @@ class MessagesInterface(Resource):
             "status": "Created: messages stored",
             "code": 201
         }, 201
+
+    def get(self):
+        """
+        Retrieve a list of messages.
+        """
+
+        try:
+            project = request.args.get('project')
+            from_time = datetime.fromisoformat(request.args.get('fromTime'))
+            to_time = datetime.fromisoformat(request.args.get('toTime'))
+        except Exception as e:
+            logging.error("Cannot parse parameters correctly while elaborating the get request", exc_info=e)
+            return {
+                "status": "Malformed request: missing required parameter, you have to specify the `project`, the `fromTime` (in ISO format) and the `toTime` (in ISO format)",
+                "code": 400
+            }, 400
+
+        user_id = request.args.get('userId', None)
+        channel = request.args.get('channel', None)
+        message_type = request.args.get('type', None)
+
+        try:
+            messages = self._dao_collector.message_dao.search_messages(project, from_time, to_time, user_id=user_id, channel=channel, message_type=message_type)
+        except ValueError:
+            logger.error("`fromTime` is greater than `toTime`")
+            return {
+                "status": "Malformed request: `fromTime` is greater than `toTime`",
+                "code": 400
+            }, 400
+        except Exception as e:
+            logging.exception("Message failed to be retrieved", exc_info=e)
+            return {
+                "status": "Internal server error: could not retrieve the message",
+                "code": 500
+            }, 500
+
+        return [message.to_repr() for message in messages], 200

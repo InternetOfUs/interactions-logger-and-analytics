@@ -22,6 +22,7 @@ from elasticsearch import Elasticsearch
 from flask import Flask
 from flask_restful import Api
 
+from memex_logging.common.dao.collector import DaoCollector
 from memex_logging.ws.resource.analytics import AnalyticsResourceBuilder
 from memex_logging.ws.resource.documentation import DocumentationResourceBuilder
 from memex_logging.ws.resource.logging import LoggingResourceBuilder
@@ -29,16 +30,22 @@ from memex_logging.ws.resource.message import MessageResourceBuilder
 from memex_logging.ws.resource.performance import PerformancesResourceBuilder
 
 
+logger = logging.getLogger("logger.ws.ws")
+
+
 class WsInterface(object):
 
-    def __init__(self, elastic: Elasticsearch) -> None:
-        self._app = Flask("log-ws")
+    def __init__(self, dao_collector: DaoCollector, es: Elasticsearch) -> None:
+        self._dao_collector = dao_collector
+        self._es = es
+
+        self._app = Flask("logger-ws")
         self._app.config.update(
             CELERY_BROKER=os.getenv("CELERY_BROKER", None),
             CELERY_RESULT_BACKEND=os.getenv("CELERY_RESULT_BACKEND", None)
         )
         self._api = Api(app=self._app)
-        self._init_modules(elastic)
+        self._init_modules(self._dao_collector, self._es)
         self.make_celery(self._app)
 
     def make_celery(self, app):
@@ -57,12 +64,12 @@ class WsInterface(object):
         celery.Task = ContextTask
         return celery_instance
 
-    def _init_modules(self, elastic) -> None:
+    def _init_modules(self, dao_collector: DaoCollector, es: Elasticsearch) -> None:
         active_routes = [
-            (MessageResourceBuilder.routes(elastic), ""),
-            (LoggingResourceBuilder.routes(elastic), ""),
-            (PerformancesResourceBuilder.routes(elastic), "/performance"),
-            (AnalyticsResourceBuilder.routes(elastic), ""),
+            (MessageResourceBuilder.routes(dao_collector), ""),
+            (LoggingResourceBuilder.routes(es), ""),
+            (PerformancesResourceBuilder.routes(es), "/performance"),
+            (AnalyticsResourceBuilder.routes(es), ""),
             (DocumentationResourceBuilder.routes(), "")
         ]
 
@@ -73,3 +80,6 @@ class WsInterface(object):
 
     def run_server(self, host: str = "0.0.0.0", port: int = 80):
         self._app.run(host=host, port=port, debug=False)
+
+    def get_application(self):
+        return self._app
