@@ -22,8 +22,8 @@ from elasticsearch import Elasticsearch
 from flask import request, Response
 from flask_restful import Resource, abort
 
-from memex_logging.analytic.analytic import AnalyticComputation
-from memex_logging.analytic.aggregation import AggregationComputation
+from memex_logging.common.analytic.aggregation import AggregationComputation
+from memex_logging.common.analytic.analytic import AnalyticComputation
 
 
 class AnalyticsResourceBuilder(object):
@@ -198,18 +198,18 @@ class AnalyticsPerformer(Resource):
                         "status": 200,
                         "static_id": static_id
                     }
-                elif metric == "m:notification_engagement":
-                    answer = ac.compute_m_notification_engagement(analytic, self._es, analytic['project'])  # does not exists
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "messageId"
-                        },
-                        "status": 200,
-                        "static_id": static_id
-                    }
+                # elif metric == "m:notification_engagement":
+                #     answer = ac.compute_m_notification_engagement(analytic, self._es, analytic['project'])  # does not exists
+                #     json_response = {
+                #         "query": analytic,
+                #         "result": {
+                #             "count": answer[0],
+                #             "items": answer[1],
+                #             "type": "messageId"
+                #         },
+                #         "status": 200,
+                #         "static_id": static_id
+                #     }
                 elif metric == "c:total":
                     answer = ac.compute_c_total(analytic, self._es, analytic['project'])
                     json_response = {
@@ -270,18 +270,18 @@ class AnalyticsPerformer(Resource):
                         "status": 200,
                         "static_id": static_id
                     }
-                elif metric == "d:interrupted":
-                    answer = ac.compute_d_interrupted(analytic, self._es, analytic['project'])  # does not exists
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "conversationId"
-                        },
-                        "status": 200,
-                        "static_id": static_id
-                    }
+                # elif metric == "d:interrupted":
+                #     answer = ac.compute_d_interrupted(analytic, self._es, analytic['project'])  # does not exists
+                #     json_response = {
+                #         "query": analytic,
+                #         "result": {
+                #             "count": answer[0],
+                #             "items": answer[1],
+                #             "type": "conversationId"
+                #         },
+                #         "status": 200,
+                #         "static_id": static_id
+                #     }
                 elif metric == "d:intents":
                     answer = ac.compute_d_intents(analytic, self._es, analytic['project'])
                     json_response = {
@@ -306,18 +306,18 @@ class AnalyticsPerformer(Resource):
                         "status": 200,
                         "static_id": static_id
                     }
-                elif metric == "b:retention":
-                    answer = ac.compute_b_retention(analytic, self._es, analytic['project'])  # does not exists
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "score"
-                        },
-                        "status": 200,
-                        "static_id": static_id
-                    }
+                # elif metric == "b:retention":
+                #     answer = ac.compute_b_retention(analytic, self._es, analytic['project'])  # does not exists
+                #     json_response = {
+                #         "query": analytic,
+                #         "result": {
+                #             "count": answer[0],
+                #             "items": answer[1],
+                #             "type": "score"
+                #         },
+                #         "status": 200,
+                #         "static_id": static_id
+                #     }
                 elif metric == "b:response":
                     answer = ac.compute_b_response(analytic, self._es, analytic['project'])
                     json_response = {
@@ -436,16 +436,16 @@ class AnalyticsPerformer(Resource):
                         "status": 200,
                         "static_id": static_id
                     }
-                elif metric == "percentile_ranks":
-                    answer = ac.percentile_ranks_aggr(analytic, self._es, analytic['project'])  # does not exists
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "percentile_ranks": answer
-                        },
-                        "status": 200,
-                        "static_id": static_id
-                    }
+                # elif metric == "percentile_ranks":
+                #     answer = ac.percentile_ranks_aggr(analytic, self._es, analytic['project'])  # does not exists
+                #     json_response = {
+                #         "query": analytic,
+                #         "result": {
+                #             "percentile_ranks": answer
+                #         },
+                #         "status": 200,
+                #         "static_id": static_id
+                #     }
 
                 index_name = "analytic-" + analytic['project'] + "-" + analytic['aggregation']
                 query = self._es.index(index=index_name, doc_type='_doc', body=json_response)

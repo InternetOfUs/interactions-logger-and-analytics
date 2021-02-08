@@ -12,11 +12,10 @@ ENV/
 env.bak/
 venv.bak/
 
-
-test/
-
 *.log
 
 docker-compose.yml
 
 .idea
+
+roles

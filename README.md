@@ -27,8 +27,6 @@ CELERY_RESULT_BACKEND='redis://localhost:6379'
 
 ## Setup and configuration
 
-Please mark the `src` folder as source route.
-
 ### Required Python Packages
 
 Required Python packages can be installed using the command:
@@ -58,5 +56,5 @@ The web service allows to set the following environment variables:
 This service can be run with the command:
 
 ```bash
-python -m memex_logging.ws_memex.main
+python -m memex_logging.ws.main
 ```

@@ -20,12 +20,13 @@ import os
 
 from elasticsearch import Elasticsearch
 
+from memex_logging.common.dao.collector import DaoCollector
 from memex_logging.common.log.logging import get_logging_configuration
-from memex_logging.ws_memex.ws import WsInterface
+from memex_logging.ws.ws import WsInterface
 
 
 logging.config.dictConfig(get_logging_configuration("logger"))
-logger = logging.getLogger("logger.main")
+logger = logging.getLogger("logger.ws.main")
 
 if __name__ == '__main__':
 
@@ -39,8 +40,8 @@ if __name__ == '__main__':
     args = arg_parser.parse_args()
 
     es = Elasticsearch([{'host': args.ehost, 'port': args.eport}], http_auth=(args.euser, args.epw))
-
-    ws = WsInterface(es)
+    dao_collector = DaoCollector.build_dao_collector(es)
+    ws = WsInterface(dao_collector, es)
 
     try:
         ws.run_server(args.whost, args.wport)

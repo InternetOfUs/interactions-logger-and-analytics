@@ -21,7 +21,7 @@ from elasticsearch import Elasticsearch
 from flask import request, Response
 from flask_restful import Resource
 
-from memex_logging.models.log import Log
+from memex_logging.common.model.log import Log
 from memex_logging.utils.utils import Utils
 
 
@@ -80,7 +80,7 @@ class LogGeneralLogs(Resource):
             utils = Utils()
 
             try:
-                temp_log = Log.from_rep(log)
+                temp_log = Log.from_repr(log)
                 project_name = utils.extract_project_name(log)
                 date = utils.extract_date(log)
                 index_name = "logging-" + project_name + "-" + date

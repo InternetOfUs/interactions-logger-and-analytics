@@ -14,60 +14,86 @@
 
 from __future__ import absolute_import, annotations
 
-from flask_restful import abort
-
+from datetime import datetime, timezone
 import logging
-import datetime
-from datetime import timezone
 import uuid
+from typing import Optional
 
 import dateutil.parser
-
 from elasticsearch import Elasticsearch
+from flask_restful import abort
 
-from memex_logging.models.message import RequestMessage, ResponseMessage, NotificationMessage
+from memex_logging.common.model.message import RequestMessage, ResponseMessage, NotificationMessage
+
+
+logger = logging.getLogger("logger.utils.utils")
 
 
 class Utils:
 
     @staticmethod
+    def generate_index(data_type: str, project: Optional[str] = None, dt: Optional[datetime] = None) -> str:
+        """
+        Generate the Elasticsearch index, the format is `data_type-project-%Y-%m-%d`.
+
+        :param str data_type: the type of data
+        :param Optional[str] project: the project associated to the data
+        :param Optional[datetime] dt: the datetime of the data
+        :return: the generated Elasticsearch index
+        :raise ValueError: when there is a datetime but not a project
+        """
+
+        if project:
+            if dt:
+                formatted_date = dt.strftime("%Y-%m-%d")
+                index_name = f"{data_type.lower()}-{project.lower()}-{formatted_date}"
+            else:
+                index_name = f"{data_type.lower()}-{project.lower()}-*"
+        else:
+            if dt:
+                raise ValueError("There is a datetime but not a project")
+            else:
+                index_name = f"{data_type.lower()}-*"
+
+        return index_name
+
+    # TODO stop using this and remove!!!!!
+    @staticmethod
     def extract_date(data: dict) -> str:
         """
-        :param data:
-        :return:
+        Extract the date of the message from the message
         """
+
         if "timestamp" in data.keys():
             try:
                 positioned = dateutil.parser.parse(data['timestamp'])
                 return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
             except:
-                logging.error("timestamp cannot be parsed of the message cannot be parsed")
+                logging.error("`timestamp` of the message cannot be parsed")
                 logging.error(data)
         else:
-            support_bound = datetime.datetime.now().isoformat()
+            support_bound = datetime.now().isoformat()
             positioned = dateutil.parser.parse(support_bound)
             return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
 
     @staticmethod
     def extract_trace_id(data: dict) -> str:
         """
-        Extract the id of the message from the message
-        :param data:
-        :return:
+        Extract the trace_id of the message from the message
         """
+
         if "traceId" in data.keys():
             return data["traceId"]
         else:
-            logging.error("ERROR@Utils - traceId not found in the message parsed")
+            logging.error("`traceId` not found in the message parsed")
             abort(400, message="Invalid message. traceId is missing")
 
     @staticmethod
     def extract_project_name(data: dict) -> str:
         """
         Extract the name of the project to use the right index on elastic
-        :param data:
-        :return:
         """
+
         if "project" in data.keys():
             return str(data["project"]).lower()
         else:
@@ -99,7 +125,7 @@ class Utils:
                 response = elastic.search(index=index, body=body, size=1)
                 if response['hits']['total'] != 0:
                     positioned = dateutil.parser.parse(response['hits']['hits'][0]['_source']['timestamp'])
-                    now = datetime.datetime.now().isoformat()
+                    now = datetime.now().isoformat()
                     positioned_now = dateutil.parser.parse(now)
                     positioned = positioned.replace(tzinfo=timezone.utc).astimezone(tz=None)
                     positioned_now = positioned_now.replace(tzinfo=timezone.utc).astimezone(tz=None)
