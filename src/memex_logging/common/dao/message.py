@@ -43,6 +43,7 @@ class MessageDao(CommonDao):
     @staticmethod
     def _build_query_by_message_id(message_id: str) -> dict:
         return {
+            "size": 1,
             "query": {
                 "bool": {
                     "must": [
@@ -176,14 +177,16 @@ class MessageDao(CommonDao):
         else:
             return self._generate_index(project=project)
 
-    def search_messages(self, project: str, from_time: datetime, to_time: datetime, user_id: Optional[str] = None,
-                        channel: Optional[str] = None, message_type: Optional[str] = None) -> List[Message]:
+    def search_messages(self, project: str, from_time: datetime, to_time: datetime, max_size: int,
+                        user_id: Optional[str] = None, channel: Optional[str] = None,
+                        message_type: Optional[str] = None) -> List[Message]:
         """
         Search messages in Elasticsearch
 
         :param str project: the project from which to search for messages
         :param datetime from_time: the time from which to search for messages
         :param datetime to_time: the time up to which to search for messages
+        :param int max_size: the maximum number of messages to retrieve
         :param Optional[str] user_id: the id of the user to search for messages for
         :param Optional[str] channel: the channel from which to search for messages
         :param Optional[str] message_type: the type of the messages to search for
@@ -192,7 +195,7 @@ class MessageDao(CommonDao):
         """
 
         index = self._generate_index_based_on_time_range(project, from_time, to_time)
-        query = self._build_time_range_query(from_time, to_time)
+        query = self._build_time_range_query(from_time, to_time, max_size)
 
         if user_id:
             query = self._add_user_id_to_query(query, user_id)
