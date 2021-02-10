@@ -75,7 +75,7 @@ class WsInterface(object):
 
         for module_routes, prefix in active_routes:
             for resource, path, args in module_routes:
-                logging.debug("Installing route %s", prefix + path)
+                logger.debug("Installing route %s", prefix + path)
                 self._api.add_resource(resource, prefix + path, resource_class_args=args)
 
     def run_server(self, host: str = "0.0.0.0", port: int = 80):

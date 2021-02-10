@@ -84,7 +84,7 @@ paths:
       tags:
         - message
       summary: Retrieve a list of messages
-      description: This end-point allows to retrieve all the messages from the database of a project within a time range, plus the possibility to specify other optional filters. It is necessary to specify the `project`, the `fromTime` and the `toTime`. Optionally you can specify also `type`, `channel` and `userId`.
+      description: This end-point allows to retrieve all the messages from the database of a project within a time range, plus the possibility to specify other optional filters. It is necessary to specify the `project`, the `fromTime` and the `toTime`. Optionally you can specify also the `type`, the `channel`, the `userId` and the `maxSize`.
       parameters:
         - in: query
           name: project
@@ -125,6 +125,13 @@ paths:
             type: string
           example: "request"
           description: the type of the messages you want to retrieve
+        - in: query
+          name: maxSize
+          schema:
+            type: number
+            format: int32
+          example: 5000
+          description: the maximum number of messages you want to retrieve (by default is set to `1000` and the maximum available is `10000`)
       responses:
         '200':
           description: messages retrived

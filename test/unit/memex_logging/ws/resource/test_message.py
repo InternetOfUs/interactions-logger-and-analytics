@@ -5,7 +5,7 @@ from datetime import datetime
 
 from mock import Mock
 
-from memex_logging.common.dao.conmon import EntryNotFound
+from memex_logging.common.dao.common import EntryNotFound
 from memex_logging.common.model.message import Message
 from test.unit.memex_logging.ws.common.common_test_ws import CommonWsTestCase
 
@@ -196,6 +196,36 @@ class TestMessagesInterface(CommonWsTestCase):
         response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}")
         self.assertEqual(200, response.status_code)
         self.assertEqual([message.to_repr() for message in messages], json.loads(response.data))
+
+        response = self.client.get(f"/messages?project={project}&fromTime={from_time}")
+        self.assertEqual(400, response.status_code)
+
+        response = self.client.get(f"/messages?project={project}&toTime={to_time}")
+        self.assertEqual(400, response.status_code)
+
+        response = self.client.get(f"/messages?fromTime={from_time}&toTime={to_time}")
+        self.assertEqual(400, response.status_code)
+
+        response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}&userId=user_id")
+        self.assertEqual(200, response.status_code)
+
+        response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}&channel=channel")
+        self.assertEqual(200, response.status_code)
+
+        response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}&type=request")
+        self.assertEqual(200, response.status_code)
+
+        response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}&maxSize=1000")
+        self.assertEqual(200, response.status_code)
+
+        response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}&maxSize=10001")
+        self.assertEqual(400, response.status_code)
+
+        response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}&maxSize=30.5")
+        self.assertEqual(400, response.status_code)
+
+        response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}&maxSize=cinque")
+        self.assertEqual(400, response.status_code)
 
         self.dao_collector.message_dao.search_messages = Mock(side_effect=Exception)
         response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}")
