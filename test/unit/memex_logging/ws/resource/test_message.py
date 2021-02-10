@@ -5,7 +5,7 @@ from datetime import datetime
 
 from mock import Mock
 
-from memex_logging.common.dao.conmon import EntryNotFound
+from memex_logging.common.dao.common import EntryNotFound
 from memex_logging.common.model.message import Message
 from test.unit.memex_logging.ws.common.common_test_ws import CommonWsTestCase
 

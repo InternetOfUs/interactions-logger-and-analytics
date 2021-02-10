@@ -20,7 +20,7 @@ from typing import Tuple, List, Optional
 
 from elasticsearch import Elasticsearch
 
-from memex_logging.common.dao.conmon import CommonDao
+from memex_logging.common.dao.common import CommonDao
 from memex_logging.common.model.message import Message
 
 

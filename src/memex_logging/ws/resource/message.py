@@ -21,7 +21,7 @@ from flask import request
 from flask_restful import Resource
 
 from memex_logging.common.dao.collector import DaoCollector
-from memex_logging.common.dao.conmon import EntryNotFound
+from memex_logging.common.dao.common import EntryNotFound
 from memex_logging.common.model.message import Message
 
 
@@ -56,13 +56,13 @@ class MessageInterface(Resource):
         try:
             message, trace_id = self._dao_collector.message_dao.get_message(project=project, message_id=message_id, user_id=user_id, trace_id=trace_id)
         except ValueError as e:
-            logger.exception("Missing required parameters", exc_info=e)
+            logger.debug("Missing required parameters", exc_info=e)
             return {
                 "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `project`, the `messageId` and the `userId`",
                 "code": 400
             }, 400
-        except EntryNotFound:
-            logger.debug("Resource not found")
+        except EntryNotFound as e:
+            logger.debug("Resource not found", exc_info=e)
             return {
                 "status": "Not found: resource not found",
                 "code": 404
@@ -91,7 +91,7 @@ class MessageInterface(Resource):
         try:
             self._dao_collector.message_dao.delete_message(project=project, message_id=message_id, user_id=user_id, trace_id=trace_id)
         except ValueError as e:
-            logger.exception("Missing required parameters", exc_info=e)
+            logger.debug("Missing required parameters", exc_info=e)
             return {
                 "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `project`, the `messageId` and the `userId`",
                 "code": 400
@@ -121,7 +121,7 @@ class MessagesInterface(Resource):
 
         messages_received = request.json
         if messages_received is None:
-            logger.error("Message failed to be logged due to missing data")
+            logger.debug("Message failed to be logged due to missing data")
             return {
                 "status": "Malformed request: data is missing",
                 "code": 400
@@ -132,7 +132,7 @@ class MessagesInterface(Resource):
         try:
             messages = [Message.from_repr(m_r) for m_r in messages_received]
         except (KeyError, ValueError, TypeError, AttributeError) as e:
-            logger.exception("Error while parsing input message data", exc_info=e)
+            logger.debug("Error while parsing input message data", exc_info=e)
             return {
                 "status": "Malformed request: could not parse malformed data",
                 "code": 400
@@ -169,7 +169,7 @@ class MessagesInterface(Resource):
 
         project = request.args.get('project')
         if project is None:
-            logger.error("Missing required `project` parameter")
+            logger.debug("Missing required `project` parameter")
             return {
                 "status": "Malformed request: missing required `project` parameter",
                 "code": 400
@@ -179,7 +179,7 @@ class MessagesInterface(Resource):
             from_time = datetime.fromisoformat(request.args.get('fromTime'))
             to_time = datetime.fromisoformat(request.args.get('toTime'))
         except Exception as e:
-            logger.exception("Cannot parse `fromTime` and the `toTime` correctly", exc_info=e)
+            logger.debug("Cannot parse `fromTime` and the `toTime` correctly", exc_info=e)
             return {
                 "status": "Malformed request: missing required parameter, you have to specify the `fromTime` and the `toTime` in ISO format",
                 "code": 400
@@ -192,14 +192,14 @@ class MessagesInterface(Resource):
         try:
             max_size = int(request.args.get('maxSize', 1000))
         except Exception as e:
-            logger.exception("`maxSize` is not an integer value", exc_info=e)
+            logger.debug("`maxSize` is not an integer value", exc_info=e)
             return {
                 "status": "Malformed request: `maxSize` is not an integer value",
                 "code": 400
             }, 400
 
         if max_size > 10000:
-            logger.error("`maxSize` is too large, must be less than or equal to: [10000] but was [{max_size}]")
+            logger.debug("`maxSize` is too large, must be less than or equal to: [10000] but was [{max_size}]")
             return {
                 "status": f"Malformed request: `maxSize` is too large, must be less than or equal to: [10000] but was [{max_size}]",
                 "code": 400
@@ -208,7 +208,7 @@ class MessagesInterface(Resource):
         try:
             messages = self._dao_collector.message_dao.search_messages(project, from_time, to_time, max_size, user_id=user_id, channel=channel, message_type=message_type)
         except ValueError as e:
-            logger.exception("`fromTime` is greater than `toTime`", exc_info=e)
+            logger.debug("`fromTime` is greater than `toTime`", exc_info=e)
             return {
                 "status": "Malformed request: `fromTime` is greater than `toTime`",
                 "code": 400

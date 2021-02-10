@@ -24,8 +24,9 @@ class MockMessageDao(MessageDao):
                        user_id: Optional[str] = None, trace_id: Optional[str] = None) -> None:
         pass
 
-    def search_messages(self, project: str, from_time: datetime, to_time: datetime, user_id: Optional[str] = None,
-                        channel: Optional[str] = None, message_type: Optional[str] = None) -> List[Message]:
+    def search_messages(self, project: str, from_time: datetime, to_time: datetime, max_size: int,
+                        user_id: Optional[str] = None, channel: Optional[str] = None,
+                        message_type: Optional[str] = None) -> List[Message]:
         pass
 
 
