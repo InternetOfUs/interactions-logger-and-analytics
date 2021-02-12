@@ -366,24 +366,28 @@ paths:
                 $ref: '#/components/schemas/HTTP_404'
 
   # ANALYTICS APIS
-  /analytics:
+  /analytic:
     post:
       tags:
-        - analytics
+        - analytic
       summary: Require an analytic
       description: This end-point allows to retrieve an analytic from the database
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Analytic'
+              oneOf:
+                - $ref: '#/components/schemas/Analytic'
+                - $ref: '#/components/schemas/Aggregation'
       responses:
         '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTP_200_ANALYTIC'
+                oneOf:
+                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC'
+                  - $ref: '#/components/schemas/HTTP_200_AGGREGATION'
         '500':
           description: malformed log
           content:
@@ -391,10 +395,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTP_500_ANALYTIC'
 
-  /analytics/usercount:
+  /analytic/usercount:
     get:
       tags:
-        - analytics
+        - analytic
       parameters:
         - in: query
           name: userId
@@ -412,17 +416,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/200_user_count'
 
-  /analytics/eventcount:
+  /analytic/eventcount:
     get:
       tags:
-        - analytics
+        - analytic
       parameters:
         - in: query
           name: eventId
           schema:
             type: string
           required: true
-          description: the identifier of the evnet for which you want to count the clicks
+          description: the identifier of the event for which you want to count the clicks
       summary: Retrieve the number click based on an event identifier
       description: Retrieve the number click based on an event identifier
       responses:
@@ -924,6 +928,7 @@ components:
         type:
           type: string
           enum: ["analytic"]
+          example: "analytic"
       required:
         - project
         - timespan
@@ -948,7 +953,8 @@ components:
           example: "messageId"
         aggregation:
           type: string
-          enum: ["avg", "min", "max", "sum", "stats", "extended_stats", "value_count", "cardinality", "percentiles", "percentile_ranks"]
+          enum: ["avg", "min", "max", "sum", "stats", "extended_stats", "value_count", "cardinality", "percentiles"]
+          example: "min"
         filters:
           type: array
           items:
@@ -987,6 +993,7 @@ components:
         metric:
           type: string
           enum: ["u:total", "u:active", "u:engaged", "u:new"]
+          example: "u:active"
       required:
         - dimension
         - metric
@@ -999,7 +1006,8 @@ components:
           example: "message"
         metric:
           type: string
-          enum: ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:notification_engagement"]
+          enum: ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled"]
+          example: "m:from_user"
       required:
         - dimension
         - metric
@@ -1013,6 +1021,7 @@ components:
         metric:
           type: string
           enum: ["c:total", "c:new", "c:length", "c:path"]
+          example: "c:new"
       required:
         - dimension
         - metric
@@ -1026,6 +1035,7 @@ components:
         metric:
           type: string
           enum: ["d:fallback", "d:intents", "d:domains"]
+          example: "d:domains"
       required:
         - dimension
         - metric
@@ -1039,6 +1049,7 @@ components:
         metric:
           type: string
           enum: ["b:response"]
+          example: "b:response"
       required:
         - dimension
         - metric
@@ -1123,11 +1134,36 @@ components:
               type: string
               example: "messageId"
         status:
+          enum: [ 'ok' ]
+          example: 'ok'
+        code:
+          enum: [ '200' ]
+          example: 200
+        static_id:
           type: string
-          example: '200'
-        id:
+          example: "wAu4EW4BFurD9NUGZY3z"
+
+    HTTP_200_AGGREGATION:
+      type: object
+      properties:
+        query:
+          oneOf:
+            - $ref: '#/components/schemas/Aggregation'
+        result:
+          type: object
+          properties:
+            metric:
+              type: string
+              example: "answer"
+        status:
+          enum: [ 'ok' ]
+          example: 'ok'
+        code:
+          enum: [ '200' ]
+          example: 200
+        static_id:
           type: string
-          example: 'wAu4EW4BFurD9NUGZY3z'
+          example: "wAu4EW4BFurD9NUGZY3z"
 
     HTTP_500_ANALYTIC:
       type: object
@@ -1167,7 +1203,8 @@ components:
       type: object
       properties:
         type:
-          enum: ['click_per_event']
+          enum: ["click_per_event"]
+          example: "click_per_event"
         event:
           type: string
           example: "EV321423"
@@ -1175,14 +1212,17 @@ components:
           type: object
         status:
           enum: ['ok']
+          example: 'ok'
         cose:
           enum: [ '200' ]
+          example: '200'
 
     200_user_count:
       type: object
       properties:
         type:
-          enum: ['click_per_user']
+          enum: ["click_per_user"]
+          example: "click_per_user"
         user:
           type: string
           example: "USR30942"
@@ -1190,8 +1230,10 @@ components:
           type: object
         status:
           enum: ['ok']
+          example: 'ok'
         cose:
           enum: [ '200' ]
+          example: '200'
 
     HTTP_400:
       type: object

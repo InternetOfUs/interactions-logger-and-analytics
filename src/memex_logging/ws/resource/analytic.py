@@ -30,9 +30,9 @@ class AnalyticsResourceBuilder(object):
     @staticmethod
     def routes(es: Elasticsearch):
         return [
-            (AnalyticsPerformer, '/analytics', (es,)),
-            (GetNoClickPerUser, '/analytics/usercount', (es,)),
-            (GetNoClickPerEvent, '/analytics/eventcount', (es,))
+            (AnalyticsPerformer, '/analytic', (es,)),
+            (GetNoClickPerUser, '/analytic/usercount', (es,)),
+            (GetNoClickPerEvent, '/analytic/eventcount', (es,))
         ]
 
 
@@ -82,7 +82,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "userId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                 elif metric == "u:active":
@@ -94,7 +95,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "userId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                 elif metric == "u:engaged":
@@ -106,7 +108,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "userId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                 elif metric == "u:new":
@@ -118,10 +121,10 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "userId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-
                 elif metric == "m:from_user":
                     answer = ac.compute_m_from_user(analytic, self._es, analytic['project'])
                     json_response = {
@@ -131,7 +134,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "userId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                     print(answer[0])
@@ -145,7 +149,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "conversationId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                 elif metric == "m:from_bot":
@@ -157,7 +162,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "messageId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                     print(answer[0])
@@ -171,7 +177,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "messageId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                 elif metric == "m:notifications":
@@ -183,7 +190,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "messageId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                 elif metric == "m:unhandled":
@@ -195,21 +203,10 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "messageId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                # elif metric == "m:notification_engagement":
-                #     answer = ac.compute_m_notification_engagement(analytic, self._es, analytic['project'])  # does not exists
-                #     json_response = {
-                #         "query": analytic,
-                #         "result": {
-                #             "count": answer[0],
-                #             "items": answer[1],
-                #             "type": "messageId"
-                #         },
-                #         "status": 200,
-                #         "static_id": static_id
-                #     }
                 elif metric == "c:total":
                     answer = ac.compute_c_total(analytic, self._es, analytic['project'])
                     json_response = {
@@ -219,7 +216,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "conversationId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                 elif metric == "c:new":
@@ -231,7 +229,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "conversationId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                 elif metric == "c:length":
@@ -243,7 +242,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "object"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                 elif metric == "c:path":
@@ -255,7 +255,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "conversationId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                 elif metric == "d:fallback":
@@ -267,21 +268,10 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "conversationId"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                # elif metric == "d:interrupted":
-                #     answer = ac.compute_d_interrupted(analytic, self._es, analytic['project'])  # does not exists
-                #     json_response = {
-                #         "query": analytic,
-                #         "result": {
-                #             "count": answer[0],
-                #             "items": answer[1],
-                #             "type": "conversationId"
-                #         },
-                #         "status": 200,
-                #         "static_id": static_id
-                #     }
                 elif metric == "d:intents":
                     answer = ac.compute_d_intents(analytic, self._es, analytic['project'])
                     json_response = {
@@ -291,7 +281,8 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "intent"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
                 elif metric == "d:domains":
@@ -303,21 +294,10 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "domain"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                # elif metric == "b:retention":
-                #     answer = ac.compute_b_retention(analytic, self._es, analytic['project'])  # does not exists
-                #     json_response = {
-                #         "query": analytic,
-                #         "result": {
-                #             "count": answer[0],
-                #             "items": answer[1],
-                #             "type": "score"
-                #         },
-                #         "status": 200,
-                #         "static_id": static_id
-                #     }
                 elif metric == "b:response":
                     answer = ac.compute_b_response(analytic, self._es, analytic['project'])
                     json_response = {
@@ -327,125 +307,131 @@ class AnalyticsPerformer(Resource):
                             "items": answer[1],
                             "type": "score"
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
+                # else:
+                #     raise ValueError("`metric` has not a valid value")
 
-            # save analytics and put the _id to retrieve it
+                # save analytics and put the _id to retrieve it
 
-            index_name = "analytic-" + analytic['project'] + "-" + analytic['dimension']
-            query = self._es.index(index=index_name, doc_type='_doc', body=json_response)
+                index_name = "analytic-" + analytic['project'] + "-" + analytic['dimension']
+                query = self._es.index(index=index_name, doc_type='_doc', body=json_response)
 
-            json_response['id'] = query['_id']
-            resp = Response(json.dumps(json_response), mimetype='application/json')
-            resp.status_code = 200
+                json_response['id'] = query['_id']
+                resp = Response(json.dumps(json_response), mimetype='application/json')
+                resp.status_code = 200
 
-            return resp
+                return resp
         elif str(analytic['type']).lower() == "aggregation":
             if AggregationComputation.aggregation_validity_check(analytic):
-                metric = str(analytic['aggregation']).lower()
+                aggregation = str(analytic['aggregation']).lower()
                 json_response = {}
                 ac = AggregationComputation()
-                if metric == "max":
+                if aggregation == "max":
                     answer = ac.max_aggr(analytic, self._es, analytic['project'])
                     json_response = {
                         "query": analytic,
                         "result": {
                             "max": answer
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                elif metric == "min":
+                elif aggregation == "min":
                     answer = ac.min_aggr(analytic, self._es, analytic['project'])
                     json_response = {
                         "query": analytic,
                         "result": {
                             "min": answer
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                elif metric == "avg":
+                elif aggregation == "avg":
                     answer = ac.avg_aggr(analytic, self._es, analytic['project'])
                     json_response = {
                         "query": analytic,
                         "result": {
                             "avg": answer
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                elif metric == "stats":
+                elif aggregation == "stats":
                     answer = ac.stats_aggr(analytic, self._es, analytic['project'])
                     json_response = {
                         "query": analytic,
                         "result": {
                             "stats": answer
                         },
-                        "stats": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                elif metric == "sum":
+                elif aggregation == "sum":
                     answer = ac.sum_aggr(analytic, self._es, analytic['project'])
                     json_response = {
                         "query": analytic,
                         "result": {
                             "sum": answer
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                elif metric == "value_count":
+                elif aggregation == "value_count":
                     answer = ac.value_count_aggr(analytic, self._es, analytic['project'])
                     json_response = {
                         "query": analytic,
                         "result": {
                             "value_count": answer
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                elif metric == "cardinality":
+                elif aggregation == "cardinality":
                     answer = ac.cardinality_aggr(analytic, self._es, analytic['project'])
                     json_response = {
                         "query": analytic,
                         "result": {
                             "cardinality": answer
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                elif metric == "extended_stats":
+                elif aggregation == "extended_stats":
                     answer = ac.extended_stats_aggr(analytic, self._es, analytic['project'])
                     json_response = {
                         "query": analytic,
                         "result": {
                             "extended_stats": answer
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                elif metric == "percentiles":
+                elif aggregation == "percentiles":
                     answer = ac.percentiles_aggr(analytic, self._es, analytic['project'])
                     json_response = {
                         "query": analytic,
                         "result": {
                             "percentiles": answer
                         },
-                        "status": 200,
+                        "status": "ok",
+                        "code": 200,
                         "static_id": static_id
                     }
-                # elif metric == "percentile_ranks":
-                #     answer = ac.percentile_ranks_aggr(analytic, self._es, analytic['project'])  # does not exists
-                #     json_response = {
-                #         "query": analytic,
-                #         "result": {
-                #             "percentile_ranks": answer
-                #         },
-                #         "status": 200,
-                #         "static_id": static_id
-                #     }
+                # else:
+                #     raise ValueError("`aggregation` has not a valid value")
+
+                # save analytics and put the _id to retrieve it
 
                 index_name = "analytic-" + analytic['project'] + "-" + analytic['aggregation']
                 query = self._es.index(index=index_name, doc_type='_doc', body=json_response)
@@ -468,23 +454,20 @@ class GetNoClickPerUser(Resource):
         if 'userId' in request.args:
             response = self._es.search(index="logging-memex*", body={"query": {"match": {"metadata.userId": request.args['userId']}}})
             if response['hits']['total']['value'] != 0:
-                click_collection = {}
+                event_collection = {}
                 # TODO check da qualche parte su namespace per capire se sto contando un evento
                 for item in response['hits']['hits']:
                     if 'metadata' in item['_source']:
                         if 'eventId' in item['_source']['metadata']:
-                            if item['_source']['metadata']['eventId'] in click_collection:
-                                click_collection[item['_source']['metadata']['eventId']] = click_collection[
-                                                                                             item['_source'][
-                                                                                                 'metadata'][
-                                                                                                 'eventId']] + 1
+                            if item['_source']['metadata']['eventId'] in event_collection:
+                                event_collection[item['_source']['metadata']['eventId']] = event_collection[item['_source']['metadata']['eventId']] + 1
                             else:
-                                click_collection[item['_source']['metadata']['eventId']] = 1
+                                event_collection[item['_source']['metadata']['eventId']] = 1
 
                 json_response = {
                     "type": "click_per_user",
                     "user": request.args['userId'],
-                    "click": click_collection,
+                    "click": event_collection,
                     "status": "ok",
                     "code": 200
                 }
@@ -496,12 +479,13 @@ class GetNoClickPerUser(Resource):
                     "status": "ok",
                     "code": 200
                 }
-        else:
-            abort(500, message="a parameter userId is needed")
-        resp = Response(json.dumps(json_response), mimetype='application/json')
-        resp.status_code = 200
 
-        return resp
+            resp = Response(json.dumps(json_response), mimetype='application/json')
+            resp.status_code = 200
+
+            return resp
+        else:
+            abort(500, message="Parameter `userId` is needed")
 
 
 class GetNoClickPerEvent(Resource):
@@ -537,20 +521,10 @@ class GetNoClickPerEvent(Resource):
                     "status": "ok",
                     "code": 200
                 }
+
+            resp = Response(json.dumps(json_response), mimetype='application/json')
+            resp.status_code = 200
+
+            return resp
         else:
-            abort(500, message="a parameter userId is needed")
-
-        resp = Response(json.dumps(json_response), mimetype='application/json')
-        resp.status_code = 200
-
-        return resp
-
-
-class GetUsers(Resource):
-
-    def __init__(self, es: Elasticsearch):
-        self._es = es
-
-    def get(self):
-        response = self._es.search(index="memex-log*", body={"query": {"match": {}}})
-        print(response)
+            abort(500, message="Parameter `eventId` is needed")

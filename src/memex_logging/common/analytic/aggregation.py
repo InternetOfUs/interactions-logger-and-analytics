@@ -20,9 +20,10 @@ import datetime
 from elasticsearch import Elasticsearch
 from flask_restful import abort
 
+from memex_logging.utils.utils import Utils
+
 
 class AggregationComputation:
-    g_index = "message-memex*"
 
     @staticmethod
     def aggregation_validity_check(analytic: dict):
@@ -38,12 +39,12 @@ class AggregationComputation:
             abort(500, message="AGGREGATION.MODEL.CHECK: project failed")
             return False
 
-        # check if dimension is in the dict
+        # check if aggregation is in the dict
         if 'aggregation' not in analytic:
             abort(500, message="AGGREGATION.MODEL.CHECK: dimension failed")
             return False
 
-        # check if metric is in the dict
+        # check if field is in the dict
         if 'field' not in analytic:
             abort(500, message="AGGREGATION.MODEL.CHECK: metric failed")
             return False
@@ -119,7 +120,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def min_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -156,7 +158,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def avg_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -193,7 +196,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def cardinality_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -230,7 +234,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def extended_stats_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -267,7 +272,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def percentiles_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -304,7 +310,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def stats_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -341,7 +348,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def sum_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -378,7 +386,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def value_count_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -415,7 +424,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     @staticmethod

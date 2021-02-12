@@ -23,7 +23,7 @@ from flask import Flask
 from flask_restful import Api
 
 from memex_logging.common.dao.collector import DaoCollector
-from memex_logging.ws.resource.analytics import AnalyticsResourceBuilder
+from memex_logging.ws.resource.analytic import AnalyticsResourceBuilder
 from memex_logging.ws.resource.documentation import DocumentationResourceBuilder
 from memex_logging.ws.resource.logging import LoggingResourceBuilder
 from memex_logging.ws.resource.message import MessageResourceBuilder
