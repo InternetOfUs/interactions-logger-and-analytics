@@ -1215,47 +1215,29 @@ class AnalyticComputation:
                     now = datetime.datetime.now()
                     delta = datetime.timedelta(days=30)
                     temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
+                    return temp_old.isoformat(), now.isoformat()
                 elif str(time_object['value']).upper() == "10D":
                     now = datetime.datetime.now()
                     delta = datetime.timedelta(days=10)
                     temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
+                    return temp_old.isoformat(), now.isoformat()
                 elif str(time_object['value']).upper() == "7D":
                     now = datetime.datetime.now()
                     delta = datetime.timedelta(days=7)
                     temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
+                    return temp_old.isoformat(), now.isoformat()
                 elif str(time_object['value']).upper() == "1D":
                     now = datetime.datetime.now()
                     delta = datetime.timedelta(days=1)
                     temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
+                    return temp_old.isoformat(), now.isoformat()
                 elif str(time_object['value']).upper() == "TODAY":
                     now = datetime.datetime.now()
-                    min_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
+                    temp_old = datetime.datetime(now.year, now.month, now.day)
+                    return temp_old.isoformat(), now.isoformat()
             except:
                 abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot generate a valid date")
         else:
-            start = None
-            end = None
-            try:
-                print(time_object['start'])
-                start = datetime.datetime.strptime(time_object['start'], '%Y-%m-%d')  # %H:%M:%S.%f
-            except:
-                abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot parse starting date. User a YYYY-MM-DD format")
-            try:
-                end = datetime.datetime.strptime(time_object['end'], '%Y-%m-%d')
-            except:
-                abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot parse ending date. User a YYYY-MM-DD format")
+            start = time_object['start']
+            end = time_object['end']
             return start, end

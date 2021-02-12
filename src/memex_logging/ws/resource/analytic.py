@@ -24,6 +24,7 @@ from flask_restful import Resource, abort
 
 from memex_logging.common.analytic.aggregation import AggregationComputation
 from memex_logging.common.analytic.analytic import AnalyticComputation
+from memex_logging.utils.utils import Utils
 
 
 class AnalyticsResourceBuilder(object):
@@ -42,12 +43,13 @@ class AnalyticsPerformer(Resource):
         self._es = es
 
     def get(self):
-        args = request.args
-        id = args['id']
-        if id == "" or id is None:
-            abort(500, message="ANALYTIC.GET: invalid identifier")
+        static_id = request.args.get('staticId')
+        project = request.args.get('project')
+        if static_id == "" or static_id is None:
+            abort(400, message="invalid `staticId`")
 
-        response = self._es.search(index="analytic*", body={"query": {"match": {"static_id.keyword": id}}})
+        index_name = Utils.generate_index("analytic", project=project)
+        response = self._es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
 
         if response['hits']['total'] == 0:
             abort(404, message="resource not found")
@@ -55,394 +57,393 @@ class AnalyticsPerformer(Resource):
             return response['hits']['hits'][0]['_source'], 200
 
     def post(self):
-        static_id = uuid.uuid4()
+        static_id = str(uuid.uuid4())
         analytic = request.json
-        self._compute(analytic, static_id)
-        return static_id, 200
+        compute(es=self._es, analytic=analytic, static_id=static_id)
+        return {"staticId": static_id}, 200
 
-    @celery.task()
-    def _compute(self, analytic, static_id):
-        if 'type' not in analytic:
-            abort(500, message="Type must be specified")
-        elif str(analytic['type']).lower() == "analytic":
 
-            # Data model check on the fly. Call the function and decide whether it is valid or not.
+@celery.task()
+def compute(es: Elasticsearch, analytic: dict, static_id: str):
+    if 'type' not in analytic:
+        abort(400, message="`type` must be specified")
+    elif str(analytic['type']).lower() == "analytic":
 
-            # Object to be stored: query + results inside of `query` and `result`
-            if AnalyticComputation.analytic_validity_check(analytic):
-                metric = str(analytic['metric']).lower()
-                json_response = {}
-                ac = AnalyticComputation()
-                if metric == "u:total":
-                    answer = ac.compute_u_total(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "userId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "u:active":
-                    answer = ac.compute_u_active(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "userId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "u:engaged":
-                    answer = ac.compute_u_engaged(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "userId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "u:new":
-                    answer = ac.compute_u_new(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "userId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "m:from_user":
-                    answer = ac.compute_m_from_user(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "userId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                    print(answer[0])
-                    print(answer[1])
-                elif metric == "m:conversation":
-                    answer = ac.compute_m_conversation(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "conversationId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "m:from_bot":
-                    answer = ac.compute_m_from_bot(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "messageId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                    print(answer[0])
-                    print(answer[1])
-                elif metric == "m:responses":
-                    answer = ac.compute_m_responses(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "messageId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "m:notifications":
-                    answer = ac.compute_m_notifications(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "messageId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "m:unhandled":
-                    answer = ac.compute_m_unhandled(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "messageId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "c:total":
-                    answer = ac.compute_c_total(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "conversationId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "c:new":
-                    answer = ac.compute_c_new(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "conversationId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "c:length":
-                    answer = ac.compute_c_length(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "conversations": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "object"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "c:path":
-                    answer = ac.compute_c_path(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "conversationId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "d:fallback":
-                    answer = ac.compute_d_fallback(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "conversationId"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "d:intents":
-                    answer = ac.compute_d_intents(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "intent"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "d:domains":
-                    answer = ac.compute_d_domains(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "domain"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif metric == "b:response":
-                    answer = ac.compute_b_response(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "count": answer[0],
-                            "items": answer[1],
-                            "type": "score"
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                # else:
-                #     raise ValueError("`metric` has not a valid value")
+        # Data model check on the fly. Call the function and decide whether it is valid or not.
 
-                # save analytics and put the _id to retrieve it
+        # Object to be stored: query + results inside of `query` and `result`
+        if AnalyticComputation.analytic_validity_check(analytic):
+            metric = str(analytic['metric']).lower()
+            json_response = {}
+            ac = AnalyticComputation()
+            if metric == "u:total":
+                answer = ac.compute_u_total(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "userId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "u:active":
+                answer = ac.compute_u_active(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "userId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "u:engaged":
+                answer = ac.compute_u_engaged(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "userId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "u:new":
+                answer = ac.compute_u_new(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "userId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "m:from_user":
+                answer = ac.compute_m_from_user(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "userId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "m:conversation":
+                answer = ac.compute_m_conversation(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "conversationId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "m:from_bot":
+                answer = ac.compute_m_from_bot(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "messageId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "m:responses":
+                answer = ac.compute_m_responses(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "messageId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "m:notifications":
+                answer = ac.compute_m_notifications(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "messageId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "m:unhandled":
+                answer = ac.compute_m_unhandled(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "messageId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "c:total":
+                answer = ac.compute_c_total(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "conversationId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "c:new":
+                answer = ac.compute_c_new(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "conversationId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "c:length":
+                answer = ac.compute_c_length(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "conversations": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "object"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "c:path":
+                answer = ac.compute_c_path(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "conversationId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "d:fallback":
+                answer = ac.compute_d_fallback(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "conversationId"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "d:intents":
+                answer = ac.compute_d_intents(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "intent"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "d:domains":
+                answer = ac.compute_d_domains(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "domain"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif metric == "b:response":
+                answer = ac.compute_b_response(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "score"
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            # else:
+            #     raise ValueError("`metric` has not a valid value")
 
-                index_name = "analytic-" + analytic['project'] + "-" + analytic['dimension']
-                query = self._es.index(index=index_name, doc_type='_doc', body=json_response)
+            # save analytics and put the _id to retrieve it
 
-                json_response['id'] = query['_id']
-                resp = Response(json.dumps(json_response), mimetype='application/json')
-                resp.status_code = 200
+            project = analytic['project']
+            index_name = "analytic-" + project.lower() + "-" + analytic['dimension']
+            query = es.index(index=index_name, doc_type='_doc', body=json_response)
 
-                return resp
-        elif str(analytic['type']).lower() == "aggregation":
-            if AggregationComputation.aggregation_validity_check(analytic):
-                aggregation = str(analytic['aggregation']).lower()
-                json_response = {}
-                ac = AggregationComputation()
-                if aggregation == "max":
-                    answer = ac.max_aggr(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "max": answer
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif aggregation == "min":
-                    answer = ac.min_aggr(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "min": answer
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif aggregation == "avg":
-                    answer = ac.avg_aggr(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "avg": answer
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif aggregation == "stats":
-                    answer = ac.stats_aggr(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "stats": answer
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif aggregation == "sum":
-                    answer = ac.sum_aggr(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "sum": answer
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif aggregation == "value_count":
-                    answer = ac.value_count_aggr(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "value_count": answer
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif aggregation == "cardinality":
-                    answer = ac.cardinality_aggr(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "cardinality": answer
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif aggregation == "extended_stats":
-                    answer = ac.extended_stats_aggr(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "extended_stats": answer
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                elif aggregation == "percentiles":
-                    answer = ac.percentiles_aggr(analytic, self._es, analytic['project'])
-                    json_response = {
-                        "query": analytic,
-                        "result": {
-                            "percentiles": answer
-                        },
-                        "status": "ok",
-                        "code": 200,
-                        "static_id": static_id
-                    }
-                # else:
-                #     raise ValueError("`aggregation` has not a valid value")
+            json_response['id'] = query['_id']
+            resp = Response(json.dumps(json_response), mimetype='application/json')
+            resp.status_code = 200
 
-                # save analytics and put the _id to retrieve it
+            return resp
+    elif str(analytic['type']).lower() == "aggregation":
+        if AggregationComputation.aggregation_validity_check(analytic):
+            aggregation = str(analytic['aggregation']).lower()
+            json_response = {}
+            ac = AggregationComputation()
+            if aggregation == "max":
+                answer = ac.max_aggr(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "max": answer
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif aggregation == "min":
+                answer = ac.min_aggr(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "min": answer
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif aggregation == "avg":
+                answer = ac.avg_aggr(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "avg": answer
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif aggregation == "stats":
+                answer = ac.stats_aggr(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "stats": answer
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif aggregation == "sum":
+                answer = ac.sum_aggr(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "sum": answer
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif aggregation == "value_count":
+                answer = ac.value_count_aggr(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "value_count": answer
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif aggregation == "cardinality":
+                answer = ac.cardinality_aggr(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "cardinality": answer
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif aggregation == "extended_stats":
+                answer = ac.extended_stats_aggr(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "extended_stats": answer
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            elif aggregation == "percentiles":
+                answer = ac.percentiles_aggr(analytic, es, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "percentiles": answer
+                    },
+                    "status": "ok",
+                    "code": 200,
+                    "staticId": static_id
+                }
+            # else:
+            #     raise ValueError("`aggregation` has not a valid value")
 
-                index_name = "analytic-" + analytic['project'] + "-" + analytic['aggregation']
-                query = self._es.index(index=index_name, doc_type='_doc', body=json_response)
+            # save analytics and put the _id to retrieve it
 
-                json_response['id'] = query['_id']
-                resp = Response(json.dumps(json_response), mimetype='application/json')
-                resp.status_code = 200
+            project = analytic['project']
+            index_name = "analytic-" + project.lower() + "-" + analytic['aggregation']
+            query = es.index(index=index_name, doc_type='_doc', body=json_response)
 
-                return resp
-        else:
-            abort(500, message="Invalid value for field type")
+            json_response['id'] = query['_id']
+            resp = Response(json.dumps(json_response), mimetype='application/json')
+            resp.status_code = 200
+
+            return resp
+    else:
+        abort(400, message="Invalid value for `type`")
 
 
 class GetNoClickPerUser(Resource):
@@ -485,7 +486,7 @@ class GetNoClickPerUser(Resource):
 
             return resp
         else:
-            abort(500, message="Parameter `userId` is needed")
+            abort(400, message="Parameter `userId` is needed")
 
 
 class GetNoClickPerEvent(Resource):
@@ -527,4 +528,4 @@ class GetNoClickPerEvent(Resource):
 
             return resp
         else:
-            abort(500, message="Parameter `eventId` is needed")
+            abort(400, message="Parameter `eventId` is needed")

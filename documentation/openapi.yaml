@@ -43,7 +43,7 @@ tags:
     description: APIs to log the conversation into the database
   - name: logging
     description: APIs to log additional information of the modules
-  - name: analytics
+  - name: analytic
     description: APIs to retrieve useful information from the database. What follows can be used to analyze the performances of the bot
 
 paths:
@@ -97,6 +97,7 @@ paths:
           name: fromTime
           schema:
             type: string
+            format: date-time
           example: "2021-01-25T14:18:36.141378"
           description: the timestamp expressed in ISO format from which you want to retrieve the messages
           required: true
@@ -104,6 +105,7 @@ paths:
           name: toTime
           schema:
             type: string
+            format: date-time
           example: "2021-01-25T14:28:36.141378"
           description: the timestamp expressed in ISO format up to which you want to retrieve the messages
           required: true
@@ -370,8 +372,8 @@ paths:
     post:
       tags:
         - analytic
-      summary: Require an analytic
-      description: This end-point allows to retrieve an analytic from the database
+      summary: Post an analytic
+      description: This end-point allows to post an analytic based on the messages in the database
       requestBody:
         content:
           application/json:
@@ -385,15 +387,57 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC'
-                  - $ref: '#/components/schemas/HTTP_200_AGGREGATION'
-        '500':
-          description: malformed log
+                properties:
+                  staticId:
+                    type: string
+                    example: "bcpg8XYBHD_pmQ1jA7b8"
+        '400':
+          description: malformed analytic
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTP_500_ANALYTIC'
+                $ref: '#/components/schemas/HTTP_400_ANALYTIC'
+
+    get:
+      tags:
+        - analytic
+      summary: Retrieve an analytic
+      description: Retrieve the number click based on a user identifier
+      parameters:
+        - in: query
+          name: staticId
+          schema:
+            type: string
+          required: true
+          description: the identifier of the analytic
+        - in: query
+          name: project
+          schema:
+            type: string
+          example: "MeMex"
+          description: the name of the project related to the messages you want to retrieve
+          required: true
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC'
+                  - $ref: '#/components/schemas/HTTP_200_AGGREGATION'
+        '400':
+          description: malformed analytic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_400_ANALYTIC'
+        '404':
+          description: analytic not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_404_ANALYTIC'
 
   /analytic/usercount:
     get:
@@ -493,6 +537,7 @@ components:
           example: "USR-JDKHEIU2-31NJDTE94"
         timestamp:
           type: string
+          format: date-time
           description: Timestamp expressed in ISO format
           example: "2021-01-25T14:18:36.141378"
         content:
@@ -569,6 +614,7 @@ components:
           example: "1FKNSM-GEKRO2-DANK2-FJ33-DASDJOW"
         timestamp:
           type: string
+          format: date-time
           description: Timestamp expressed in ISO format
           example: "2021-01-25T14:18:36.141378"
         content:
@@ -618,6 +664,7 @@ components:
           example: "USR-JDKHEIU2-31NJDTE94"
         timestamp:
           type: string
+          format: date-time
           description: Timestamp expressed in ISO format
           example: "2021-01-25T14:18:36.141378"
         content:
@@ -894,6 +941,7 @@ components:
           example: "bot stopped"
         timestamp:
           type: string
+          format: date-time
           description: Timestamp expressed in ISO format
           example: "2021-01-25T14:18:36.141378"
         botVersion:
@@ -1079,11 +1127,11 @@ components:
         start:
           type: string
           format: date-time
-          example: "2019-07-23T16:31:24.432000"
+          example: "2021-01-25T14:18:36.141378"
         end:
           type: string
           format: date-time
-          example: "2019-07-23T16:35:50.00"
+          example: "2021-01-25T14:28:36.141378"
       required:
         - type
         - start
@@ -1165,11 +1213,19 @@ components:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"
 
-    HTTP_500_ANALYTIC:
+    HTTP_400_ANALYTIC:
       type: object
       properties:
         message:
           type: string
+          example: "malformed request"
+
+    HTTP_404_ANALYTIC:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "resource not found"
 
     HTTP_201:
       type: object
