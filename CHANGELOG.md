@@ -2,6 +2,10 @@
 
 ## Version 1.*
 
+### 1.1.0
+
+* Enabled Gunicorn for docker deployment
+
 ### 1.0.0
 
 * Re-organised code for message management
