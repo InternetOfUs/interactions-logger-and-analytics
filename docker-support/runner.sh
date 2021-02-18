@@ -70,8 +70,8 @@ else
 fi
 
 # Exporting image name for the build and test scripts
-REGISTRY=public.registry.u-hopper.com
-export IMAGE_NAME=wenet/logging:${VERSION}
+REGISTRY=docker.io
+export IMAGE_NAME=internetofus/logger:${VERSION}
 export REGISTRY=${REGISTRY}
 
 # Build step

@@ -12,7 +12,7 @@
       - ci_cd
     project_python_submodules: []
 
-    docker_image_name: wenet/logging
+    docker_image_name: internetofus/logger
     docker_python_services:
       - name: logger
         main_module: memex_logging.ws.main
@@ -20,7 +20,7 @@
           - ${EL_HOST}
           - ${EL_PORT}
         gunicorn_app: build_production_app()
-    docker_registry: public.registry.u-hopper.com
+    docker_registry: docker.io
 
     ci_stages:
       - build

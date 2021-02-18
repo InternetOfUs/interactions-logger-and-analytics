@@ -60,7 +60,7 @@ before_script:
 
 # Script for docker based stages.
 .docker-script: &docker-script
-  - docker login public.registry.u-hopper.com -u $REGISTRY_USERNAME -p $REGISTRY_PASSWORD
+  - docker login docker.io -u $REGISTRY_USERNAME -p $REGISTRY_PASSWORD
 
 # Scripts for installing Ansible and the associated roles directly from the Lab.
 .ansible-script: &ansible-script
