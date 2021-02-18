@@ -17,6 +17,7 @@ from __future__ import absolute_import, annotations
 import argparse
 import logging.config
 import os
+from typing import Optional
 
 from elasticsearch import Elasticsearch
 
@@ -27,6 +28,33 @@ from memex_logging.ws.ws import WsInterface
 
 logging.config.dictConfig(get_logging_configuration("logger"))
 logger = logging.getLogger("logger.ws.main")
+
+
+def init_ws(
+        elasticsearch_host: str,
+        elasticsearch_port: int,
+        elasticsearch_user: Optional[str],
+        elasticsearch_password: Optional[str]
+        ) -> WsInterface:
+
+    es = Elasticsearch([{'host': elasticsearch_host, 'port': elasticsearch_port}], http_auth=(elasticsearch_user, elasticsearch_password))
+    dao_collector = DaoCollector.build_dao_collector(es)
+    ws = WsInterface(dao_collector, es)
+    return ws
+
+
+def build_production_app():
+    ws_interface = init_ws(
+        elasticsearch_host=os.getenv("EL_HOST", "localhost"),
+        elasticsearch_port=int(os.getenv("EL_PORT", 9200)),
+        elasticsearch_user=os.getenv("EL_USERNAME", None),
+        elasticsearch_password=os.getenv("EL_PASSWORD", None),
+    )
+
+    print("HERE")
+
+    return ws_interface.get_application()
+
 
 if __name__ == '__main__':
 
@@ -39,9 +67,7 @@ if __name__ == '__main__':
     arg_parser.add_argument("-wp", "--wport", type=int, dest="wport", default=int(os.getenv("WS_PORT", 80)), help="The web service port")
     args = arg_parser.parse_args()
 
-    es = Elasticsearch([{'host': args.ehost, 'port': args.eport}], http_auth=(args.euser, args.epw))
-    dao_collector = DaoCollector.build_dao_collector(es)
-    ws = WsInterface(dao_collector, es)
+    ws = init_ws(args.ehost, args.eport, args.euser, args.epw)
 
     try:
         ws.run_server(args.whost, args.wport)

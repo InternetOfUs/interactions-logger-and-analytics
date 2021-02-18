@@ -13,6 +13,7 @@ class TestMessageDao(TestCase):
 
         query = message_dao._build_query_based_on_parameters(trace_id="trace_id",  message_id=None, user_id=None)
         self.assertEqual({
+            "size": 1,
             "query": {
                 "bool": {
                     "must": [
@@ -28,6 +29,7 @@ class TestMessageDao(TestCase):
 
         query = message_dao._build_query_based_on_parameters(trace_id=None,  message_id="message_id", user_id="user_id")
         self.assertEqual({
+            "size": 1,
             "query": {
                 "bool": {
                     "must": [

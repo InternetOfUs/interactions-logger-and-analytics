@@ -51,6 +51,7 @@ class CommonDao:
     @staticmethod
     def _build_query_by_id(trace_id: str) -> dict:
         return {
+            "size": 1,
             "query": {
                 "bool": {
                     "must": [
@@ -65,8 +66,9 @@ class CommonDao:
         }
 
     @staticmethod
-    def _build_time_range_query(from_time: datetime, to_time: datetime) -> dict:
+    def _build_time_range_query(from_time: datetime, to_time: datetime, max_size: int) -> dict:
         return {
+            "size": max_size,
             "query": {
                 "bool": {
                     "must": [
