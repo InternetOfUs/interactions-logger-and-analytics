@@ -12,14 +12,14 @@
       - ci_cd
     project_python_submodules: []
 
-    docker_image_name: wenet/logging
+    docker_image_name: uhopper/logger
     docker_python_services:
       - name: logger
         main_module: memex_logging.ws.main
         required_env_variables:
           - ${EL_HOST}
           - ${EL_PORT}
-    docker_registry: public.registry.u-hopper.com
+    docker_registry: registry.u-hopper.com
 
     ci_stages:
       - build
