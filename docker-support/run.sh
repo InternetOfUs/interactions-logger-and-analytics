@@ -23,4 +23,9 @@ echo "Running service..."
 #
 
 
-python -m memex_logging.ws.main
+DEFAULT_WORKERS=4
+if [[ -z "${GUNICORN_WORKERS}" ]]; then
+    GUNICORN_WORKERS=${DEFAULT_WORKERS}
+fi
+
+exec gunicorn -w "${GUNICORN_WORKERS}" -b 0.0.0.0:80 "memex_logging.ws.main:build_production_app()"

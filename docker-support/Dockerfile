@@ -21,6 +21,7 @@ COPY run_tests.sh .
 COPY test.sh .
 
 
+
 ENV PYTHONPATH /scripts
 
 ARG GIT_REF

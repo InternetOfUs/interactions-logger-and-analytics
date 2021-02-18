@@ -19,6 +19,7 @@
         required_env_variables:
           - ${EL_HOST}
           - ${EL_PORT}
+        gunicorn_app: build_production_app()
     docker_registry: public.registry.u-hopper.com
 
     ci_stages:
