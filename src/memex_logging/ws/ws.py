@@ -17,7 +17,7 @@ from __future__ import absolute_import, annotations
 import logging
 import os
 
-import celery
+from celery import Celery
 from elasticsearch import Elasticsearch
 from flask import Flask
 from flask_restful import Api
@@ -41,35 +41,35 @@ class WsInterface(object):
 
         self._app = Flask("logger-ws")
         self._app.config.update(
-            CELERY_BROKER=os.getenv("CELERY_BROKER", None),
-            CELERY_RESULT_BACKEND=os.getenv("CELERY_RESULT_BACKEND", None)
+            CELERY_RESULT_BACKEND=os.getenv("CELERY_RESULT_BACKEND", None),
+            CELERY_BROKER_URL=os.getenv("CELERY_BROKER_URL", None)
         )
         self._api = Api(app=self._app)
-        self._init_modules(self._dao_collector, self._es)
-        self.make_celery(self._app)
+        self._celery = self.make_celery(self._app)
+        self._init_modules(self._dao_collector, self._es, self._celery)
 
     def make_celery(self, app):
-        celery_instance = celery.Celery(
+        celery = Celery(
             app.import_name,
             backend=app.config['CELERY_RESULT_BACKEND'],
-            broker=app.config['CELERY_BROKER']
+            broker=app.config['CELERY_BROKER_URL']
         )
-        celery_instance.conf.update(app.config)
+        celery.conf.update(app.config)
 
-        class ContextTask(celery_instance.Task):
+        class ContextTask(celery.Task):
             def __call__(self, *args, **kwargs):
                 with app.app_context():
                     return self.run(*args, **kwargs)
 
         celery.Task = ContextTask
-        return celery_instance
+        return celery
 
-    def _init_modules(self, dao_collector: DaoCollector, es: Elasticsearch) -> None:
+    def _init_modules(self, dao_collector: DaoCollector, es: Elasticsearch, celery: Celery) -> None:
         active_routes = [
             (MessageResourceBuilder.routes(dao_collector), ""),
             (LoggingResourceBuilder.routes(es), ""),
             (PerformancesResourceBuilder.routes(es), "/performance"),
-            (AnalyticsResourceBuilder.routes(es), ""),
+            (AnalyticsResourceBuilder.routes(es, celery), ""),
             (DocumentationResourceBuilder.routes(), "")
         ]
 

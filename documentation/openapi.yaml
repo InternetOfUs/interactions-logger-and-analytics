@@ -396,7 +396,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTP_400_ANALYTIC'
+                $ref: '#/components/schemas/HTTP_400'
 
     get:
       tags:
@@ -431,13 +431,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTP_400_ANALYTIC'
+                $ref: '#/components/schemas/HTTP_400'
         '404':
           description: analytic not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTP_404_ANALYTIC'
+                $ref: '#/components/schemas/HTTP_404'
 
   /analytic/usercount:
     get:
@@ -1181,12 +1181,6 @@ components:
             type:
               type: string
               example: "messageId"
-        status:
-          enum: [ 'ok' ]
-          example: 'ok'
-        code:
-          enum: [ '200' ]
-          example: 200
         static_id:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"
@@ -1203,29 +1197,9 @@ components:
             metric:
               type: string
               example: "answer"
-        status:
-          enum: [ 'ok' ]
-          example: 'ok'
-        code:
-          enum: [ '200' ]
-          example: 200
         static_id:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"
-
-    HTTP_400_ANALYTIC:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "malformed request"
-
-    HTTP_404_ANALYTIC:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "resource not found"
 
     HTTP_201:
       type: object
