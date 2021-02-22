@@ -415,7 +415,7 @@ paths:
           schema:
             type: string
           example: "MeMex"
-          description: the name of the project related to the messages you want to retrieve
+          description: the name of the project related to the analytic you want to retrieve
           required: true
       responses:
         '200':

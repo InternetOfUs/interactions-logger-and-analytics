@@ -207,7 +207,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "type.keyword": "NOTIFICATION"
+                                "type.keyword": "notification"
                             }
                         }
                     ],
@@ -339,7 +339,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                    "type.keyword": "REQUEST"
+                                    "type.keyword": "request"
                             }
                         }
                     ],
@@ -434,7 +434,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "type.keyword": "RESPONSE"
+                                "type.keyword": "response"
                             }
                         }
                     ],
@@ -479,7 +479,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "type.keyword": "NOTIFICATION"
+                                "type.keyword": "notification"
                             }
                         }
                     ],
@@ -515,7 +515,6 @@ class AnalyticComputation:
         for item in response['aggregations']['terms_count']['buckets']:
             messages.append(item['key'])
             total_len = total_len + item['doc_count']
-        print(total_len, messages)
         return total_len, messages
 
     def compute_m_responses(self, analytic: dict, es: Elasticsearch, project: str):
@@ -528,7 +527,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "type.keyword": "RESPONSE"
+                                "type.keyword": "response"
                             }
                         }
                     ],
@@ -579,7 +578,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "type.keyword": "NOTIFICATION"
+                                "type.keyword": "notification"
                             }
                         }
                     ],
