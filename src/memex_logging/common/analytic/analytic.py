@@ -20,10 +20,10 @@ import datetime
 from elasticsearch import Elasticsearch
 from flask_restful import abort
 
+from memex_logging.utils.utils import Utils
+
 
 class AnalyticComputation:
-
-    g_index = "message-memex*"
 
     @staticmethod
     def analytic_validity_check(analytic: dict):
@@ -75,11 +75,10 @@ class AnalyticComputation:
             return False
 
         allowed_metrics_user = ["u:total", "u:active", "u:engaged", "u:new"]
-        allowed_metrics_message = ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications",
-                                   "m:unhandled", "m:notification_engagement"]
+        allowed_metrics_message = ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled"]
         allowed_metrics_conversation = ["c:total", "c:new", "c:length", "c:path"]
-        allowed_metrics_dialogue = ["d:fallback", "d:interrupted", "d:intents", "d:domains"]
-        allowed_metrics_bot = ["b:retention", "b:response"]
+        allowed_metrics_dialogue = ["d:fallback", "d:intents", "d:domains"]
+        allowed_metrics_bot = ["b:response"]
 
         if str(analytic['dimension']).lower() == "user":
             if str(analytic['metric']).lower() not in allowed_metrics_user:
@@ -142,8 +141,8 @@ class AnalyticComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
-        print(response)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         user_list = []
 
         for item in response['aggregations']['terms_count']['buckets']:
@@ -189,7 +188,8 @@ class AnalyticComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         user_list = []
 
         for item in response['aggregations']['terms_count']['buckets']:
@@ -207,7 +207,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "type.keyword": "NOTIFICATION"
+                                "type.keyword": "notification"
                             }
                         }
                     ],
@@ -243,7 +243,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         user_list = []
 
         for item in response['aggregations']['terms_count']['buckets']:
@@ -285,7 +286,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         users_in_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             users_in_period.append(item['key'])
@@ -315,7 +317,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         users_out_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             users_out_period.append(item['key'])
@@ -336,7 +339,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                    "type.keyword": "REQUEST"
+                                    "type.keyword": "request"
                             }
                         }
                     ],
@@ -367,7 +370,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         user_list = []
         total_counter = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -410,7 +414,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -429,7 +434,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "type.keyword": "RESPONSE"
+                                "type.keyword": "response"
                             }
                         }
                     ],
@@ -460,7 +465,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -473,7 +479,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "type.keyword": "NOTIFICATION"
+                                "type.keyword": "notification"
                             }
                         }
                     ],
@@ -504,11 +510,11 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         for item in response['aggregations']['terms_count']['buckets']:
             messages.append(item['key'])
             total_len = total_len + item['doc_count']
-        print(total_len, messages)
         return total_len, messages
 
     def compute_m_responses(self, analytic: dict, es: Elasticsearch, project: str):
@@ -521,7 +527,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "type.keyword": "RESPONSE"
+                                "type.keyword": "response"
                             }
                         }
                     ],
@@ -552,7 +558,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -571,7 +578,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "type.keyword": "NOTIFICATION"
+                                "type.keyword": "notification"
                             }
                         }
                     ],
@@ -602,7 +609,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -652,7 +660,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -696,7 +705,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -739,7 +749,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         conv_in_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             conv_in_period.append(item['key'])
@@ -769,7 +780,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         conv_out_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             conv_out_period.append(item['key'])
@@ -814,7 +826,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
         for item in response['aggregations']['terms_count']['buckets']:
@@ -857,7 +870,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         conversation_list = []
         for item in response['aggregations']['terms_count']['buckets']:
             conversation_list.append(item['key'])
@@ -905,7 +919,8 @@ class AnalyticComputation:
                 }
             }
 
-            response = es.search(index=self.g_index, body=body, size=0)
+            index = Utils.generate_index(data_type="message", project=project)
+            response = es.search(index=index, body=body, size=0)
             message_list = []
             for obj in response['aggregations']['terms_count']['buckets']:
                 message_list.append(obj['key'])
@@ -954,7 +969,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         total_missed = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_missed = response['aggregations']['type_count']['value']
@@ -991,7 +1007,8 @@ class AnalyticComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         total_messages = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_messages = response['aggregations']['type_count']['value']
@@ -1038,7 +1055,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         user_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
@@ -1089,7 +1107,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         user_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
                 response['aggregations']['terms_count']:
@@ -1137,7 +1156,8 @@ class AnalyticComputation:
             }
         }
 
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         total_messages = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in \
                 response['aggregations']['type_count']:
@@ -1175,7 +1195,8 @@ class AnalyticComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         total_not_working = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
                 response['aggregations']['terms_count']:
@@ -1193,47 +1214,29 @@ class AnalyticComputation:
                     now = datetime.datetime.now()
                     delta = datetime.timedelta(days=30)
                     temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
+                    return temp_old.isoformat(), now.isoformat()
                 elif str(time_object['value']).upper() == "10D":
                     now = datetime.datetime.now()
                     delta = datetime.timedelta(days=10)
                     temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
+                    return temp_old.isoformat(), now.isoformat()
                 elif str(time_object['value']).upper() == "7D":
                     now = datetime.datetime.now()
                     delta = datetime.timedelta(days=7)
                     temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
+                    return temp_old.isoformat(), now.isoformat()
                 elif str(time_object['value']).upper() == "1D":
                     now = datetime.datetime.now()
                     delta = datetime.timedelta(days=1)
                     temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
+                    return temp_old.isoformat(), now.isoformat()
                 elif str(time_object['value']).upper() == "TODAY":
                     now = datetime.datetime.now()
-                    min_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
+                    temp_old = datetime.datetime(now.year, now.month, now.day)
+                    return temp_old.isoformat(), now.isoformat()
             except:
                 abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot generate a valid date")
         else:
-            start = None
-            end = None
-            try:
-                print(time_object['start'])
-                start = datetime.datetime.strptime(time_object['start'], '%Y-%m-%d')  # %H:%M:%S.%f
-            except:
-                abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot parse starting date. User a YYYY-MM-DD format")
-            try:
-                end = datetime.datetime.strptime(time_object['end'], '%Y-%m-%d')
-            except:
-                abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot parse ending date. User a YYYY-MM-DD format")
+            start = time_object['start']
+            end = time_object['end']
             return start, end
