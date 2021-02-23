@@ -140,6 +140,26 @@ class AnalyticsPerformer(Resource):
                             },
                             "staticId": static_id
                         }
+                    elif metric == "m:segmentation":
+                        answer = ac.compute_m_segmentation(analytic, es, analytic['project'])
+                        json_response = {
+                            "query": analytic,
+                            "result": {
+                                "counts": answer,
+                                "type": "type"
+                            },
+                            "staticId": static_id
+                        }
+                    elif metric == "r:segmentation":
+                        answer = ac.compute_r_segmentation(analytic, es, analytic['project'])
+                        json_response = {
+                            "query": analytic,
+                            "result": {
+                                "counts": answer,
+                                "type": "content.type"
+                            },
+                            "staticId": static_id
+                        }
                     elif metric == "m:conversation":
                         answer = ac.compute_m_conversation(analytic, es, analytic['project'])
                         json_response = {

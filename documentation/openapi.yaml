@@ -425,6 +425,7 @@ paths:
               schema:
                 oneOf:
                   - $ref: '#/components/schemas/HTTP_200_ANALYTIC'
+                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC_SEGMENTATION'
                   - $ref: '#/components/schemas/HTTP_200_AGGREGATION'
         '400':
           description: malformed analytic
@@ -1054,7 +1055,7 @@ components:
           example: "message"
         metric:
           type: string
-          enum: ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled"]
+          enum: ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
           example: "m:from_user"
       required:
         - dimension
@@ -1181,6 +1182,25 @@ components:
             type:
               type: string
               example: "messageId"
+        static_id:
+          type: string
+          example: "wAu4EW4BFurD9NUGZY3z"
+
+    HTTP_200_ANALYTIC_SEGMENTATION:
+      type: object
+      properties:
+        query:
+          oneOf:
+            - $ref: '#/components/schemas/Analytic'
+        result:
+          type: object
+          properties:
+            counts:
+              type: object
+              example: { "text": 26 }
+            type:
+              type: string
+              example: "type"
         static_id:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"

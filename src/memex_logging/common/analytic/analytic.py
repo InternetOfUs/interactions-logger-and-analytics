@@ -23,11 +23,14 @@ from flask_restful import abort
 from memex_logging.utils.utils import Utils
 
 
+logger = logging.getLogger("logger.common.analytic.analytic")
+
+
 class AnalyticComputation:
 
     @staticmethod
     def analytic_validity_check(analytic: dict):
-        logging.info("ANALYTIC.DISPLACEMENT: " + str(analytic))
+        logger.info("ANALYTIC.DISPLACEMENT: " + str(analytic))
 
         # check if timespan is in the dict
         if 'timespan' not in analytic:
@@ -75,7 +78,7 @@ class AnalyticComputation:
             return False
 
         allowed_metrics_user = ["u:total", "u:active", "u:engaged", "u:new"]
-        allowed_metrics_message = ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled"]
+        allowed_metrics_message = ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
         allowed_metrics_conversation = ["c:total", "c:new", "c:length", "c:path"]
         allowed_metrics_dialogue = ["d:fallback", "d:intents", "d:domains"]
         allowed_metrics_bot = ["b:response"]
@@ -136,7 +139,8 @@ class AnalyticComputation:
                 },
                 "terms_count": {
                     "terms": {
-                        "field": "userId.keyword"
+                        "field": "userId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -147,6 +151,9 @@ class AnalyticComputation:
 
         for item in response['aggregations']['terms_count']['buckets']:
             user_list.append(item['key'])
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         return response['aggregations']['type_count']['value'], user_list
 
@@ -183,7 +190,8 @@ class AnalyticComputation:
                 },
                 "terms_count": {
                     "terms": {
-                        "field": "userId.keyword"
+                        "field": "userId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -194,6 +202,9 @@ class AnalyticComputation:
 
         for item in response['aggregations']['terms_count']['buckets']:
             user_list.append(item['key'])
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         return response['aggregations']['type_count']['value'], user_list
 
@@ -237,7 +248,8 @@ class AnalyticComputation:
                 },
                 "terms_count": {
                     "terms": {
-                        "field": "userId.keyword"
+                        "field": "userId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -249,6 +261,9 @@ class AnalyticComputation:
 
         for item in response['aggregations']['terms_count']['buckets']:
             user_list.append(item['key'])
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         return response['aggregations']['type_count']['value'], user_list
 
@@ -280,7 +295,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "userId.keyword"
+                        "field": "userId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -291,6 +307,9 @@ class AnalyticComputation:
         users_in_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             users_in_period.append(item['key'])
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         users_in_period = set(users_in_period)
 
@@ -311,7 +330,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "userId.keyword"
+                        "field": "userId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -322,6 +342,9 @@ class AnalyticComputation:
         users_out_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             users_out_period.append(item['key'])
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         users_out_period = set(users_out_period)
 
@@ -364,7 +387,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "userId.keyword"
+                        "field": "userId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -378,7 +402,109 @@ class AnalyticComputation:
             user_list.append(item['key'])
             total_counter = total_counter + int(item['doc_count'])
 
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+
         return total_counter, user_list
+
+    def compute_m_segmentation(self, analytic: dict, es: Elasticsearch, project: str):
+        time_bound = self._support_bound_timestamp(analytic['timespan'])
+        min_bound = time_bound[0]
+        max_bound = time_bound[1]
+        body = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {
+                            "range": {
+                                "timestamp": {
+                                    "gte": min_bound
+                                }
+                            }
+                        },
+                        {
+                            "range": {
+                                "timestamp": {
+                                    "lte": max_bound
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "aggs": {
+                "terms_count": {
+                    "terms": {
+                        "field": "type.keyword",
+                        "size": 5
+                    }
+                }
+            }
+        }
+
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
+        type_counter = {}
+        for item in response['aggregations']['terms_count']['buckets']:
+            type_counter[item['key']] = item['doc_count']
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `5` but the number of types is higher")
+
+        return type_counter
+
+    def compute_r_segmentation(self, analytic: dict, es: Elasticsearch, project: str):
+        time_bound = self._support_bound_timestamp(analytic['timespan'])
+        min_bound = time_bound[0]
+        max_bound = time_bound[1]
+        body = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "match": {
+                                "type.keyword": "request"
+                            }
+                        }
+                    ],
+                    "filter": [
+                        {
+                            "range": {
+                                "timestamp": {
+                                    "gte": min_bound
+                                }
+                            }
+                        },
+                        {
+                            "range": {
+                                "timestamp": {
+                                    "lte": max_bound
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "aggs": {
+                "terms_count": {
+                    "terms": {
+                        "field": "content.type.keyword",
+                        "size": 10
+                    }
+                }
+            }
+        }
+
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
+        type_counter = {}
+        for item in response['aggregations']['terms_count']['buckets']:
+            type_counter[item['key']] = item['doc_count']
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `10` but the number of content types is higher")
+
+        return type_counter
 
     def compute_m_conversation(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
@@ -408,7 +534,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "conversationId.keyword"
+                        "field": "conversationId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -421,6 +548,9 @@ class AnalyticComputation:
         for item in response['aggregations']['terms_count']['buckets']:
             conversation_list.append(item['key'])
             total_len = total_len + 1
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         return total_len, conversation_list
 
@@ -459,7 +589,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "messageId.keyword"
+                        "field": "messageId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -472,6 +603,9 @@ class AnalyticComputation:
         for item in response['aggregations']['terms_count']['buckets']:
             messages.append(item['key'])
             total_len = total_len + item['doc_count']
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of response messages is higher")
 
         body = {
             "query": {
@@ -504,7 +638,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "messageId.keyword"
+                        "field": "messageId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -515,6 +650,10 @@ class AnalyticComputation:
         for item in response['aggregations']['terms_count']['buckets']:
             messages.append(item['key'])
             total_len = total_len + item['doc_count']
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
+
         return total_len, messages
 
     def compute_m_responses(self, analytic: dict, es: Elasticsearch, project: str):
@@ -552,7 +691,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "messageId.keyword"
+                        "field": "messageId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -565,6 +705,9 @@ class AnalyticComputation:
         for item in response['aggregations']['terms_count']['buckets']:
             messages.append(item['key'])
             total_len = total_len + item['doc_count']
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         return total_len, messages
 
@@ -603,7 +746,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "messageId.keyword"
+                        "field": "messageId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -616,6 +760,9 @@ class AnalyticComputation:
         for item in response['aggregations']['terms_count']['buckets']:
             messages.append(item['key'])
             total_len = total_len + item['doc_count']
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
 
         return total_len, messages
 
@@ -654,7 +801,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "messageId.keyword"
+                        "field": "messageId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -668,6 +816,9 @@ class AnalyticComputation:
             for item in response['aggregations']['terms_count']['buckets']:
                 messages.append(item['key'])
                 total_len = total_len + item['doc_count']
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of unhandled messages is higher")
 
         return total_len, messages
 
@@ -699,7 +850,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "conversationId.keyword"
+                        "field": "conversationId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -712,6 +864,9 @@ class AnalyticComputation:
         for item in response['aggregations']['terms_count']['buckets']:
             conversation_list.append(item['key'])
             total_len = total_len + 1
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         return total_len, conversation_list
 
@@ -743,7 +898,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "conversationId.keyword"
+                        "field": "conversationId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -754,6 +910,9 @@ class AnalyticComputation:
         conv_in_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             conv_in_period.append(item['key'])
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         conv_in_period = set(conv_in_period)
 
@@ -774,7 +933,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "conversationId.keyword"
+                        "field": "conversationId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -785,6 +945,9 @@ class AnalyticComputation:
         conv_out_period = []
         for item in response['aggregations']['terms_count']['buckets']:
             conv_out_period.append(item['key'])
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         conv_out_period = set(conv_out_period)
 
@@ -820,7 +983,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "conversationId.keyword"
+                        "field": "conversationId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -833,6 +997,9 @@ class AnalyticComputation:
         for item in response['aggregations']['terms_count']['buckets']:
             conversation_list.append({"conversation": item['key'], "length": item['doc_count']})
             total_len = total_len + 1
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         return total_len, conversation_list
 
@@ -864,7 +1031,8 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "conversationId.keyword"
+                        "field": "conversationId.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -875,6 +1043,10 @@ class AnalyticComputation:
         conversation_list = []
         for item in response['aggregations']['terms_count']['buckets']:
             conversation_list.append(item['key'])
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+
         conversation_list = list(set(conversation_list))
         paths = []
 
@@ -913,7 +1085,8 @@ class AnalyticComputation:
                 "aggs": {
                     "terms_count": {
                         "terms": {
-                            "field": "messageId.keyword"
+                            "field": "messageId.keyword",
+                            "size": 65535
                         }
                     }
                 }
@@ -924,7 +1097,12 @@ class AnalyticComputation:
             message_list = []
             for obj in response['aggregations']['terms_count']['buckets']:
                 message_list.append(obj['key'])
+
             paths.append({item: message_list})
+
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of messages is higher")
+
         return len(paths), paths
 
     def compute_d_fallback(self, analytic: dict, es: Elasticsearch, project: str):
@@ -961,7 +1139,7 @@ class AnalyticComputation:
                 }
             },
             "aggs": {
-                "terms_count": {
+                "type_count": {
                     "cardinality": {
                         "field": "messageId.keyword"
                     }
@@ -1000,7 +1178,7 @@ class AnalyticComputation:
                 }
             },
             "aggs": {
-                "terms_count": {
+                "type_count": {
                     "cardinality": {
                         "field": "messageId.keyword"
                     }
@@ -1049,7 +1227,8 @@ class AnalyticComputation:
                 },
                 "terms_count": {
                     "terms": {
-                        "field": "intent.keyword"
+                        "field": "intent.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -1057,16 +1236,19 @@ class AnalyticComputation:
 
         index = Utils.generate_index(data_type="message", project=project)
         response = es.search(index=index, body=body, size=0)
-        user_list = []
+        intent_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
-                user_list.append(item['key'])
+                intent_list.append(item['key'])
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of intents is higher")
 
         value = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return value, user_list
+        return value, intent_list
 
     def compute_d_domains(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
@@ -1101,7 +1283,8 @@ class AnalyticComputation:
                 },
                 "terms_count": {
                     "terms": {
-                        "field": "domain.keyword"
+                        "field": "domain.keyword",
+                        "size": 65535
                     }
                 }
             }
@@ -1109,18 +1292,21 @@ class AnalyticComputation:
 
         index = Utils.generate_index(data_type="message", project=project)
         response = es.search(index=index, body=body, size=0)
-        user_list = []
+        domain_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
                 response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
-                user_list.append(item['key'])
+                domain_list.append(item['key'])
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of domains is higher")
 
         value = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in \
                 response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return value, user_list
+        return value, domain_list
 
     def compute_b_response(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
@@ -1148,7 +1334,7 @@ class AnalyticComputation:
                 }
             },
             "aggs": {
-                "terms_count": {
+                "type_count": {
                     "cardinality": {
                         "field": "messageId.keyword"
                     }
@@ -1190,11 +1376,13 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "userId.keyword"
+                        "field": "userId.keyword",
+                        "size": 65535
                     }
                 }
             }
         }
+
         index = Utils.generate_index(data_type="message", project=project)
         response = es.search(index=index, body=body, size=0)
         total_not_working = 0
@@ -1203,6 +1391,9 @@ class AnalyticComputation:
             for item in response['aggregations']['terms_count']['buckets']:
                 if item['doc_count'] == 1:
                     total_not_working = total_not_working + 1
+
+        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         return total_not_working, total_messages
 
