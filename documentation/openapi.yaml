@@ -1055,8 +1055,8 @@ components:
           example: "message"
         metric:
           type: string
-          enum: ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
-          example: "m:from_user"
+          enum: ["m:from_users", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
+          example: "m:from_users"
       required:
         - dimension
         - metric

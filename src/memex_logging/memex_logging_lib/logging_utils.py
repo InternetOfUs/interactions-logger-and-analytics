@@ -14,13 +14,16 @@
 
 from __future__ import absolute_import, annotations
 
-from typing import Optional, List
+from time import sleep
+from typing import Optional, List, Union
 
 import json
 
 import requests
 
 import logging
+
+from memex_logging.common.model.analytic import DefaultTime, CustomTime, Metric
 
 
 class Entity:
@@ -112,14 +115,16 @@ class CarouselItem:
 
 class LoggingUtility:
 
-    def __init__(self, service_host: str, project: str) -> None:
+    def __init__(self, service_host: str, project: str, custom_headers: Optional[dict] = None) -> None:
         """
         Initialize a logging Utility object by specifying the host, the port and the project
         :param service_host: the host of the service as a string (e.g, https://www.test.com)
         :param project: the name of the project. It is used to create well-formed indexes in the database and to retrieve information from the right index
+        :param custom_headers: a dictionary containing some custom headers
         """
         self._access_point = service_host
         self._project = project
+        self._custom_headers = custom_headers if custom_headers else {}
 
     def add_location_request(self, latitude: float, longitude: float, message_id: str, user_id: str, channel: str,
                              timestamp: str, conversation_id: str = None, domain: str = None, intent_name: str = None,
@@ -1159,3 +1164,22 @@ class LoggingUtility:
             return dict_response['logId']
         else:
             raise ValueError("LIB.LOGGING The message has not been logged")
+
+    def get_statistic(self, temporal_range: Union[DefaultTime, CustomTime], metric: Metric, sleep_time: int = 1) -> dict:
+
+        json_payload = {
+            "project": self._project,
+            "timespan": temporal_range.to_repr(),
+            "type": "analytic"
+        }
+
+        json_payload.update(metric.to_repr())
+
+        r = requests.post(self._access_point + "/analytic", headers=self._custom_headers, json=json_payload)
+
+        static_id = json.loads(r.content)["staticId"]
+
+        sleep(sleep_time)
+
+        r = requests.get(self._access_point + "/analytic", headers=self._custom_headers, params={"staticId": static_id, "project": self._project})
+        return json.loads(r.content)["result"]

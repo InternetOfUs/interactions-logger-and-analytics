@@ -129,8 +129,8 @@ class AnalyticsPerformer(Resource):
                             },
                             "staticId": static_id
                         }
-                    elif metric == "m:from_user":
-                        answer = ac.compute_m_from_user(analytic, es, analytic['project'])
+                    elif metric == "m:from_users":
+                        answer = ac.compute_m_from_users(analytic, es, analytic['project'])
                         json_response = {
                             "query": analytic,
                             "result": {

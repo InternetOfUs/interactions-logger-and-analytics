@@ -78,7 +78,7 @@ class AnalyticComputation:
             return False
 
         allowed_metrics_user = ["u:total", "u:active", "u:engaged", "u:new"]
-        allowed_metrics_message = ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
+        allowed_metrics_message = ["m:from_users", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
         allowed_metrics_conversation = ["c:total", "c:new", "c:length", "c:path"]
         allowed_metrics_dialogue = ["d:fallback", "d:intents", "d:domains"]
         allowed_metrics_bot = ["b:response"]
@@ -164,6 +164,13 @@ class AnalyticComputation:
         body = {
             "query": {
                 "bool": {
+                    "must": [
+                        {
+                            "match": {
+                                "type.keyword": "request"
+                            }
+                        }
+                    ],
                     "filter": [
                         {
                             "range": {
@@ -352,7 +359,7 @@ class AnalyticComputation:
 
         return len(final_users), list(final_users)
 
-    def compute_m_from_user(self, analytic: dict, es: Elasticsearch, project: str):
+    def compute_m_from_users(self, analytic: dict, es: Elasticsearch, project: str):
         time_bound = self._support_bound_timestamp(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]

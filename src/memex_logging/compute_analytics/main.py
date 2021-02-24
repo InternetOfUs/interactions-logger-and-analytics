@@ -16,14 +16,12 @@ from __future__ import absolute_import, annotations
 
 import argparse
 import csv
-import json
 import logging.config
 import os
-from time import sleep
-
-import requests
 
 from memex_logging.common.log.logging import get_logging_configuration
+from memex_logging.common.model.analytic import DefaultTime, UserMetric, MessageMetric
+from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
 
 
 logging.config.dictConfig(get_logging_configuration("compute_analytics"))
@@ -41,38 +39,54 @@ if __name__ == '__main__':
     args = arg_parser.parse_args()
 
     headers = {"x-wenet-component-apikey": args.apikey}
-
-    static_ids = []
-    for dimension, metric in [("user", "u:total"), ("user", "u:active"), ("user", "u:engaged"), ("user", "u:new"), ("message", "m:from_user"), ("message", "m:responses"), ("message", "m:notifications")]:
-        r = requests.post(args.host+"/analytic", headers=headers, json={
-            "project": args.project,
-            "timespan": {
-                "type": "default",
-                "value": args.range
-            },
-            "type": "analytic",
-            "dimension": dimension,
-            "metric": metric
-        })
-
-        static_ids.append(json.loads(r.content)["staticId"])
-
-    sleep(10)
-
-    result = []
-    for (static_id, metric) in [(static_ids[0], "total users"), (static_ids[1], "active users"), (static_ids[2], "engaged users"), (static_ids[3], "new users"), (static_ids[4], "messages from user"), (static_ids[5], "response messages"), (static_ids[6], "notifications messages")]:
-        r = requests.get(args.host + "/analytic", headers=headers, params={"staticId": static_id, "project": args.project})
-
-        analytic = json.loads(r.content)["result"]
-        analytic["metric"] = metric
-        result.append(analytic)
+    operations = LoggingUtility(args.host, args.project, headers)
+    time_range = DefaultTime(args.range)
 
     f = csv.writer(open(args.file, "w"))
-    f.writerow(["metric", "count", "type"])
+    f.writerow(["metric", "count"])
 
-    for analytic in result:
-        f.writerow([
-            analytic["metric"],
-            analytic["count"],
-            analytic["type"]
-        ])
+    total_users = UserMetric("u:total")
+    total_users_result = operations.get_statistic(time_range, total_users)
+    f.writerow(["total users", total_users_result["count"]])
+
+    active_users = UserMetric("u:active")
+    active_users_result = operations.get_statistic(time_range, active_users)
+    f.writerow(["active users", active_users_result["count"]])
+
+    engaged_users = UserMetric("u:engaged")
+    engaged_users_result = operations.get_statistic(time_range, engaged_users)
+    f.writerow(["engaged users", engaged_users_result["count"]])
+
+    new_users = UserMetric("u:new")
+    new_users_result = operations.get_statistic(time_range, new_users)
+    f.writerow(["new users", new_users_result["count"]])
+
+    segmentation_messages = MessageMetric("m:segmentation")
+    segmentation_messages_result = operations.get_statistic(time_range, segmentation_messages)
+    if "request" in segmentation_messages_result["counts"]:
+        f.writerow(["request messages", segmentation_messages_result["counts"]["request"]])
+    else:
+        f.writerow(["request messages", 0])
+    if "response" in segmentation_messages_result["counts"]:
+        f.writerow(["response messages", segmentation_messages_result["counts"]["response"]])
+    else:
+        f.writerow(["response messages", 0])
+    if "notification" in segmentation_messages_result["counts"]:
+        f.writerow(["notification messages", segmentation_messages_result["counts"]["notification"]])
+    else:
+        f.writerow(["notification messages", 0])
+
+    segmentation_requests = MessageMetric("r:segmentation")
+    segmentation_requests_result = operations.get_statistic(time_range, segmentation_requests)
+    if "text" in segmentation_messages_result["counts"]:
+        f.writerow(["text request messages", new_users_result["counts"]["text"]])
+    else:
+        f.writerow(["text request messages", 0])
+    if "action" in segmentation_messages_result["counts"]:
+        f.writerow(["action request messages", new_users_result["counts"]["action"]])
+    else:
+        f.writerow(["action request messages", 0])
+
+    # to use the Task Manager to get them
+    # total number of created tasks
+    # total number of created transactions (and also segmentation of them?)
