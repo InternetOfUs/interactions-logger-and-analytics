@@ -18,9 +18,12 @@ import argparse
 import csv
 import logging.config
 import os
+from datetime import datetime
 
+from memex_logging.common.analytic.analytic import AnalyticComputation
 from memex_logging.common.log.logging import get_logging_configuration
 from memex_logging.common.model.analytic import DefaultTime, UserMetric, MessageMetric
+from memex_logging.compute_analytics.task_manager_connector import TaskManagerConnector
 from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
 
 
@@ -32,15 +35,26 @@ if __name__ == '__main__':
 
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-f", "--file", type=str, dest="file", default=os.getenv("ANALYTIC_FILE", "analytics.csv"), help="The file where to save analytics")
-    arg_parser.add_argument("-ho", "--host", type=str, dest="host", default=os.getenv("ANALYTIC_HOST", "http://0.0.0.0:80"), help="The host of the ws to compute the analytics")
+    arg_parser.add_argument("-lh", "--lhost", type=str, dest="lhost", default=os.getenv("LOGGER_HOST", "http://0.0.0.0:80"), help="The host of the ws to compute the analytics")
+    arg_parser.add_argument("-th", "--thost", type=str, dest="thost", default=os.getenv("TASK_MANAGER_HOST", "http://0.0.0.0:80"), help="The host of the ws to compute the analytics")
     arg_parser.add_argument("-p", "--project", type=str, dest="project", default=os.getenv("ANALYTIC_PROJECT", "wenet"), help="The project where to compute the analytics")
     arg_parser.add_argument("-r", "--range", type=str, dest="range", default=os.getenv("ANALYTIC_RANGE", "30D"), help="The temporal range in which compute the analytics")
     arg_parser.add_argument("-a", "--apikey", type=str, dest="apikey", default=os.getenv("APIKEY"), help="The apikey for accessing the ws")
+    arg_parser.add_argument("-id", "--appid", type=str, dest="appid", default=os.getenv("APP_ID"), help="The id of the application in which compute the analytics")
     args = arg_parser.parse_args()
 
     headers = {"x-wenet-component-apikey": args.apikey}
-    operations = LoggingUtility(args.host, args.project, headers)
+    operations = LoggingUtility(args.lhost, args.project, headers)
+    task_manager_connector = TaskManagerConnector(args.thost, args.apikey)
+
     time_range = DefaultTime(args.range)
+    created_from, created_to = AnalyticComputation.support_bound_timestamp(time_range.to_repr())
+
+    created_from = datetime.fromisoformat(created_from)
+    created_to = datetime.fromisoformat(created_to)
+
+    tasks = task_manager_connector.get_tasks(args.appid, created_from, created_to)
+    transactions = task_manager_connector.get_transactions(args.appid, created_from, created_to)
 
     f = csv.writer(open(args.file, "w"))
     f.writerow(["metric", "count"])
@@ -87,6 +101,5 @@ if __name__ == '__main__':
     else:
         f.writerow(["action request messages", 0])
 
-    # to use the Task Manager to get them
-    # total number of created tasks
-    # total number of created transactions (and also segmentation of them?)
+    f.writerow(["created tasks", len(tasks)])
+    f.writerow(["created transactions", len(transactions)])
