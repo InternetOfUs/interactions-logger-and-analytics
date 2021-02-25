@@ -373,7 +373,43 @@ paths:
       tags:
         - analytic
       summary: Post an analytic
-      description: This end-point allows to post an analytic based on the messages in the database
+      description: "
+      This end-point allows to post an analytic based on the messages in the database, it returns a `staticId` that you have to use to retrieve the analytics.
+
+      The allowed analytics are:
+
+      * UserMetrics with `dimension` set to `user`, you can set `metric` to:
+      `u:total`: the number of total users in a certain time range;
+      `u:active`: the number of active users in a certain time range (that send at least a request message);
+      `u:engaged`: the number of engaged users in a certain time range (that receive at least a notification message);
+      `u:new`: the number of new users in a certain time range;
+
+      * MessageMetrics with `dimension` set to `message`, you can set `metric` to:
+      `m:from_users`: the number of messages from the users in a certain time range;
+      `m:conversation`: the number of conversation in a certain time range;
+      `m:from_bot`: the number of messages from the bot in a certain time range;
+      `m:responses`: the number of response messages in a certain time range;
+      `m:notifications`: the number of notification messages in a certain time range;
+      `m:unhandled`: the number of unhandled messages in a certain time range;
+      `m:segmentation`: the segmentation of the messages based on the type in a certain time range;
+      `r:segmentation`: the segmentation of the request messages based on the type in a certain time range;
+
+      * ConversationMetrics with `dimension` set to `conversation`, you can set `metric` to:
+      `c:total`: the number of conversation in a certain time range;
+      `c:new`: the number of new conversation in a certain time range;
+      `c:length`: the number of conversation in a certain time range with the length;
+      `c:path`: the number of paths of the conversations in a certain time;
+
+      * DialogueMetrics with `dimension` set to `dialogue`, you can set `metric` to:
+      `d:fallback`: the number of missed intent messages in a certain time range;
+      `d:intents`: the number of intents in a certain time range;
+      `d:domains`: the number of domains in a certain time range;
+
+      * BotMetrics with `dimension` set to `bot`, you can set `metric` to:
+      `b:response`: the number of users and messages in a certain time range.
+
+      It could be possible to post also aggregations.
+      "
       requestBody:
         content:
           application/json:
@@ -392,7 +428,7 @@ paths:
                     type: string
                     example: "bcpg8XYBHD_pmQ1jA7b8"
         '400':
-          description: malformed analytic
+          description: malformed requesy
           content:
             application/json:
               schema:
@@ -402,7 +438,17 @@ paths:
       tags:
         - analytic
       summary: Retrieve an analytic
-      description: Retrieve the number click based on a user identifier
+      description: "
+      This end-point allows to retrieve an analytic based on a `staticId`.
+
+      If the analytic requested is a `MessageMetrics` with metric `m:segmentation` or `r:segmentation` it will return a `HTTP_200_ANALYTIC_SEGMENTATION` object.
+
+      If the analytic requested is a `ConversationMetrics` it will return a `HTTP_200_ANALYTIC_CONVERSATION` object.
+
+      In all the other analytic cases will return a `HTTP_200_ANALYTIC` object.
+
+      For the aggreagtions will return a `HTTP_200_AGGREGATION` object.
+      "
       parameters:
         - in: query
           name: staticId
@@ -426,9 +472,10 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/HTTP_200_ANALYTIC'
                   - $ref: '#/components/schemas/HTTP_200_ANALYTIC_SEGMENTATION'
+                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC_CONVERSATION'
                   - $ref: '#/components/schemas/HTTP_200_AGGREGATION'
         '400':
-          description: malformed analytic
+          description: malformed request
           content:
             application/json:
               schema:
@@ -1201,6 +1248,29 @@ components:
             type:
               type: string
               example: "type"
+        static_id:
+          type: string
+          example: "wAu4EW4BFurD9NUGZY3z"
+
+    HTTP_200_ANALYTIC_CONVERSATION:
+      type: object
+      properties:
+        query:
+          oneOf:
+            - $ref: '#/components/schemas/Analytic'
+        conversations:
+          type: object
+          properties:
+            count:
+              type: number
+              format: int32
+            items:
+              type: array
+              items:
+                type: string
+            type:
+              type: string
+              example: "messageId"
         static_id:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"

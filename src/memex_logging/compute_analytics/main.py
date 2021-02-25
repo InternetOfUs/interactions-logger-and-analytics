@@ -30,17 +30,35 @@ from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
 logging.config.dictConfig(get_logging_configuration("compute_analytics"))
 logger = logging.getLogger("compute_analytics.main")
 
+# message types
+TYPE_REQUEST_MESSAGE = "request"
+TYPE_RESPONSE_MESSAGE = "response"
+TYPE_NOTIFICATION_MESSAGE = "notification"
+
+# request message content types
+TYPE_TEXT_CONTENT_REQUEST = "text"
+TYPE_ACTION_CONTENT_REQUEST = "action"
+
+# transaction labels
+LABEL_CREATE_TASK_TRANSACTION = "CREATE_TASK"
+LABEL_ANSWER_TRANSACTION = "answerTransaction"
+LABEL_NOT_ANSWER_TRANSACTION = "notAnswerTransaction"
+LABEL_REPORT_QUESTION_TRANSACTION = "reportQuestionTransaction"
+LABEL_REPORT_ANSWER_TRANSACTION = "reportAnswerTransaction"
+LABEL_MORE_ANSWER_TRANSACTION = "moreAnswerTransaction"
+LABEL_BEST_ANSWER_TRANSACTION = "bestAnswerTransaction"
+
 
 if __name__ == '__main__':
 
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-f", "--file", type=str, dest="file", default=os.getenv("ANALYTIC_FILE", "analytics.csv"), help="The file where to save analytics")
-    arg_parser.add_argument("-lh", "--lhost", type=str, dest="lhost", default=os.getenv("LOGGER_HOST", "http://0.0.0.0:80"), help="The host of the ws to compute the analytics")
-    arg_parser.add_argument("-th", "--thost", type=str, dest="thost", default=os.getenv("TASK_MANAGER_HOST", "http://0.0.0.0:80"), help="The host of the ws to compute the analytics")
-    arg_parser.add_argument("-p", "--project", type=str, dest="project", default=os.getenv("ANALYTIC_PROJECT", "wenet"), help="The project where to compute the analytics")
+    arg_parser.add_argument("-f", "--file", type=str, dest="file", default=os.getenv("ANALYTIC_CSV_FILE"), help="The file where to save analytics")
+    arg_parser.add_argument("-lh", "--lhost", type=str, dest="lhost", default=os.getenv("LOGGER_HOST"), help="The host of the logger ws")
+    arg_parser.add_argument("-th", "--thost", type=str, dest="thost", default=os.getenv("TASK_MANAGER_HOST"), help="The host of the task manager")
+    arg_parser.add_argument("-p", "--project", type=str, dest="project", default=os.getenv("ANALYTIC_PROJECT"), help="The project for which to compute the analytics")
     arg_parser.add_argument("-r", "--range", type=str, dest="range", default=os.getenv("ANALYTIC_RANGE", "30D"), help="The temporal range in which compute the analytics")
-    arg_parser.add_argument("-a", "--apikey", type=str, dest="apikey", default=os.getenv("APIKEY"), help="The apikey for accessing the ws")
-    arg_parser.add_argument("-id", "--appid", type=str, dest="appid", default=os.getenv("APP_ID"), help="The id of the application in which compute the analytics")
+    arg_parser.add_argument("-a", "--apikey", type=str, dest="apikey", default=os.getenv("APIKEY"), help="The apikey for accessing the services")
+    arg_parser.add_argument("-i", "--appid", type=str, dest="appid", default=os.getenv("APP_ID"), help="The id of the application in which compute the analytics")
     args = arg_parser.parse_args()
 
     headers = {"x-wenet-component-apikey": args.apikey}
@@ -52,9 +70,6 @@ if __name__ == '__main__':
 
     created_from = datetime.fromisoformat(created_from)
     created_to = datetime.fromisoformat(created_to)
-
-    tasks = task_manager_connector.get_tasks(args.appid, created_from, created_to)
-    transactions = task_manager_connector.get_transactions(args.appid, created_from, created_to)
 
     f = csv.writer(open(args.file, "w"))
     f.writerow(["metric", "count"])
@@ -77,29 +92,64 @@ if __name__ == '__main__':
 
     segmentation_messages = MessageMetric("m:segmentation")
     segmentation_messages_result = operations.get_statistic(time_range, segmentation_messages)
-    if "request" in segmentation_messages_result["counts"]:
-        f.writerow(["request messages", segmentation_messages_result["counts"]["request"]])
-    else:
-        f.writerow(["request messages", 0])
-    if "response" in segmentation_messages_result["counts"]:
-        f.writerow(["response messages", segmentation_messages_result["counts"]["response"]])
-    else:
-        f.writerow(["response messages", 0])
-    if "notification" in segmentation_messages_result["counts"]:
-        f.writerow(["notification messages", segmentation_messages_result["counts"]["notification"]])
-    else:
-        f.writerow(["notification messages", 0])
+
+    total_messages = 0
+    for key in segmentation_messages_result["counts"]:
+        total_messages += segmentation_messages_result["counts"][key]
+    f.writerow(["total messages", total_messages])
+
+    request_messages = 0
+    if TYPE_REQUEST_MESSAGE in segmentation_messages_result["counts"]:
+        request_messages = segmentation_messages_result["counts"][TYPE_REQUEST_MESSAGE]
+    f.writerow(["request messages", request_messages])
+
+    response_messages = 0
+    if TYPE_RESPONSE_MESSAGE in segmentation_messages_result["counts"]:
+        response_messages = segmentation_messages_result["counts"][TYPE_RESPONSE_MESSAGE]
+    f.writerow(["response messages", response_messages])
+
+    notification_messages = 0
+    if TYPE_NOTIFICATION_MESSAGE in segmentation_messages_result["counts"]:
+        notification_messages = segmentation_messages_result["counts"][TYPE_NOTIFICATION_MESSAGE]
+    f.writerow(["notification messages", notification_messages])
 
     segmentation_requests = MessageMetric("r:segmentation")
     segmentation_requests_result = operations.get_statistic(time_range, segmentation_requests)
-    if "text" in segmentation_messages_result["counts"]:
-        f.writerow(["text request messages", new_users_result["counts"]["text"]])
-    else:
-        f.writerow(["text request messages", 0])
-    if "action" in segmentation_messages_result["counts"]:
-        f.writerow(["action request messages", new_users_result["counts"]["action"]])
-    else:
-        f.writerow(["action request messages", 0])
+
+    text_requests = 0
+    if TYPE_TEXT_CONTENT_REQUEST in segmentation_messages_result["counts"]:
+        text_requests = new_users_result["counts"][TYPE_TEXT_CONTENT_REQUEST]
+    f.writerow(["text request messages", text_requests])
+
+    action_requests = 0
+    if TYPE_ACTION_CONTENT_REQUEST in segmentation_messages_result["counts"]:
+        action_requests = new_users_result["counts"][TYPE_ACTION_CONTENT_REQUEST]
+    f.writerow(["action request messages", action_requests])
+
+    tasks = task_manager_connector.get_tasks(args.appid, created_from, created_to)
+    transactions = task_manager_connector.get_transactions(args.appid, created_from, created_to)
+    transaction_labels = [transaction.label for transaction in transactions]
 
     f.writerow(["created tasks", len(tasks)])
     f.writerow(["created transactions", len(transactions)])
+
+    create_task_transactions = transaction_labels.count(LABEL_CREATE_TASK_TRANSACTION)
+    f.writerow(["create task transactions", create_task_transactions])
+
+    answer_transactions = transaction_labels.count(LABEL_ANSWER_TRANSACTION)
+    f.writerow(["answer transactions", answer_transactions])
+
+    not_answer_transactions = transaction_labels.count(LABEL_NOT_ANSWER_TRANSACTION)
+    f.writerow(["not answer transactions", not_answer_transactions])
+
+    report_question_transactions = transaction_labels.count(LABEL_REPORT_QUESTION_TRANSACTION)
+    f.writerow(["report question transactions", report_question_transactions])
+
+    report_answer_transactions = transaction_labels.count(LABEL_REPORT_ANSWER_TRANSACTION)
+    f.writerow(["report answer transactions", report_answer_transactions])
+
+    more_answer_transactions = transaction_labels.count(LABEL_MORE_ANSWER_TRANSACTION)
+    f.writerow(["more answer transactions", more_answer_transactions])
+
+    best_answer_transactions = transaction_labels.count(LABEL_BEST_ANSWER_TRANSACTION)
+    f.writerow(["best answer transactions", best_answer_transactions])

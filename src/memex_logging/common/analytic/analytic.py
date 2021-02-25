@@ -18,7 +18,6 @@ import logging
 
 import datetime
 from elasticsearch import Elasticsearch
-from flask_restful import abort
 
 from memex_logging.utils.utils import Utils
 
@@ -34,47 +33,54 @@ class AnalyticComputation:
 
         # check if timespan is in the dict
         if 'timespan' not in analytic:
-            abort(500, message="ANALYTIC.MODEL.CHECK: timespan failed")
+            logger.debug("timespan failed")
             return False
 
         # check if project is in the dict
         if 'project' not in analytic:
-            abort(500, message="ANALYTIC.MODEL.CHECK: project failed")
+            logger.debug("project failed")
             return False
 
         # check if dimension is in the dict
         if 'dimension' not in analytic:
-            abort(500, message="ANALYTIC.MODEL.CHECK: dimension failed")
+            logger.debug("dimension failed")
             return False
 
         # check if metric is in the dict
         if 'metric' not in analytic:
-            abort(500, message="ANALYTIC.MODEL.CHECK: metric failed")
+            logger.debug("metric failed")
             return False
 
         # check timespan details
         if 'type' not in (analytic["timespan"]):
-            abort(500, message="ANALYTIC.MODEL.SUBCHECK: timespan.type.key failed")
+            logger.debug("timespan.type.key failed")
             return False
 
         if str(analytic['timespan']['type']).lower() not in ["default", "custom"]:
-            abort(500, message="ANALYTIC.MODEL.SUBCHECK: timespan.type.value failed")
+            logger.debug("timespan.type.value failed")
             return False
 
         allowed_time_defaults = ["30D", "10D", "7D", "1D", "TODAY"]
         if str(analytic['timespan']['type']).lower() == "default":
             if 'value' not in analytic['timespan']:
-                abort(500, message="ANALYTIC.MODEL.SUBCHECK: timespan.value.key failed")
+                logger.debug("timespan.value.key failed")
                 return False
             else:
                 if str(analytic['timespan']['value']).upper() not in allowed_time_defaults:
-                    abort(500, message="ANALYTIC.MODEL.SUBCHECK: timespan.value.value failed")
+                    logger.debug("timespan.value.value failed")
                     return False
+        else:
+            try:
+                datetime.datetime.fromisoformat(analytic['timespan']['start']).isoformat()
+                datetime.datetime.fromisoformat(analytic['timespan']['end']).isoformat()
+            except Exception as e:
+                logger.debug("timespan.start or timespan.end failed", exc_info=e)
+                return False
 
         # list the allowed dimensions and the allowed metrics split per sub_type
         allowed_dimensions = ["user", "message", "conversation", "dialogue", "bot"]
         if str(analytic['dimension']).lower() not in allowed_dimensions:
-            abort(500, message="ANALYTIC.MODEL.SUBCHECK: dimension.value failed")
+            logger.debug("dimension.value failed")
             return False
 
         allowed_metrics_user = ["u:total", "u:active", "u:engaged", "u:new"]
@@ -85,23 +91,23 @@ class AnalyticComputation:
 
         if str(analytic['dimension']).lower() == "user":
             if str(analytic['metric']).lower() not in allowed_metrics_user:
-                abort(500, message="ANALYTIC.MODEL.SUBCHECK: metric.value failed")
+                logger.debug("metric.value failed")
                 return False
         elif str(analytic['dimension']).lower() == "message":
             if str(analytic['metric']).lower() not in allowed_metrics_message:
-                abort(500, message="ANALYTIC.MODEL.SUBCHECK: metric.value failed")
+                logger.debug("metric.value failed")
                 return False
         elif str(analytic['dimension']).lower() == "conversation":
             if str(analytic['metric']).lower() not in allowed_metrics_conversation:
-                abort(500, message="ANALYTIC.MODEL.SUBCHECK: metric.value failed")
+                logger.debug("metric.value failed")
                 return False
         elif str(analytic['dimension']).lower() == "dialogue":
             if str(analytic['metric']).lower() not in allowed_metrics_dialogue:
-                abort(500, message="ANALYTIC.MODEL.SUBCHECK: metric.value failed")
+                logger.debug("metric.value failed")
                 return False
         elif str(analytic['dimension']).lower() == "bot":
             if str(analytic['metric']).lower() not in allowed_metrics_bot:
-                abort(500, message="ANALYTIC.MODEL.SUBCHECK: metric.value failed")
+                logger.debug("metric.value failed")
                 return False
 
         return True
@@ -1407,33 +1413,30 @@ class AnalyticComputation:
     @staticmethod
     def support_bound_timestamp(time_object: dict):
         if str(time_object['type']).lower() == "default":
-            try:
-                if str(time_object['value']).upper() == "30D":
-                    now = datetime.datetime.now()
-                    delta = datetime.timedelta(days=30)
-                    temp_old = now - delta
-                    return temp_old.isoformat(), now.isoformat()
-                elif str(time_object['value']).upper() == "10D":
-                    now = datetime.datetime.now()
-                    delta = datetime.timedelta(days=10)
-                    temp_old = now - delta
-                    return temp_old.isoformat(), now.isoformat()
-                elif str(time_object['value']).upper() == "7D":
-                    now = datetime.datetime.now()
-                    delta = datetime.timedelta(days=7)
-                    temp_old = now - delta
-                    return temp_old.isoformat(), now.isoformat()
-                elif str(time_object['value']).upper() == "1D":
-                    now = datetime.datetime.now()
-                    delta = datetime.timedelta(days=1)
-                    temp_old = now - delta
-                    return temp_old.isoformat(), now.isoformat()
-                elif str(time_object['value']).upper() == "TODAY":
-                    now = datetime.datetime.now()
-                    temp_old = datetime.datetime(now.year, now.month, now.day)
-                    return temp_old.isoformat(), now.isoformat()
-            except:
-                abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot generate a valid date")
+            if str(time_object['value']).upper() == "30D":
+                now = datetime.datetime.now()
+                delta = datetime.timedelta(days=30)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "10D":
+                now = datetime.datetime.now()
+                delta = datetime.timedelta(days=10)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "7D":
+                now = datetime.datetime.now()
+                delta = datetime.timedelta(days=7)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "1D":
+                now = datetime.datetime.now()
+                delta = datetime.timedelta(days=1)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "TODAY":
+                now = datetime.datetime.now()
+                temp_old = datetime.datetime(now.year, now.month, now.day)
+                return temp_old.isoformat(), now.isoformat()
         else:
             start = time_object['start']
             end = time_object['end']

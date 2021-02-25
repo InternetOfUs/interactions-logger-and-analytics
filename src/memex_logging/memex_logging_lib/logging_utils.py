@@ -1179,7 +1179,9 @@ class LoggingUtility:
 
         static_id = json.loads(r.content)["staticId"]
 
-        sleep(sleep_time)
-
-        r = requests.get(self._access_point + "/analytic", headers=self._custom_headers, params={"staticId": static_id, "project": self._project})
+        for i in range(10):
+            sleep(sleep_time)
+            r = requests.get(self._access_point + "/analytic", headers=self._custom_headers, params={"staticId": static_id, "project": self._project})
+            if r.status_code == 200:
+                break
         return json.loads(r.content)["result"]

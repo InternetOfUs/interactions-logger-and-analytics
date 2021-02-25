@@ -12,7 +12,7 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-It is a web service. It can be used to store, retrieve and delete messages (+ logs and analytics/performances, but not sure they work as documented or as should work).
+There is a web service. It can be used to store, retrieve and delete messages (+ logs and performances, but not sure they work as documented or as should work).
 
 The web service need an Elasticsearch database for storing data.
 
@@ -23,6 +23,9 @@ It requires a broker and a backend. An example to use it, having a Redis instanc
 CELERY_BROKER_URL='redis://localhost:6379/0'
 CELERY_RESULT_BACKEND='redis://localhost:6379/0'
 ```
+
+There is also a script for computing the analytics using the logger web service and a task manager.
+It stores them in a .csv file which name should change in order to save analytics computed in different days to avoid overwriting them.
 
 
 ## Setup and configuration
@@ -49,6 +52,16 @@ The web service allows to set the following environment variables:
 * `CELERY_RESULT_BACKEND` (optional, the default value is `None`): the information about the result backend to use the Celery instance, it must be in the following format: `redis://:password@hostname:port/db_number`.
 
 
+The script for computing the analytics allows to set the following environment variables:
+* `ANALYTIC_CSV_FILE`: the path of the csv file where to store the analytics, it can also be set using the argument `-f` or `--file` when manually running the Python service;
+* `LOGGER_HOST`: the host of the logger web service, it can also be set using the argument `-lh` or `--lhost` when manually running the Python service;
+* `TASK_MANAGER_HOST`: the host of the task manager, it can also be set using the argument `-th` or `--thost` when manually running the Python service;
+* `ANALYTIC_PROJECT`: the project for which to compute the analytics, it can also be set using the argument `-p` or `--project` when manually running the Python service;
+* `ANALYTIC_RANGE`(optional, the default value is `30D`): The temporal range in which compute the analytics, it can also be set using the argument `-r` or `--range` when manually running the Python service;
+* `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
+* `APP_ID`: the id of the application in which compute the analytics, it can also be set using the argument `-i` or `--appid` when manually running the Python service;
+
+
 ## Usage
 
 ### Web service
@@ -57,4 +70,12 @@ This service can be run with the command:
 
 ```bash
 python -m memex_logging.ws.main
+```
+
+### Script for computing the analytics
+
+This service can be run with the command:
+
+```bash
+python -m memex_logging.compute_analytics.main
 ```
