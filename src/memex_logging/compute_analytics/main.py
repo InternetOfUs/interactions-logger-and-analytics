@@ -75,23 +75,23 @@ if __name__ == '__main__':
     f.writerow(["metric", "count"])
 
     total_users = UserMetric("u:total")
-    total_users_result = operations.get_statistic(time_range, total_users)
+    total_users_result = operations.get_analytic(time_range, total_users)
     f.writerow(["total users", total_users_result["count"]])
 
     active_users = UserMetric("u:active")
-    active_users_result = operations.get_statistic(time_range, active_users)
+    active_users_result = operations.get_analytic(time_range, active_users)
     f.writerow(["active users", active_users_result["count"]])
 
     engaged_users = UserMetric("u:engaged")
-    engaged_users_result = operations.get_statistic(time_range, engaged_users)
+    engaged_users_result = operations.get_analytic(time_range, engaged_users)
     f.writerow(["engaged users", engaged_users_result["count"]])
 
     new_users = UserMetric("u:new")
-    new_users_result = operations.get_statistic(time_range, new_users)
+    new_users_result = operations.get_analytic(time_range, new_users)
     f.writerow(["new users", new_users_result["count"]])
 
     segmentation_messages = MessageMetric("m:segmentation")
-    segmentation_messages_result = operations.get_statistic(time_range, segmentation_messages)
+    segmentation_messages_result = operations.get_analytic(time_range, segmentation_messages)
 
     total_messages = 0
     for key in segmentation_messages_result["counts"]:
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     f.writerow(["notification messages", notification_messages])
 
     segmentation_requests = MessageMetric("r:segmentation")
-    segmentation_requests_result = operations.get_statistic(time_range, segmentation_requests)
+    segmentation_requests_result = operations.get_analytic(time_range, segmentation_requests)
 
     text_requests = 0
     if TYPE_TEXT_CONTENT_REQUEST in segmentation_messages_result["counts"]:
