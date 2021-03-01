@@ -2,6 +2,11 @@
 
 ## Version 1.*
 
+### 1.2.0
+
+* Updated message and user metrics
+* Fixed aggregation query for user and message metrics
+
 ### 1.1.0
 
 * Enabled Gunicorn for docker deployment

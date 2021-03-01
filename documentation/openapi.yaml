@@ -43,7 +43,7 @@ tags:
     description: APIs to log the conversation into the database
   - name: logging
     description: APIs to log additional information of the modules
-  - name: analytics
+  - name: analytic
     description: APIs to retrieve useful information from the database. What follows can be used to analyze the performances of the bot
 
 paths:
@@ -97,6 +97,7 @@ paths:
           name: fromTime
           schema:
             type: string
+            format: date-time
           example: "2021-01-25T14:18:36.141378"
           description: the timestamp expressed in ISO format from which you want to retrieve the messages
           required: true
@@ -104,6 +105,7 @@ paths:
           name: toTime
           schema:
             type: string
+            format: date-time
           example: "2021-01-25T14:28:36.141378"
           description: the timestamp expressed in ISO format up to which you want to retrieve the messages
           required: true
@@ -366,35 +368,129 @@ paths:
                 $ref: '#/components/schemas/HTTP_404'
 
   # ANALYTICS APIS
-  /analytics:
+  /analytic:
     post:
       tags:
-        - analytics
-      summary: Require an analytic
-      description: This end-point allows to retrieve an analytic from the database
+        - analytic
+      summary: Post an analytic
+      description: "
+      This end-point allows to post an analytic based on the messages in the database, it returns a `staticId` that you have to use to retrieve the analytics.
+
+      The allowed analytics are:
+
+      * UserMetrics with `dimension` set to `user`, you can set `metric` to:
+      `u:total`: the number of total users in a certain time range;
+      `u:active`: the number of active users in a certain time range (that send at least a request message);
+      `u:engaged`: the number of engaged users in a certain time range (that receive at least a notification message);
+      `u:new`: the number of new users in a certain time range;
+
+      * MessageMetrics with `dimension` set to `message`, you can set `metric` to:
+      `m:from_users`: the number of messages from the users in a certain time range;
+      `m:conversation`: the number of conversation in a certain time range;
+      `m:from_bot`: the number of messages from the bot in a certain time range;
+      `m:responses`: the number of response messages in a certain time range;
+      `m:notifications`: the number of notification messages in a certain time range;
+      `m:unhandled`: the number of unhandled messages in a certain time range;
+      `m:segmentation`: the segmentation of the messages based on the type in a certain time range;
+      `r:segmentation`: the segmentation of the request messages based on the type in a certain time range;
+
+      * ConversationMetrics with `dimension` set to `conversation`, you can set `metric` to:
+      `c:total`: the number of conversation in a certain time range;
+      `c:new`: the number of new conversation in a certain time range;
+      `c:length`: the number of conversation in a certain time range with the length;
+      `c:path`: the number of paths of the conversations in a certain time;
+
+      * DialogueMetrics with `dimension` set to `dialogue`, you can set `metric` to:
+      `d:fallback`: the number of missed intent messages in a certain time range;
+      `d:intents`: the number of intents in a certain time range;
+      `d:domains`: the number of domains in a certain time range;
+
+      * BotMetrics with `dimension` set to `bot`, you can set `metric` to:
+      `b:response`: the number of users and messages in a certain time range.
+
+      It could be possible to post also aggregations.
+      "
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Analytic'
+              oneOf:
+                - $ref: '#/components/schemas/Analytic'
+                - $ref: '#/components/schemas/Aggregation'
       responses:
         '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTP_200_ANALYTIC'
-        '500':
-          description: malformed log
+                properties:
+                  staticId:
+                    type: string
+                    example: "bcpg8XYBHD_pmQ1jA7b8"
+        '400':
+          description: malformed requesy
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTP_500_ANALYTIC'
+                $ref: '#/components/schemas/HTTP_400'
 
-  /analytics/usercount:
     get:
       tags:
-        - analytics
+        - analytic
+      summary: Retrieve an analytic
+      description: "
+      This end-point allows to retrieve an analytic based on a `staticId`.
+
+      If the analytic requested is a `MessageMetrics` with metric `m:segmentation` or `r:segmentation` it will return a `HTTP_200_ANALYTIC_SEGMENTATION` object.
+
+      If the analytic requested is a `ConversationMetrics` it will return a `HTTP_200_ANALYTIC_CONVERSATION` object.
+
+      In all the other analytic cases will return a `HTTP_200_ANALYTIC` object.
+
+      For the aggreagtions will return a `HTTP_200_AGGREGATION` object.
+      "
+      parameters:
+        - in: query
+          name: staticId
+          schema:
+            type: string
+          required: true
+          description: the identifier of the analytic
+        - in: query
+          name: project
+          schema:
+            type: string
+          example: "MeMex"
+          description: the name of the project related to the analytic you want to retrieve
+          required: true
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC'
+                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC_SEGMENTATION'
+                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC_CONVERSATION'
+                  - $ref: '#/components/schemas/HTTP_200_AGGREGATION'
+        '400':
+          description: malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_400'
+        '404':
+          description: analytic not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_404'
+
+  /analytic/usercount:
+    get:
+      tags:
+        - analytic
       parameters:
         - in: query
           name: userId
@@ -412,17 +508,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/200_user_count'
 
-  /analytics/eventcount:
+  /analytic/eventcount:
     get:
       tags:
-        - analytics
+        - analytic
       parameters:
         - in: query
           name: eventId
           schema:
             type: string
           required: true
-          description: the identifier of the evnet for which you want to count the clicks
+          description: the identifier of the event for which you want to count the clicks
       summary: Retrieve the number click based on an event identifier
       description: Retrieve the number click based on an event identifier
       responses:
@@ -489,6 +585,7 @@ components:
           example: "USR-JDKHEIU2-31NJDTE94"
         timestamp:
           type: string
+          format: date-time
           description: Timestamp expressed in ISO format
           example: "2021-01-25T14:18:36.141378"
         content:
@@ -565,6 +662,7 @@ components:
           example: "1FKNSM-GEKRO2-DANK2-FJ33-DASDJOW"
         timestamp:
           type: string
+          format: date-time
           description: Timestamp expressed in ISO format
           example: "2021-01-25T14:18:36.141378"
         content:
@@ -614,6 +712,7 @@ components:
           example: "USR-JDKHEIU2-31NJDTE94"
         timestamp:
           type: string
+          format: date-time
           description: Timestamp expressed in ISO format
           example: "2021-01-25T14:18:36.141378"
         content:
@@ -890,6 +989,7 @@ components:
           example: "bot stopped"
         timestamp:
           type: string
+          format: date-time
           description: Timestamp expressed in ISO format
           example: "2021-01-25T14:18:36.141378"
         botVersion:
@@ -924,6 +1024,7 @@ components:
         type:
           type: string
           enum: ["analytic"]
+          example: "analytic"
       required:
         - project
         - timespan
@@ -948,7 +1049,8 @@ components:
           example: "messageId"
         aggregation:
           type: string
-          enum: ["avg", "min", "max", "sum", "stats", "extended_stats", "value_count", "cardinality", "percentiles", "percentile_ranks"]
+          enum: ["avg", "min", "max", "sum", "stats", "extended_stats", "value_count", "cardinality", "percentiles"]
+          example: "min"
         filters:
           type: array
           items:
@@ -987,6 +1089,7 @@ components:
         metric:
           type: string
           enum: ["u:total", "u:active", "u:engaged", "u:new"]
+          example: "u:active"
       required:
         - dimension
         - metric
@@ -999,7 +1102,8 @@ components:
           example: "message"
         metric:
           type: string
-          enum: ["m:from_user", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:notification_engagement"]
+          enum: ["m:from_users", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
+          example: "m:from_users"
       required:
         - dimension
         - metric
@@ -1013,6 +1117,7 @@ components:
         metric:
           type: string
           enum: ["c:total", "c:new", "c:length", "c:path"]
+          example: "c:new"
       required:
         - dimension
         - metric
@@ -1026,6 +1131,7 @@ components:
         metric:
           type: string
           enum: ["d:fallback", "d:intents", "d:domains"]
+          example: "d:domains"
       required:
         - dimension
         - metric
@@ -1039,6 +1145,7 @@ components:
         metric:
           type: string
           enum: ["b:response"]
+          example: "b:response"
       required:
         - dimension
         - metric
@@ -1068,11 +1175,11 @@ components:
         start:
           type: string
           format: date-time
-          example: "2019-07-23T16:31:24.432000"
+          example: "2021-01-25T14:18:36.141378"
         end:
           type: string
           format: date-time
-          example: "2019-07-23T16:35:50.00"
+          example: "2021-01-25T14:28:36.141378"
       required:
         - type
         - start
@@ -1122,18 +1229,67 @@ components:
             type:
               type: string
               example: "messageId"
-        status:
+        static_id:
           type: string
-          example: '200'
-        id:
-          type: string
-          example: 'wAu4EW4BFurD9NUGZY3z'
+          example: "wAu4EW4BFurD9NUGZY3z"
 
-    HTTP_500_ANALYTIC:
+    HTTP_200_ANALYTIC_SEGMENTATION:
       type: object
       properties:
-        message:
+        query:
+          oneOf:
+            - $ref: '#/components/schemas/Analytic'
+        result:
+          type: object
+          properties:
+            counts:
+              type: object
+              example: { "text": 26 }
+            type:
+              type: string
+              example: "type"
+        static_id:
           type: string
+          example: "wAu4EW4BFurD9NUGZY3z"
+
+    HTTP_200_ANALYTIC_CONVERSATION:
+      type: object
+      properties:
+        query:
+          oneOf:
+            - $ref: '#/components/schemas/Analytic'
+        conversations:
+          type: object
+          properties:
+            count:
+              type: number
+              format: int32
+            items:
+              type: array
+              items:
+                type: string
+            type:
+              type: string
+              example: "messageId"
+        static_id:
+          type: string
+          example: "wAu4EW4BFurD9NUGZY3z"
+
+    HTTP_200_AGGREGATION:
+      type: object
+      properties:
+        query:
+          oneOf:
+            - $ref: '#/components/schemas/Aggregation'
+        result:
+          type: object
+          properties:
+            metric:
+              type: string
+              example: "answer"
+        static_id:
+          type: string
+          example: "wAu4EW4BFurD9NUGZY3z"
 
     HTTP_201:
       type: object
@@ -1167,7 +1323,8 @@ components:
       type: object
       properties:
         type:
-          enum: ['click_per_event']
+          enum: ["click_per_event"]
+          example: "click_per_event"
         event:
           type: string
           example: "EV321423"
@@ -1175,14 +1332,17 @@ components:
           type: object
         status:
           enum: ['ok']
+          example: 'ok'
         cose:
           enum: [ '200' ]
+          example: '200'
 
     200_user_count:
       type: object
       properties:
         type:
-          enum: ['click_per_user']
+          enum: ["click_per_user"]
+          example: "click_per_user"
         user:
           type: string
           example: "USR30942"
@@ -1190,8 +1350,10 @@ components:
           type: object
         status:
           enum: ['ok']
+          example: 'ok'
         cose:
           enum: [ '200' ]
+          example: '200'
 
     HTTP_400:
       type: object

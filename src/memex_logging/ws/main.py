@@ -51,8 +51,6 @@ def build_production_app():
         elasticsearch_password=os.getenv("EL_PASSWORD", None),
     )
 
-    print("HERE")
-
     return ws_interface.get_application()
 
 

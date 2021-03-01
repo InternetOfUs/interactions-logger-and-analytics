@@ -18,11 +18,14 @@ import logging
 
 import datetime
 from elasticsearch import Elasticsearch
-from flask_restful import abort
+
+from memex_logging.utils.utils import Utils
+
+
+logger = logging.getLogger("logger.common.analytic.aggregation")
 
 
 class AggregationComputation:
-    g_index = "message-memex*"
 
     @staticmethod
     def aggregation_validity_check(analytic: dict):
@@ -30,57 +33,64 @@ class AggregationComputation:
 
         # check if timespan is in the dict
         if 'timespan' not in analytic:
-            abort(500, message="AGGREGATION.MODEL.CHECK: timespan failed")
+            logger.debug("timespan failed")
             return False
 
         # check if project is in the dict
         if 'project' not in analytic:
-            abort(500, message="AGGREGATION.MODEL.CHECK: project failed")
+            logger.debug("project failed")
             return False
 
-        # check if dimension is in the dict
+        # check if aggregation is in the dict
         if 'aggregation' not in analytic:
-            abort(500, message="AGGREGATION.MODEL.CHECK: dimension failed")
+            logger.debug("dimension failed")
             return False
 
-        # check if metric is in the dict
+        # check if field is in the dict
         if 'field' not in analytic:
-            abort(500, message="AGGREGATION.MODEL.CHECK: metric failed")
+            logger.debug("metric failed")
             return False
 
         # check timespan details
         if 'type' not in (analytic["timespan"]):
-            abort(500, message="AGGREGATION.MODEL.SUBCHECK: timespan.type.key failed")
+            logger.debug("timespan.type.key failed")
             return False
 
         if str(analytic['timespan']['type']).lower() not in ["default", "custom"]:
-            abort(500, message="AGGREGATION.MODEL.SUBCHECK: timespan.type.value failed")
+            logger.debug("timespan.type.value failed")
             return False
 
         allowed_time_defaults = ["30D", "10D", "7D", "1D", "TODAY"]
         if str(analytic['timespan']['type']).lower() == "default":
             if 'value' not in analytic['timespan']:
-                abort(500, message="AGGREGATION.MODEL.SUBCHECK: timespan.value.key failed")
+                logger.debug("timespan.value.key failed")
                 return False
             else:
                 if str(analytic['timespan']['value']).upper() not in allowed_time_defaults:
-                    abort(500, message="AGGREGATION.MODEL.SUBCHECK: timespan.value.value failed")
+                    logger.debug("timespan.value.value failed")
                     return False
+        else:
+            try:
+                datetime.datetime.fromisoformat(analytic['timespan']['start']).isoformat()
+                datetime.datetime.fromisoformat(analytic['timespan']['end']).isoformat()
+            except Exception as e:
+                logger.debug("timespan.start or timespan.end failed", exc_info=e)
+                return False
 
         if 'filters' in analytic:
             for item in analytic['filters']:
                 if 'field' not in item:
-                    abort(500, message="AGGREGATION.MODEL.SUBCHECK: filters.field failed")
+                    logger.debug("filters.field failed")
                     return False
                 if 'operation' not in item:
-                    abort(500, message="AGGREGATION.MODEL.SUBCHECK: filters.operation failed")
+                    logger.debug("filters.operation failed")
                     return False
                 allowed_operation = ["gre"]
                 if item['operation'] not in allowed_operation:
-                    abort(500, message="AGGREGATION.MODEL.SUBCHECK: filters.operation.value failed")
+                    logger.debug("filters.operation.value failed")
                     return False
                 if 'value' not in item:
-                    abort(500, message="AGGREGATION.MODEL.SUBCHECK: filters.value failed")
+                    logger.debug("filters.value failed")
                     return False
 
         return True
@@ -119,7 +129,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def min_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -156,7 +167,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def avg_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -193,7 +205,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def cardinality_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -230,7 +243,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def extended_stats_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -267,7 +281,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def percentiles_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -304,7 +319,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def stats_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -341,7 +357,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def sum_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -378,7 +395,8 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     def value_count_aggr(self, analytic: dict, es: Elasticsearch, project: str):
@@ -415,59 +433,38 @@ class AggregationComputation:
                 }
             }
         }
-        response = es.search(index=self.g_index, body=body, size=0)
+        index = Utils.generate_index(data_type="message", project=project)
+        response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
     @staticmethod
     def _support_bound_timestamp(time_object: dict):
         if str(time_object['type']).lower() == "default":
-            try:
-                if str(time_object['value']).upper() == "30D":
-                    now = datetime.datetime.now()
-                    delta = datetime.timedelta(days=30)
-                    temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
-                elif str(time_object['value']).upper() == "10D":
-                    now = datetime.datetime.now()
-                    delta = datetime.timedelta(days=10)
-                    temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
-                elif str(time_object['value']).upper() == "7D":
-                    now = datetime.datetime.now()
-                    delta = datetime.timedelta(days=7)
-                    temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
-                elif str(time_object['value']).upper() == "1D":
-                    now = datetime.datetime.now()
-                    delta = datetime.timedelta(days=1)
-                    temp_old = now - delta
-                    min_bound = str(temp_old.year) + "-" + str(temp_old.month) + "-" + str(temp_old.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
-                elif str(time_object['value']).upper() == "TODAY":
-                    now = datetime.datetime.now()
-                    min_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    max_bound = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
-                    return min_bound, max_bound
-            except:
-                abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot generate a valid date")
+            if str(time_object['value']).upper() == "30D":
+                now = datetime.datetime.now()
+                delta = datetime.timedelta(days=30)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "10D":
+                now = datetime.datetime.now()
+                delta = datetime.timedelta(days=10)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "7D":
+                now = datetime.datetime.now()
+                delta = datetime.timedelta(days=7)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "1D":
+                now = datetime.datetime.now()
+                delta = datetime.timedelta(days=1)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "TODAY":
+                now = datetime.datetime.now()
+                temp_old = datetime.datetime(now.year, now.month, now.day)
+                return temp_old.isoformat(), now.isoformat()
         else:
-            start = None
-            end = None
-            try:
-                print(time_object['start'])
-                start = datetime.datetime.strptime(time_object['start'], '%Y-%m-%d')  # %H:%M:%S.%f
-            except:
-                abort(500,
-                      message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot parse starting date. User a YYYY-MM-DD format")
-            try:
-                end = datetime.datetime.strptime(time_object['end'], '%Y-%m-%d')
-            except:
-                abort(500, message="ANALYTIC.COMPUTATION.TIMEBOUND: cannot parse ending date. User a YYYY-MM-DD format")
+            start = time_object['start']
+            end = time_object['end']
             return start, end
