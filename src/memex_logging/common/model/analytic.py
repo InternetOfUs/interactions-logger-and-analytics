@@ -86,33 +86,166 @@ class DefaultTime:
     @staticmethod
     def from_repr(data: dict) -> DefaultTime:
         if 'value' not in data:
-            raise ValueError('a Value must be defined in the timespan object')
+            raise ValueError('a Value must be defined in the `DefaultTime` object')
 
-        if str(data['value']).lower() not in ['today', 'yesterday', '7d', '30d']:
-            raise ValueError('unknown value for Value in the timespan')
+        if str(data['value']).lower() not in ['today', '1d', '7d', '10d', '30d']:
+            raise ValueError('unknown value for `value` in the `DefaultTime`')
 
         return DefaultTime(data['value'])
 
 
 class CustomTime:
-    def __init__(self, value: str):
-        self.value = value
+    def __init__(self, start: str, end: str):
+        self.start = start
+        self.end = end
 
     def to_repr(self) -> dict:
         return{
-            'type': 'default',
-            'value': self.value
+            'type': 'CUSTOM',
+            'start': self.start,
+            'end': self.end
         }
 
     @staticmethod
     def from_repr(data: dict) -> CustomTime:
-        if 'value' not in data:
-            raise ValueError('a Value must be defined in the timespan object')
+        if 'start' not in data or 'end' not in data:
+            raise ValueError('a start and end must be defined in the `CustomTime` object')
 
-        if str(data['value']).lower() not in ['today', 'yesterday', '7d', '30d']:
-            raise ValueError('unknown value for Value in the timespan')
+        return CustomTime(data['start'], data['end'])
 
-        return CustomTime(data['value'])
+
+class Metric:
+    def __init__(self, dimension: str, metric: str):
+        self.dimension = dimension
+        self.metric = metric
+
+    def to_repr(self) -> dict:
+        return{
+            'dimension': self.dimension,
+            'metric': self.metric
+        }
+
+    @staticmethod
+    def from_repr(data: dict) -> Metric:
+        if 'metric' not in data:
+            raise ValueError('A `metric` must be defined in the `Metric` object')
+
+        if 'dimension' in data:
+            if str(data['dimension']).lower() == UserMetric.USER_DIMENSION:
+                return UserMetric.from_repr(data)
+            elif str(data['dimension']).lower() == MessageMetric.MESSAGE_DIMENSION:
+                return MessageMetric.from_repr(data)
+            elif str(data['dimension']).lower() == ConversationMetric.CONVERSATION_DIMENSION:
+                return ConversationMetric.from_repr(data)
+            elif str(data['dimension']).lower() == DialogueMetric.DIALOGUE_DIMENSION:
+                return DialogueMetric.from_repr(data)
+            elif str(data['dimension']).lower() == BotMetric.BOT_DIMENSION:
+                return DialogueMetric.from_repr(data)
+            else:
+                raise ValueError("Unrecognized dimension for `Metric`")
+        else:
+            raise ValueError("A `dimension` must be defined in the `Metric` object")
+
+
+class UserMetric(Metric):
+
+    USER_DIMENSION = "user"
+
+    def __init__(self, metric: str):
+        super().__init__(self.USER_DIMENSION, metric)
+
+    @staticmethod
+    def from_repr(data: dict) -> UserMetric:
+        if 'metric' not in data:
+            raise ValueError('A `metric` must be defined in the `UserMetric` object')
+
+        if 'dimension' in data:
+            if str(data['dimension']).lower() != UserMetric.USER_DIMENSION:
+                raise ValueError("Unrecognized dimension for `UserMetric`")
+        else:
+            raise ValueError("A `dimension` must be defined in the `UserMetric` object")
+
+        return UserMetric(data['metric'])
+
+
+class MessageMetric(Metric):
+    MESSAGE_DIMENSION = "message"
+
+    def __init__(self, metric: str):
+        super().__init__(self.MESSAGE_DIMENSION, metric)
+
+    @staticmethod
+    def from_repr(data: dict) -> MessageMetric:
+        if 'metric' not in data:
+            raise ValueError('A `metric` must be defined in the `MessageMetric` object')
+
+        if 'dimension' in data:
+            if str(data['dimension']).lower() != MessageMetric.MESSAGE_DIMENSION:
+                raise ValueError("Unrecognized dimension for `MessageMetric`")
+        else:
+            raise ValueError("A `dimension` must be defined in the `MessageMetric` object")
+
+        return MessageMetric(data['metric'])
+
+
+class ConversationMetric(Metric):
+    CONVERSATION_DIMENSION = "conversation"
+
+    def __init__(self, metric: str):
+        super().__init__(self.CONVERSATION_DIMENSION, metric)
+
+    @staticmethod
+    def from_repr(data: dict) -> ConversationMetric:
+        if 'metric' not in data:
+            raise ValueError('A `metric` must be defined in the `ConversationMetric` object')
+
+        if 'dimension' in data:
+            if str(data['dimension']).lower() != ConversationMetric.CONVERSATION_DIMENSION:
+                raise ValueError("Unrecognized dimension for `ConversationMetric`")
+        else:
+            raise ValueError("A `dimension` must be defined in the `ConversationMetric` object")
+
+        return ConversationMetric(data['metric'])
+
+
+class DialogueMetric(Metric):
+    DIALOGUE_DIMENSION = "dialogue"
+
+    def __init__(self, metric: str):
+        super().__init__(self.DIALOGUE_DIMENSION, metric)
+
+    @staticmethod
+    def from_repr(data: dict) -> DialogueMetric:
+        if 'metric' not in data:
+            raise ValueError('A `metric` must be defined in the `DialogueMetric` object')
+
+        if 'dimension' in data:
+            if str(data['dimension']).lower() != DialogueMetric.DIALOGUE_DIMENSION:
+                raise ValueError("Unrecognized dimension for `DialogueMetric`")
+        else:
+            raise ValueError("A `dimension` must be defined in the `DialogueMetric` object")
+
+        return DialogueMetric(data['metric'])
+
+
+class BotMetric(Metric):
+    BOT_DIMENSION = "bot"
+
+    def __init__(self, metric: str):
+        super().__init__(self.BOT_DIMENSION, metric)
+
+    @staticmethod
+    def from_repr(data: dict) -> BotMetric:
+        if 'metric' not in data:
+            raise ValueError('A `metric` must be defined in the `BotMetric` object')
+
+        if 'dimension' in data:
+            if str(data['dimension']).lower() != BotMetric.BOT_DIMENSION:
+                raise ValueError("Unrecognized dimension for `BotMetric`")
+        else:
+            raise ValueError("A `dimension` must be defined in the `BotMetric` object")
+
+        return BotMetric(data['metric'])
 
 
 class Average:

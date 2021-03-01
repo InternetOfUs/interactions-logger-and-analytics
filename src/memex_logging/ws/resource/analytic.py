@@ -60,7 +60,7 @@ class AnalyticsPerformer(Resource):
         index_name = Utils.generate_index("analytic", project=project)
         response = self._es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
 
-        if response['hits']['total'] == 0:
+        if response['hits']['total']['value'] == 0:
             logger.debug("Resource not found")
             return {
                 "status": "Not found: resource not found",
@@ -71,13 +71,17 @@ class AnalyticsPerformer(Resource):
 
     def post(self):
         analytic = request.json
-        static_id = str(uuid.uuid4())
+
+        if analytic is None:
+            logger.debug("Analytic failed to be computed due to missing data")
+            return {
+                "status": "Malformed request: data is missing",
+                "code": 400
+            }, 400
 
         @self._celery.task()
         def compute(es: Elasticsearch, analytic: dict, static_id: str):
-            if 'type' not in analytic:
-                return
-            elif str(analytic['type']).lower() == "analytic":
+            if str(analytic['type']).lower() == "analytic":
 
                 # Data model check on the fly. Call the function and decide whether it is valid or not.
 
@@ -129,14 +133,34 @@ class AnalyticsPerformer(Resource):
                             },
                             "staticId": static_id
                         }
-                    elif metric == "m:from_user":
-                        answer = ac.compute_m_from_user(analytic, es, analytic['project'])
+                    elif metric == "m:from_users":
+                        answer = ac.compute_m_from_users(analytic, es, analytic['project'])
                         json_response = {
                             "query": analytic,
                             "result": {
                                 "count": answer[0],
                                 "items": answer[1],
                                 "type": "userId"
+                            },
+                            "staticId": static_id
+                        }
+                    elif metric == "m:segmentation":
+                        answer = ac.compute_m_segmentation(analytic, es, analytic['project'])
+                        json_response = {
+                            "query": analytic,
+                            "result": {
+                                "counts": answer,
+                                "type": "type"
+                            },
+                            "staticId": static_id
+                        }
+                    elif metric == "r:segmentation":
+                        answer = ac.compute_r_segmentation(analytic, es, analytic['project'])
+                        json_response = {
+                            "query": analytic,
+                            "result": {
+                                "counts": answer,
+                                "type": "content.type"
                             },
                             "staticId": static_id
                         }
@@ -199,7 +223,7 @@ class AnalyticsPerformer(Resource):
                         answer = ac.compute_c_total(analytic, es, analytic['project'])
                         json_response = {
                             "query": analytic,
-                            "result": {
+                            "conversations": {
                                 "count": answer[0],
                                 "items": answer[1],
                                 "type": "conversationId"
@@ -210,7 +234,7 @@ class AnalyticsPerformer(Resource):
                         answer = ac.compute_c_new(analytic, es, analytic['project'])
                         json_response = {
                             "query": analytic,
-                            "result": {
+                            "conversations": {
                                 "count": answer[0],
                                 "items": answer[1],
                                 "type": "conversationId"
@@ -232,7 +256,7 @@ class AnalyticsPerformer(Resource):
                         answer = ac.compute_c_path(analytic, es, analytic['project'])
                         json_response = {
                             "query": analytic,
-                            "result": {
+                            "conversations": {
                                 "count": answer[0],
                                 "items": answer[1],
                                 "type": "conversationId"
@@ -285,8 +309,6 @@ class AnalyticsPerformer(Resource):
                         }
                     else:
                         return
-
-                    # save analytics and put the _id to retrieve it
 
                     project = analytic['project']
                     index_name = "analytic-" + project.lower() + "-" + analytic['dimension']
@@ -380,15 +402,35 @@ class AnalyticsPerformer(Resource):
                     else:
                         return
 
-                    # save analytics and put the _id to retrieve it
-
                     project = analytic['project']
                     index_name = "analytic-" + project.lower() + "-" + analytic['aggregation']
                     es.index(index=index_name, doc_type='_doc', body=json_response)
 
-            else:
-                return
+        if 'type' not in analytic:
+            return {
+                "status": "Malformed request: `type` not present in the request body",
+                "code": 400
+            }, 400
 
+        if str(analytic['type']).lower() == "analytic":
+            if not AnalyticComputation.analytic_validity_check(analytic):
+                return {
+                    "status": "Malformed request: analytic not valid",
+                    "code": 400
+                }, 400
+        elif str(analytic['type']).lower() == "aggregation":
+            if not AggregationComputation.aggregation_validity_check(analytic):
+                return {
+                    "status": "Malformed request: aggregation not valid",
+                    "code": 400
+                }, 400
+        else:
+            return {
+                "status": "Malformed request: `type` not valid",
+                "code": 400
+            }, 400
+
+        static_id = str(uuid.uuid4())
         compute(es=self._es, analytic=analytic, static_id=static_id)
         return {"staticId": static_id}, 200
 
