@@ -1437,6 +1437,8 @@ class AnalyticComputation:
                 now = datetime.datetime.now()
                 temp_old = datetime.datetime(now.year, now.month, now.day)
                 return temp_old.isoformat(), now.isoformat()
+            else:
+                raise ValueError(f"Unable to handle the interval [{time_object['type']}]")
         else:
             start = time_object['start']
             end = time_object['end']
