@@ -1209,4 +1209,7 @@ class LoggingUtility:
             if response.status_code == 200:
                 break
 
-        return json.loads(r.content)["result"]
+        if response.status_code == 200:
+            return json.loads(response.content)["result"]
+        else:
+            raise Exception(f"request has return a code {response.status_code} with content {response.content}")

@@ -33,9 +33,12 @@ info:
   contact:
     email: "massimiliano.luca@unitn.it"
 
-# servers:
-#   - url: memex.u-hopper.com
-#   - url: http://0.0.0.0:80/
+servers:
+
+  - url: https://internetofus.u-hopper.com/prod/logger
+    description: WeNet production server
+  - url: https://wenet.u-hopper.com/dev/logger
+    description: WeNet development server
 
 tags:
 
@@ -428,7 +431,7 @@ paths:
                     type: string
                     example: "bcpg8XYBHD_pmQ1jA7b8"
         '400':
-          description: malformed requesy
+          description: malformed request
           content:
             application/json:
               schema:
