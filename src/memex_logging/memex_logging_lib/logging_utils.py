@@ -22,96 +22,10 @@ from typing import Optional, List, Union
 import requests
 
 from memex_logging.common.model.analytic import DefaultTime, CustomTime, Metric
+from memex_logging.common.model.message import Entity, ActionResponse, CarouselCardResponse
 
 
 logger = logging.getLogger("logger.memex_logging_lib.logging_utils")
-
-
-class Entity:
-
-    def __init__(self, type: str, value, confidence=None) -> None:
-        """
-        Method to create an Entity
-        :param type: the type of the entity (i.e., @city)
-        :param value: the value of the entity (i.e., Boston)
-        :param confidence: the confidence with which the entity has been detected. The default value for this parameter is 0.0
-        """
-        self.type = type
-        self.value = value
-        self.confidence = confidence
-
-    def __repr__(self) -> str:
-        return 'Entity(type {}, value {})'.format(self.type, self.value)
-
-    def to_dict(self) -> dict:
-        return {
-            "type": self.type,
-            "value": self.value,
-            "confidence": self.confidence
-        }
-
-
-class QuickReplyResponse:
-
-    def __init__(self, button_text: str, button_id=None) -> None:
-        """
-        Create a QuickReplyResponse object. A quick reply response is a button that suggest the user a quick action to perform.
-        :param button_text: the text of the button
-        :param button_id: optionally, the id of the button
-        """
-
-        self.button_text = button_text
-        self.button_id = button_id
-
-    def __repr__(self) -> str:
-        return 'QuickReplyResponse(value {}, id {})'.format(self.button_text, self.button_id)
-
-    def to_dict(self) -> dict:
-        return {
-            "type": "action",
-            "buttonText": self.button_text,
-            "buttonId": self.button_id
-        }
-
-
-class CarouselItem:
-
-    def __init__(self, title: str, image_url: str, subtitle="", default_action={}, buttons=[]) -> None:
-        """
-        Create a CarouselResponse Object. A carousel is a scrollable list of medias. As a best-practice, carousels should be used with no more that 6 elements and when the elements can be ranked.
-        :param title: the title of the slide of the carousel
-        :param image_url: the url of the media
-        :param subtitle: eventually, a subtitle for the slide
-        :param default_action: the default action the user may take. It is a dictionary and it is optional
-        :param buttons: a list of QuickReply responses (list of buttons to let the user perform quick actions)
-        """
-        self.title = title
-        self.image_url = image_url
-        self.subtitle = subtitle
-        self.default_action = default_action
-        self.buttons = buttons
-
-    def __repr__(self) -> str:
-        return "CarouselResponse obj"
-
-    def to_dict(self) -> dict:
-
-        buttons = []
-
-        for button in self.buttons:
-            if not isinstance(button, QuickReplyResponse):
-                raise ValueError("the elements in the button list should be instances of QuickReplyResponse")
-            else:
-                buttons.append(button.to_dict())
-
-        return {
-            "type": "carousel",
-            "title": self.title,
-            "imageUrl": self.image_url,
-            "subtitle": self.subtitle,
-            "defaultAction": self.default_action,
-            "buttons": buttons
-        }
 
 
 class LoggingUtility:
@@ -176,7 +90,7 @@ class LoggingUtility:
 
         entity_list = []
         for entity in entities:
-            entity_list.append(entity.to_dict())
+            entity_list.append(entity.to_repr())
 
         message_generated = {
             "messageId": message_id,
@@ -212,7 +126,7 @@ class LoggingUtility:
         else:
             raise ValueError("The message has not been logged")
 
-    def add_textual_request(self, message: object, message_id: str, user_id: str, channel: str,
+    def add_textual_request(self, message: str, message_id: str, user_id: str, channel: str,
                             timestamp: str, conversation_id: str = None, domain: str = None, intent_name: str = None,
                             intent_confidence: float = None,
                             entities: object = Optional[List[Entity]], language: object = None, metadata: object = Optional[dict]) -> str:
@@ -260,7 +174,7 @@ class LoggingUtility:
         temp_entities = []
 
         for entity in entities:
-            temp_entities.append(entity.to_dict())
+            temp_entities.append(entity.to_repr())
 
         message_generated = {
             "messageId": message_id,
@@ -345,7 +259,7 @@ class LoggingUtility:
             if not isinstance(entity, Entity):
                 raise ValueError("entities should be a list of Entity objects")
             else:
-                temp_entities.append(entity.to_dict())
+                temp_entities.append(entity.to_repr())
 
         message_generated = {
             "messageId": message_id,
@@ -428,7 +342,7 @@ class LoggingUtility:
         temp_entities = []
 
         for entity in entities:
-            temp_entities.append(entity.to_dict())
+            temp_entities.append(entity.to_repr())
 
         message_generated = {
             "messageId": message_id,
@@ -509,10 +423,10 @@ class LoggingUtility:
         button_list = []
         for button in buttons:
             if button[1] == "" or button[1] is None:
-                button_temp = QuickReplyResponse(button[0])
+                button_temp = ActionResponse(button[0])
             else:
-                button_temp = QuickReplyResponse(button[0], button_id=button[1])
-            button_list.append(button_temp.to_dict())
+                button_temp = ActionResponse(button[0], button_id=button[1])
+            button_list.append(button_temp.to_repr())
 
         content_dict = {
             'type': 'text',
@@ -592,10 +506,10 @@ class LoggingUtility:
         button_list = []
         for button in buttons:
             if button[1] == "" or button[1] is None:
-                button_temp = QuickReplyResponse(button[0])
+                button_temp = ActionResponse(button[0])
             else:
-                button_temp = QuickReplyResponse(button[0], button_id=button[1])
-            button_list.append(button_temp.to_dict())
+                button_temp = ActionResponse(button[0], button_id=button[1])
+            button_list.append(button_temp.to_repr())
 
         content_dict = {
             'type': 'attachment',
@@ -673,10 +587,10 @@ class LoggingUtility:
         button_list = []
         for button in buttons:
             if button[1] == "" or button[1] is None:
-                button_temp = QuickReplyResponse(button[0])
+                button_temp = ActionResponse(button[0])
             else:
-                button_temp = QuickReplyResponse(button[0], button_id=button[1])
-            button_list.append(button_temp.to_dict())
+                button_temp = ActionResponse(button[0], button_id=button[1])
+            button_list.append(button_temp.to_repr())
 
         content_dict = {
             "type": "multiaction",
@@ -748,8 +662,8 @@ class LoggingUtility:
 
         cards = []
         for item in carousel_items:
-            if isinstance(item, CarouselItem):
-                cards.append(item.to_dict())
+            if isinstance(item, CarouselCardResponse):
+                cards.append(item.to_repr())
 
         content_dict = {
             'type': 'carousel',
@@ -826,10 +740,10 @@ class LoggingUtility:
         button_list = []
         for button in buttons:
             if button[1] == "" or button[1] is None:
-                button_temp = QuickReplyResponse(button[0])
+                button_temp = ActionResponse(button[0])
             else:
-                button_temp = QuickReplyResponse(button[0], button_id=button[1])
-            button_list.append(button_temp.to_dict())
+                button_temp = ActionResponse(button[0], button_id=button[1])
+            button_list.append(button_temp.to_repr())
 
         content_dict = {
             'type': 'text',
@@ -904,10 +818,10 @@ class LoggingUtility:
         button_list = []
         for button in buttons:
             if button[1] == "" or button[1] is None:
-                button_temp = QuickReplyResponse(button[0])
+                button_temp = ActionResponse(button[0])
             else:
-                button_temp = QuickReplyResponse(button[0], button_id=button[1])
-            button_list.append(button_temp.to_dict())
+                button_temp = ActionResponse(button[0], button_id=button[1])
+            button_list.append(button_temp.to_repr())
 
         content_dict = {
             'type': 'attachment',
@@ -980,10 +894,10 @@ class LoggingUtility:
         button_list = []
         for button in buttons:
             if button[1] == "" or button[1] is None:
-                button_temp = QuickReplyResponse(button[0])
+                button_temp = ActionResponse(button[0])
             else:
-                button_temp = QuickReplyResponse(button[0], button_id=button[1])
-            button_list.append(button_temp.to_dict())
+                button_temp = ActionResponse(button[0], button_id=button[1])
+            button_list.append(button_temp.to_repr())
 
         content_dict = {
             "type": "multiaction",
@@ -1050,8 +964,8 @@ class LoggingUtility:
 
         cards = []
         for item in carousel_items:
-            if isinstance(item, CarouselItem):
-                cards.append(item.to_dict())
+            if isinstance(item, CarouselCardResponse):
+                cards.append(item.to_repr())
 
         content_dict = {
             'type': 'carousel',
@@ -1209,4 +1123,7 @@ class LoggingUtility:
             if response.status_code == 200:
                 break
 
-        return json.loads(r.content)["result"]
+        if response.status_code == 200:
+            return json.loads(response.content)["result"]
+        else:
+            raise Exception(f"request has return a code {response.status_code} with content {response.content}")

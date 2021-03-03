@@ -36,6 +36,7 @@ Required Python packages can be installed using the command:
 
 ```bash
 pip install -r requirements.txt
+pip install -r wenet-common-models/requirements.txt
 ```
 
 ### Environment variables
@@ -53,13 +54,17 @@ The web service allows to set the following environment variables:
 
 
 The script for computing the analytics allows to set the following environment variables:
-* `ANALYTIC_CSV_FILE`: the path of the csv file where to store the analytics, it can also be set using the argument `-f` or `--file` when manually running the Python service;
+* `CSV_FILE`: the path of the csv file where to store the analytics, it can also be set using the argument `-f` or `--file` when manually running the Python service;
 * `LOGGER_HOST`: the host of the logger web service, it can also be set using the argument `-lh` or `--lhost` when manually running the Python service;
 * `TASK_MANAGER_HOST`: the host of the task manager, it can also be set using the argument `-th` or `--thost` when manually running the Python service;
-* `ANALYTIC_PROJECT`: the project for which to compute the analytics, it can also be set using the argument `-p` or `--project` when manually running the Python service;
-* `ANALYTIC_RANGE`(optional, the default value is `30D`): The temporal range in which compute the analytics, it can also be set using the argument `-r` or `--range` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
 * `APP_ID`: the id of the application in which compute the analytics, it can also be set using the argument `-i` or `--appid` when manually running the Python service;
+* `PROJECT`: the project for which to compute the analytics, it can also be set using the argument `-p` or `--project` when manually running the Python service;
+* `TIME_RANGE`(optional, the default value is `30D`): The temporal range in which compute the analytics, the allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
+
+Alternatively to the `TIME_RANGE` arbitrary start and end time could be set using the following environment variables:
+* `START_TIME`: The start time from which compute the analytics, must be in iso format, it can also be set using the argument `-s` or `--start` when manually running the Python service;
+* `END_TIME`: The end time up to which compute the analytics, must be in iso format, it can also be set using the argument `-e` or `--end` when manually running the Python service.
 
 
 ## Usage

@@ -14,10 +14,10 @@
 
 from __future__ import absolute_import, annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import logging
 import uuid
-from typing import Optional
+from typing import Optional, Tuple
 
 import dateutil.parser
 from elasticsearch import Elasticsearch
@@ -56,6 +56,40 @@ class Utils:
                 index_name = f"{data_type.lower()}-*"
 
         return index_name
+
+    @staticmethod
+    def extract_range_timestamps(time_object: dict) -> Tuple[str, str]:
+        if str(time_object['type']).lower() == "default":
+            if str(time_object['value']).upper() == "30D":
+                now = datetime.now()
+                delta = timedelta(days=30)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "10D":
+                now = datetime.now()
+                delta = timedelta(days=10)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "7D":
+                now = datetime.now()
+                delta = timedelta(days=7)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "1D":
+                now = datetime.now()
+                delta = timedelta(days=1)
+                temp_old = now - delta
+                return temp_old.isoformat(), now.isoformat()
+            elif str(time_object['value']).upper() == "TODAY":
+                now = datetime.now()
+                temp_old = datetime(now.year, now.month, now.day)
+                return temp_old.isoformat(), now.isoformat()
+            else:
+                raise ValueError(f"Unable to handle the interval [{time_object['value']}]")
+        else:
+            start = time_object['start']
+            end = time_object['end']
+            return start, end
 
     # TODO stop using this and remove!!!!!
     @staticmethod
