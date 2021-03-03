@@ -39,8 +39,8 @@ class TaskManagerConnector:
         offset = 0
         while not has_got_all_tasks:
             result = requests.get(self._host + "/tasks", headers=self._create_apikey_header(),
-                                  params={"appId": app_id, "createdFrom": int(created_from.timestamp()),
-                                          "createdTo": int(created_to.timestamp()), "offset": offset})
+                                  params={"appId": app_id, "creationFrom": int(created_from.timestamp()),
+                                          "creationTo": int(created_to.timestamp()), "offset": offset})
 
             if result.status_code == 200:
                 task_page = TaskPage.from_repr(json.loads(result.content))
@@ -60,8 +60,8 @@ class TaskManagerConnector:
         offset = 0
         while not has_got_all_transactions:
             result = requests.get(self._host + "/taskTransactions", headers=self._create_apikey_header(),
-                                  params={"appId": app_id, "createdFrom": int(created_from.timestamp()),
-                                          "createdTo": int(created_to.timestamp()), "offset": offset})
+                                  params={"appId": app_id, "creationFrom": int(created_from.timestamp()),
+                                          "creationTo": int(created_to.timestamp()), "offset": offset})
 
             if result.status_code == 200:
                 transaction_page = TaskTransactionPage.from_repr(json.loads(result.content))
