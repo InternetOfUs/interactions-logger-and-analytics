@@ -169,7 +169,13 @@ class ActionRequest:
 
 class ActionResponse:
 
-    def __init__(self, button_text: str, button_id: str):
+    def __init__(self, button_text: str, button_id: Optional[str] = None) -> None:
+        """
+        Create an ActionResponse object. An action response is a button that suggest the user an action to perform.
+        :param button_text: the text of the button
+        :param button_id: optionally, the id of the button
+        """
+
         self.button_text = button_text
         self.button_id = button_id
 
@@ -199,7 +205,7 @@ class ActionResponse:
 
 class MultiActionResponse:
 
-    def __init__(self, buttons: Optional[List[ActionResponse]]):
+    def __init__(self, buttons: Optional[List[ActionResponse]]) -> None:
         self.buttons = buttons
 
     def to_repr(self) -> dict:
@@ -231,7 +237,7 @@ class MultiActionResponse:
 
 class TextualRequest:
 
-    def __init__(self, value: str):
+    def __init__(self, value: str) -> None:
         self.value = value
 
     def to_repr(self) -> dict:
@@ -287,7 +293,7 @@ class TextualResponse:
 
 class AttachmentRequest:
 
-    def __init__(self, uri: str, alternative_text: str):
+    def __init__(self, uri: str, alternative_text: Optional[str]) -> None:
         self.uri = uri
         self.alternative_text = alternative_text
 
@@ -315,7 +321,7 @@ class AttachmentRequest:
 
 class AttachmentResponse:
 
-    def __init__(self, uri: str, alternative_text: str, buttons: Optional[List[ActionResponse]]):
+    def __init__(self, uri: str, alternative_text: Optional[str], buttons: Optional[List[ActionResponse]]) -> None:
         """
         Create an AttachmentResponse Object. An attachment response is a response containing only a media
         :param uri: uri of the media as a string
@@ -364,7 +370,16 @@ class AttachmentResponse:
 
 class CarouselCardResponse:
 
-    def __init__(self, title: str, image_url: str, subtitle: str, default_action: dict, buttons: Optional[List[ActionResponse]]):
+    def __init__(self, title: str, image_url: Optional[str], subtitle: Optional[str], default_action: Optional[dict], buttons: Optional[List[ActionResponse]]) -> None:
+        """
+        Create a CarouselCardResponse Object. A carousel is a scrollable list of medias. As a best-practice, carousels should be used with no more that 6 elements and when the elements can be ranked.
+        :param title: the title of the slide of the carousel
+        :param image_url: the url of the media
+        :param subtitle: eventually, a subtitle for the slide
+        :param default_action: the default action the user may take. It is a dictionary and it is optional
+        :param buttons: a list of ActionResponse responses (list of buttons to let the user perform actions)
+        """
+
         self.title = title
         self.image_url = image_url
         self.subtitle = subtitle
@@ -373,8 +388,11 @@ class CarouselCardResponse:
 
     def to_repr(self) -> dict:
         buttons = []
-        for action in self.buttons:
-            buttons.append(ActionResponse.to_repr(action))
+        for button in self.buttons:
+            if not isinstance(button, ActionResponse):
+                raise ValueError("The elements in the button list should be instances of ActionResponse")
+            else:
+                buttons.append(button.to_repr())
 
         return {
             'title': self.title,
@@ -415,7 +433,7 @@ class CarouselCardResponse:
 
 class CarouselResponse:
 
-    def __init__(self, cards: List[CarouselCardResponse]):
+    def __init__(self, cards: List[CarouselCardResponse]) -> None:
         self.cards = cards
 
     def to_repr(self) -> dict:
@@ -446,7 +464,14 @@ class CarouselResponse:
 
 class Entity:
 
-    def __init__(self, entity_type: str, value: str, confidence: float):
+    def __init__(self, entity_type: str, value: str, confidence: float) -> None:
+        """
+        Method to create an Entity
+        :param entity_type: the type of the entity (i.e., @city)
+        :param value: the value of the entity (i.e., Boston)
+        :param confidence: the confidence with which the entity has been detected
+        """
+
         self.type = entity_type
         self.value = value
         self.confidence = confidence
@@ -657,7 +682,7 @@ class ResponseMessage(Message):
     ]
 
     def __init__(self, message_id: str, conversation_id: Optional[str], channel: str, user_id: str, response_to: str,
-                 timestamp: datetime, content, metadata: Optional[dict], project: str):
+                 timestamp: datetime, content, metadata: Optional[dict], project: str) -> None:
 
         super().__init__(message_id, conversation_id, channel, user_id, timestamp, content, metadata, project)
 
@@ -726,7 +751,7 @@ class NotificationMessage(Message):
     ]
 
     def __init__(self, message_id: str, conversation_id: Optional[str], channel: str, user_id: str, timestamp: datetime,
-                 content, metadata: Optional[dict], project: str):
+                 content, metadata: Optional[dict], project: str) -> None:
 
         super().__init__(message_id, conversation_id, channel, user_id, timestamp, content, metadata, project)
 
