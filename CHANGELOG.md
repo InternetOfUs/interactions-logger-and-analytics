@@ -2,6 +2,12 @@
 
 ## Version 1.*
 
+### 1.2.1
+
+* Updated the script for storing analytics on csv
+* Updated wenet-common-models
+* Updated queries for analytics including project keyword
+
 ### 1.2.0
 
 * Updated message and user metrics
