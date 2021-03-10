@@ -82,8 +82,26 @@ class CommonDao:
                         }
                     ]
                 }
-            }
+            },
+            "sort": [
+                {
+                    "timestamp": {
+                        "order": "asc"
+                    }
+                }
+            ]
         }
+
+    @staticmethod
+    def _add_project_to_query(query: dict, project: str) -> dict:
+        query["query"]["bool"]["must"].append(
+            {
+                "match_phrase": {
+                    "project.keyword": project
+                }
+            }
+        )
+        return query
 
     def add(self, index: str, object_repr: dict, doc_type: str = "_doc") -> str:
         """
