@@ -24,7 +24,7 @@ CELERY_BROKER_URL='redis://localhost:6379/0'
 CELERY_RESULT_BACKEND='redis://localhost:6379/0'
 ```
 
-There is also a script for computing the analytics using the logger web service and a task manager.
+There is also a script for computing the analytics, questions and users using the logger, the task manager, the hub, the profile manager and the incentive server.
 It stores them in a .csv file which name should change in order to save analytics computed in different days to avoid overwriting them.
 
 
@@ -53,12 +53,13 @@ The web service allows to set the following environment variables:
 * `CELERY_RESULT_BACKEND` (optional, the default value is `None`): the information about the result backend to use the Celery instance, it must be in the following format: `redis://:password@hostname:port/db_number`.
 
 
-The script for computing the analytics allows to set the following environment variables:
-* `CSV_FILE`: the path of the csv file where to store the analytics, it can also be set using the argument `-f` or `--file` when manually running the Python service;
-* `LOGGER_HOST`: the host of the logger web service, it can also be set using the argument `-lh` or `--lhost` when manually running the Python service;
-* `TASK_MANAGER_HOST`: the host of the task manager, it can also be set using the argument `-th` or `--thost` when manually running the Python service;
+The script for computing the analytics, questions and users allows to set the following environment variables:
+* `ANALYTICS_FILE`: the path of the csv/tsv file where to store the analytics, it can also be set using the argument `-af` or `--afile` when manually running the Python service;
+* `QUESTIONS_FILE`: the path of the csv/tsv file where to store the questions, it can also be set using the argument `-qf` or `--qfile` when manually running the Python service;
+* `USERS_FILE`: the path of the csv/tsv file where to store the users, it can also be set using the argument `-uf` or `--ufile` when manually running the Python service;
+* `INSTANCE`: the host of the logger web service, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
-* `APP_ID`: the id of the application in which compute the analytics, it can also be set using the argument `-i` or `--appid` when manually running the Python service;
+* `APP_ID`: the id of the application in which compute the analytics, it can also be set using the argument `-ai` or `--appid` when manually running the Python service;
 * `PROJECT`: the project for which to compute the analytics, it can also be set using the argument `-p` or `--project` when manually running the Python service;
 * `TIME_RANGE`(optional, the default value is `30D`): The temporal range in which compute the analytics, the allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
 
