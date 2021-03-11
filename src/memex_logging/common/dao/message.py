@@ -212,4 +212,6 @@ class MessageDao(CommonDao):
             query = self._add_message_type_to_query(query, message_type)
 
         messages_repr = self.search(index, query)
+        if len(messages_repr) == max_size:
+            logger.warning(f"The number of messages retrieved has reached the maximum size of `{max_size}`")
         return [Message.from_repr(message_repr) for message_repr in messages_repr]
