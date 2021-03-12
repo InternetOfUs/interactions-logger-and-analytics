@@ -2,6 +2,11 @@
 
 ## Version 1.*
 
+### 1.3.0
+
+* Added project filter into queries for message endpoint and other minor fixes
+* Improved script for analytics and added all questions and their chosen answers and users and associated cohorts
+
 ### 1.2.1
 
 * Updated the script for storing analytics on csv
