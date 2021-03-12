@@ -130,13 +130,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -194,13 +188,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -258,13 +246,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -317,13 +299,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -421,13 +397,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -476,13 +446,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -534,13 +498,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -587,13 +545,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -647,13 +599,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -701,13 +647,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -759,13 +699,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -819,13 +753,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -879,13 +807,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -935,13 +857,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -990,13 +906,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -1089,13 +999,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -1144,13 +1048,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -1203,13 +1101,7 @@ class AnalyticComputation:
                             {
                                 "range": {
                                     "timestamp": {
-                                        "gte": min_bound
-                                    }
-                                }
-                            },
-                            {
-                                "range": {
-                                    "timestamp": {
+                                        "gte": min_bound,
                                         "lte": max_bound
                                     }
                                 }
@@ -1263,13 +1155,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -1309,13 +1195,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -1359,13 +1239,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -1422,13 +1296,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -1487,13 +1355,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }
@@ -1534,13 +1396,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound
-                                }
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
+                                    "gte": min_bound,
                                     "lte": max_bound
                                 }
                             }

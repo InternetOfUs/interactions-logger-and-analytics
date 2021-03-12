@@ -106,7 +106,7 @@ class LoggingUtility:
             "domain": domain,
             "intent": intent_dict,
             "entities": entity_list,
-            "project": self._project.lower(),
+            "project": self._project,
             "language": language,
             "metadata": metadata,
             "type": "REQUEST"
@@ -189,7 +189,7 @@ class LoggingUtility:
             "domain": domain,
             "intent": intent_dict,
             "entities": temp_entities,
-            "project": self._project.lower(),
+            "project": self._project,
             "language": language,
             "metadata": metadata,
             "type": "REQUEST"
@@ -274,7 +274,7 @@ class LoggingUtility:
             "domain": domain,
             "intent": intent_dict,
             "entities": temp_entities,
-            "project": self._project.lower(),
+            "project": self._project,
             "language": language,
             "metadata": metadata,
             "type": "REQUEST"
@@ -358,7 +358,7 @@ class LoggingUtility:
             "domain": domain,
             "intent": intent_dict,
             "entities": temp_entities,
-            "project": self._project.lower(),
+            "project": self._project,
             "language": language,
             "metadata": metadata,
             "type": "REQUEST"
@@ -443,7 +443,7 @@ class LoggingUtility:
             "responseTo": response_to,
             "content": content_dict,
             "metadata": metadata,
-            "project": self._project.lower(),
+            "project": self._project,
             "type": "RESPONSE"
         }
 
@@ -529,7 +529,7 @@ class LoggingUtility:
             "responseTo": response_to,
             "content": content_dict,
             "metadata": metadata,
-            "project": self._project.lower(),
+            "project": self._project,
             "type": "RESPONSE"
         }
 
@@ -608,7 +608,7 @@ class LoggingUtility:
             "responseTo": response_to,
             "content": content_dict,
             "metadata": metadata,
-            "project": self._project.lower(),
+            "project": self._project,
             "type": "RESPONSE"
         }
 
@@ -681,7 +681,7 @@ class LoggingUtility:
             "responseTo": response_to,
             "content": content_dict,
             "metadata": metadata,
-            "project": self._project.lower(),
+            "project": self._project,
             "type": "NOTIFICATION"
         }
 
@@ -759,7 +759,7 @@ class LoggingUtility:
             "timestamp": timestamp,
             "content": content_dict,
             "metadata": metadata,
-            "project": self._project.lower(),
+            "project": self._project,
             "type": "NOTIFICATION"
         }
 
@@ -840,7 +840,7 @@ class LoggingUtility:
             "timestamp": timestamp,
             "content": content_dict,
             "metadata": metadata,
-            "project": self._project.lower(),
+            "project": self._project,
             "type": "NOTIFICATION"
         }
 
@@ -914,7 +914,7 @@ class LoggingUtility:
             "timestamp": timestamp,
             "content": content_dict,
             "metadata": metadata,
-            "project": self._project.lower(),
+            "project": self._project,
             "type": "NOTIFICATION"
         }
 
@@ -982,7 +982,7 @@ class LoggingUtility:
             "timestamp": timestamp,
             "content": content_dict,
             "metadata": metadata,
-            "project": self._project.lower(),
+            "project": self._project,
             "type": "NOTIFICATION"
         }
 
@@ -1073,7 +1073,7 @@ class LoggingUtility:
 
         log_generated = {
             "logId": log_id,
-            "project": self._project.lower(),
+            "project": self._project,
             "component": component,
             "authority": authority,
             "severity": severity,
@@ -1100,7 +1100,7 @@ class LoggingUtility:
     def get_analytic(self, temporal_range: Union[DefaultTime, CustomTime], metric: Metric, sleep_time: int = 1) -> dict:
 
         json_payload = {
-            "project": self._project.lower(),
+            "project": self._project,
             "timespan": temporal_range.to_repr(),
             "type": "analytic"
         }

@@ -87,8 +87,8 @@ class Utils:
             else:
                 raise ValueError(f"Unable to handle the interval [{time_object['value']}]")
         else:
-            start = time_object['start']
-            end = time_object['end']
+            start = datetime.fromisoformat(time_object['start']).isoformat()
+            end = datetime.fromisoformat(time_object['end']).isoformat()
             return start, end
 
     # TODO stop using this and remove!!!!!

@@ -35,12 +35,12 @@ class TestMessageDao(TestCase):
                     "must": [
                         {
                             "match_phrase": {
-                                "messageId": "message_id"
+                                "messageId.keyword": "message_id"
                             }
                         },
                         {
                             "match_phrase": {
-                                "userId": "user_id"
+                                "userId.keyword": "user_id"
                             }
                         }
                     ]
@@ -68,4 +68,3 @@ class TestMessageDao(TestCase):
 
         index = message_dao._generate_index_based_on_time_range("project", datetime(2021, 2, 4), datetime(2021, 2, 5))
         self.assertEqual(f"{MessageDao.BASE_INDEX}-project-*", index)
-
