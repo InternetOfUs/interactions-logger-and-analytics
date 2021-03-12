@@ -72,6 +72,8 @@ class CommonDao:
             "query": {
                 "bool": {
                     "must": [
+                    ],
+                    "filter": [
                         {
                             "range": {
                                 "timestamp": {
