@@ -204,15 +204,15 @@ if __name__ == '__main__':
     questions_file.writerow(["question", "answer"])
 
     for task in tasks:
-        map_id_answer = {}
+        id_answer_map = {}
         chosen_answer_id = None
         for transaction in task.transactions:
             if transaction.label == LABEL_ANSWER_TRANSACTION:
-                map_id_answer[transaction.id] = transaction.attributes.get("answer")
+                id_answer_map[transaction.id] = transaction.attributes.get("answer")
             if transaction.label == LABEL_BEST_ANSWER_TRANSACTION:
                 chosen_answer_id = transaction.attributes.get("transactionId")
         if chosen_answer_id:
-            questions_file.writerow([task.goal.name, map_id_answer[chosen_answer_id]])
+            questions_file.writerow([task.goal.name, id_answer_map[chosen_answer_id]])
         else:
             questions_file.writerow([task.goal.name])
 
@@ -228,8 +228,6 @@ if __name__ == '__main__':
 
     users_file.writerow(["app id", args.appid])
     users_file.writerow(["project", args.project])
-    users_file.writerow(["from", created_from])
-    users_file.writerow(["to", created_to])
     users_file.writerow([])
     users_file.writerow(["user id", "name", "surname", "email", "gender", "incentive cohort"])
 
