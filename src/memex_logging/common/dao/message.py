@@ -49,7 +49,7 @@ class MessageDao(CommonDao):
                     "must": [
                         {
                             "match_phrase": {
-                                "messageId": message_id
+                                "messageId.keyword": message_id
                             }
                         }
                     ]
@@ -62,7 +62,7 @@ class MessageDao(CommonDao):
         query["query"]["bool"]["must"].append(
             {
                 "match_phrase": {
-                    "userId": user_id
+                    "userId.keyword": user_id
                 }
             }
         )
@@ -73,7 +73,7 @@ class MessageDao(CommonDao):
         query["query"]["bool"]["must"].append(
             {
                 "match_phrase": {
-                    "channel": channel
+                    "channel.keyword": channel
                 }
             }
         )
@@ -84,7 +84,7 @@ class MessageDao(CommonDao):
         query["query"]["bool"]["must"].append(
             {
                 "match_phrase": {
-                    "type": message_type
+                    "type.keyword": message_type
                 }
             }
         )
@@ -138,6 +138,8 @@ class MessageDao(CommonDao):
 
         index = self._generate_index(project=project)
         query = self._build_query_based_on_parameters(trace_id=trace_id, message_id=message_id, user_id=user_id)
+        if project:
+            query = self._add_project_to_query(query, project)
         response = self.get(index, query)
         message = Message.from_repr(response[0])
         trace_id = response[1]
@@ -157,6 +159,8 @@ class MessageDao(CommonDao):
 
         index = self._generate_index(project=project)
         query = self._build_query_based_on_parameters(trace_id=trace_id, message_id=message_id, user_id=user_id)
+        if project:
+            query = self._add_project_to_query(query, project)
         self.delete(index, query)
 
     def _generate_index_based_on_time_range(self, project: str, from_time: datetime, to_time: datetime) -> str:
@@ -196,6 +200,7 @@ class MessageDao(CommonDao):
 
         index = self._generate_index_based_on_time_range(project, from_time, to_time)
         query = self._build_time_range_query(from_time, to_time, max_size)
+        query = self._add_project_to_query(query, project)
 
         if user_id:
             query = self._add_user_id_to_query(query, user_id)
@@ -207,4 +212,6 @@ class MessageDao(CommonDao):
             query = self._add_message_type_to_query(query, message_type)
 
         messages_repr = self.search(index, query)
+        if len(messages_repr) == max_size:
+            logger.warning(f"The number of messages retrieved has reached the maximum size of `{max_size}`")
         return [Message.from_repr(message_repr) for message_repr in messages_repr]
