@@ -260,5 +260,7 @@ if __name__ == '__main__':
                 break
 
         users_file_writer.writerow([user.name.first, user.name.last, user.email, user.gender.name.lower() if user.gender else None, user_cohort, has_user_enabled_ilog])
+        if not user.email:
+            logger.warning(f"User [{user.profile_id}] does not have an associated email")
 
     users_file.close()
