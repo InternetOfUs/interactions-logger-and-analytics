@@ -13,6 +13,9 @@ env.bak/
 venv.bak/
 
 *.log
+*.csv
+*.tsv
+*.json
 
 docker-compose.yml
 

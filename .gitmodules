@@ -1,3 +1,0 @@
-[submodule "wenet-common-models"]
-	path = wenet-common-models
-	url = ../wenet-common-models.git
