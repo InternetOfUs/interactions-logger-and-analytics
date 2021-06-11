@@ -22,6 +22,7 @@ import os
 from datetime import datetime
 
 from wenet.common.interface.client import ApikeyClient
+from wenet.common.interface.component import ComponentInterface
 from wenet.common.interface.incentive_server import IncentiveServerInterface
 from wenet.common.interface.profile_manager import ProfileManagerInterface
 from wenet.common.interface.task_manager import TaskManagerInterface
@@ -64,7 +65,7 @@ if __name__ == '__main__':
     arg_parser.add_argument("-uf", "--ufile", type=str, default=os.getenv("USERS_FILE"), help="The path of csv/tsv file where to store users")
     arg_parser.add_argument("-tf", "--tfile", type=str, default=os.getenv("TASK_FILE"), help="The path of json file where to store the tasks")
     arg_parser.add_argument("-df", "--dfile", type=str, default=os.getenv("DUMP_FILE"), help="The path of json file where to store the dump of messages")
-    arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
+    arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", ComponentInterface.DEVELOPMENT_INSTANCE), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
     arg_parser.add_argument("-ai", "--appid", type=str, default=os.getenv("APP_ID"), help="The id of the application in which compute the analytics")
     arg_parser.add_argument("-il", "--ilog", type=str, default=os.getenv("ILOG"), help="The id of the ilog application to check if the user has enabled it or not")

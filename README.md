@@ -63,11 +63,11 @@ The script for computing the analytics, questions, users and for extracting the 
 * `USERS_FILE`: the path of the csv/tsv file where to store the users, it can also be set using the argument `-uf` or `--ufile` when manually running the Python service;
 * `TASK_FILE`: the path of the json file where to store the tasks, it can also be set using the argument `-tf` or `--tfile` when manually running the Python service;
 * `DUMP_FILE`: the path of the json file where to store the dump of messages, it can also be set using the argument `-df` or `--dfile` when manually running the Python service;
-* `INSTANCE`: the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
+* `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
 * `APP_ID`: the id of the application in which compute the analytics, it can also be set using the argument `-ai` or `--appid` when manually running the Python service;
 * `PROJECT`: the project for which to compute the analytics, it can also be set using the argument `-p` or `--project` when manually running the Python service;
-* `TIME_RANGE`(optional, the default value is `30D`): The temporal range in which compute the analytics, the allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
+* `TIME_RANGE` (optional, the default value is `30D`): The temporal range in which compute the analytics, the allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
 
 Alternatively to the `TIME_RANGE` arbitrary start and end time could be set using the following environment variables:
 
@@ -78,7 +78,7 @@ Alternatively to the `TIME_RANGE` arbitrary start and end time could be set usin
 The script for getting the association between the id and the email of users allows to set the following environment variables:
 
 * `FILE`: the path of the csv/tsv file where to store the id-email associations, it can also be set using the argument `-f` or `--file` when manually running the Python service;
-* `INSTANCE`: the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
+* `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
 * `APP_ID`: the id of the application in which compute the analytics, it can also be set using the argument `-ai` or `--appid` when manually running the Python service;
 
