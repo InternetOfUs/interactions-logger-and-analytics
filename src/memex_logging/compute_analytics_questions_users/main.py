@@ -75,10 +75,10 @@ if __name__ == '__main__':
     args = arg_parser.parse_args()
 
     client = ApikeyClient(args.apikey)
-    task_manager_connector = TaskManagerInterface(client, instance=args.instance)
+    task_manager_interface = TaskManagerInterface(client, instance=args.instance)
     hub_interface = HubInterface(client, instance=args.instance)
-    profile_manager_connector = ProfileManagerInterface(client, instance=args.instance)
-    incentive_server_connector = IncentiveServerInterface(client, instance=args.instance)
+    profile_manager_interface = ProfileManagerInterface(client, instance=args.instance)
+    incentive_server_interface = IncentiveServerInterface(client, instance=args.instance)
     logger_operations = LoggingUtility(args.instance + "/logger", args.project, {ApikeyClient.COMPONENT_AUTHORIZATION_APIKEY_HEADER: args.apikey})
 
     if args.start and args.end:
@@ -160,19 +160,14 @@ if __name__ == '__main__':
         notification_messages = segmentation_messages_result["counts"][TYPE_NOTIFICATION_MESSAGE]
     analytics_file_writer.writerow(["messages from wenet", notification_messages, "The number of messages sent by the WeNet platform"])
 
-    tasks = task_manager_connector.get_tasks(args.appid, created_from, created_to)
+    tasks = task_manager_interface.get_tasks(args.appid, created_from, created_to)
     task_file = open(args.tfile, "w")
     json.dump([task.to_repr() for task in tasks], task_file, ensure_ascii=False, indent=2)
     task_file.close()
     analytics_file_writer.writerow(["questions", len(tasks), "The number of questions asked by the users"])
 
-    transactions = task_manager_connector.get_transactions(args.appid, created_from, created_to)
-    # file.writerow(["actions on questions and answers", len(transactions), "The total number of actions performed on questions and answers by the users"])
-
+    transactions = task_manager_interface.get_transactions(args.appid, created_from, created_to)
     transaction_labels = [transaction.label for transaction in transactions]
-
-    # created_task_transactions = transaction_labels.count(LABEL_CREATE_TASK_TRANSACTION)
-    # file.writerow(["created questions", created_task_transactions, "The number of questions created"])  # it should be equal to `questions`, it is a duplicate
 
     report_question_transactions = transaction_labels.count(LABEL_REPORT_QUESTION_TRANSACTION)
     analytics_file_writer.writerow(["question reports", report_question_transactions, "The number of reports created for questions (e.g. usually for malicious contents)"])
@@ -243,10 +238,10 @@ if __name__ == '__main__':
     users_file_writer.writerow([])
     users_file_writer.writerow(["name", "surname", "email", "gender", "incentive cohort", "ilog"])
 
-    cohorts = incentive_server_connector.get_cohorts()
+    cohorts = incentive_server_interface.get_cohorts()
     ilog_user_ids = hub_interface.get_user_ids_for_app(args.ilog)
     for user_id in user_ids:
-        user = profile_manager_connector.get_user_profile(user_id)
+        user = profile_manager_interface.get_user_profile(user_id)
         user_cohort = None
         for cohort in cohorts:
             if cohort.get("app_id") == args.appid:

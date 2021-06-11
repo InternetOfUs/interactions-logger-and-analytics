@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     client = ApikeyClient(args.apikey)
     hub_interface = HubInterface(client, instance=args.instance)
-    profile_manager_connector = ProfileManagerInterface(client, instance=args.instance)
+    profile_manager_interface = ProfileManagerInterface(client, instance=args.instance)
 
     name, extension = os.path.splitext(args.file)
     file = open(args.file, "w")
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     file_writer.writerow(["id", "email"])
 
     for user_id in user_ids:
-        user = profile_manager_connector.get_user_profile(user_id)
+        user = profile_manager_interface.get_user_profile(user_id)
         file_writer.writerow([user.profile_id, user.email])
 
     file.close()
