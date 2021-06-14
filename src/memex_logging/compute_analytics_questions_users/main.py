@@ -1,4 +1,4 @@
-# Copyright 2020 U-Hopper srl
+# Copyright 2021 U-Hopper srl
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,15 +16,20 @@ from __future__ import absolute_import, annotations
 
 import argparse
 import csv
+import json
 import logging.config
 import os
 from datetime import datetime
 
+from wenet.common.interface.client import ApikeyClient
+from wenet.common.interface.component import ComponentInterface
+from wenet.common.interface.incentive_server import IncentiveServerInterface
+from wenet.common.interface.profile_manager import ProfileManagerInterface
+from wenet.common.interface.task_manager import TaskManagerInterface
+
 from memex_logging.common.log.logging import get_logging_configuration
 from memex_logging.common.model.analytic import DefaultTime, UserMetric, MessageMetric, CustomTime
-from memex_logging.compute_analytics_questions_users.incentive_server_connector import IncentiveServerConnector
-from memex_logging.compute_analytics_questions_users.profile_manager_connector import ProfileManagerConnector
-from memex_logging.compute_analytics_questions_users.task_manager_connector import TaskManagerConnector
+from memex_logging.common.model.message import Message
 from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
 from memex_logging.utils.utils import Utils
 from wenet.common.interface.hub import HubInterface
@@ -55,10 +60,12 @@ LABEL_REPORT_ANSWER_TRANSACTION = "reportAnswerTransaction"
 if __name__ == '__main__':
 
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-af", "--afile", type=str, default=os.getenv("ANALYTICS_FILE"), help="The path of csv/tsv file where to save analytics")
-    arg_parser.add_argument("-qf", "--qfile", type=str, default=os.getenv("QUESTIONS_FILE"), help="The path of csv/tsv file where to save questions")
-    arg_parser.add_argument("-uf", "--ufile", type=str, default=os.getenv("USERS_FILE"), help="The path of csv/tsv file where to save users")
-    arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
+    arg_parser.add_argument("-af", "--afile", type=str, default=os.getenv("ANALYTICS_FILE"), help="The path of csv/tsv file where to store analytics")
+    arg_parser.add_argument("-qf", "--qfile", type=str, default=os.getenv("QUESTIONS_FILE"), help="The path of csv/tsv file where to store questions")
+    arg_parser.add_argument("-uf", "--ufile", type=str, default=os.getenv("USERS_FILE"), help="The path of csv/tsv file where to store users")
+    arg_parser.add_argument("-tf", "--tfile", type=str, default=os.getenv("TASK_FILE"), help="The path of json file where to store the tasks")
+    arg_parser.add_argument("-df", "--dfile", type=str, default=os.getenv("DUMP_FILE"), help="The path of json file where to store the dump of messages")
+    arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", ComponentInterface.DEVELOPMENT_INSTANCE), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
     arg_parser.add_argument("-ai", "--appid", type=str, default=os.getenv("APP_ID"), help="The id of the application in which compute the analytics")
     arg_parser.add_argument("-il", "--ilog", type=str, default=os.getenv("ILOG"), help="The id of the ilog application to check if the user has enabled it or not")
@@ -68,18 +75,12 @@ if __name__ == '__main__':
     arg_parser.add_argument("-e", "--end", type=str, default=os.getenv("END_TIME"), help="The end time up to which compute the analytics")
     args = arg_parser.parse_args()
 
-    logger_host = args.instance + "/logger"
-    task_manager_host = args.instance + "/task_manager"
-    hub_host = args.instance + "/hub/frontend"
-    profile_manager_host = args.instance + "/profile_manager"
-    incentive_server_host = args.instance + "/incentive_server"
-
-    headers = {"x-wenet-component-apikey": args.apikey}
-    operations = LoggingUtility(logger_host, args.project, headers)
-    task_manager_connector = TaskManagerConnector(task_manager_host, args.apikey)
-    hub_interface = HubInterface(hub_host)
-    profile_manager_connector = ProfileManagerConnector(profile_manager_host, args.apikey)
-    incentive_server_connector = IncentiveServerConnector(incentive_server_host, args.apikey)
+    client = ApikeyClient(args.apikey)
+    task_manager_interface = TaskManagerInterface(client, instance=args.instance)
+    hub_interface = HubInterface(client, instance=args.instance)
+    profile_manager_interface = ProfileManagerInterface(client, instance=args.instance)
+    incentive_server_interface = IncentiveServerInterface(client, instance=args.instance)
+    logger_operations = LoggingUtility(args.instance + "/logger", args.project, {ApikeyClient.COMPONENT_AUTHORIZATION_APIKEY_HEADER: args.apikey})
 
     if args.start and args.end:
         time_range = CustomTime(args.start, args.end)
@@ -90,6 +91,7 @@ if __name__ == '__main__':
     created_from = datetime.fromisoformat(created_from)
     created_to = datetime.fromisoformat(created_to)
 
+    # get analytics
     name, extension = os.path.splitext(args.afile)
     analytics_file = open(args.afile, "w")
     if extension == ".csv":
@@ -108,23 +110,23 @@ if __name__ == '__main__':
     analytics_file_writer.writerow(["metric", "count", "description"])
 
     total_users = UserMetric("u:total")
-    total_users_result = operations.get_analytic(time_range, total_users)
+    total_users_result = logger_operations.get_analytic(time_range, total_users)
     analytics_file_writer.writerow(["total users", total_users_result["count"], "The total number of users of the application"])
 
     active_users = UserMetric("u:active")
-    active_users_result = operations.get_analytic(time_range, active_users)
+    active_users_result = logger_operations.get_analytic(time_range, active_users)
     analytics_file_writer.writerow(["active users", active_users_result["count"], "The number of users who used the application"])
 
     engaged_users = UserMetric("u:engaged")
-    engaged_users_result = operations.get_analytic(time_range, engaged_users)
+    engaged_users_result = logger_operations.get_analytic(time_range, engaged_users)
     analytics_file_writer.writerow(["engaged users", engaged_users_result["count"], "The number of users who received a notification from the platform (incentive, prompt, badge, ..)"])
 
     new_users = UserMetric("u:new")
-    new_users_result = operations.get_analytic(time_range, new_users)
+    new_users_result = logger_operations.get_analytic(time_range, new_users)
     analytics_file_writer.writerow(["new users", new_users_result["count"], "The number of new users who activated the application during the period of this analysis"])
 
     segmentation_messages = MessageMetric("m:segmentation")
-    segmentation_messages_result = operations.get_analytic(time_range, segmentation_messages)
+    segmentation_messages_result = logger_operations.get_analytic(time_range, segmentation_messages)
 
     total_messages = 0
     for key in segmentation_messages_result["counts"]:
@@ -137,7 +139,7 @@ if __name__ == '__main__':
     analytics_file_writer.writerow(["messages from users", request_messages, "The number of messages sent by users (textual messages, clicked buttons and commands)"])
 
     segmentation_requests = MessageMetric("r:segmentation")
-    segmentation_requests_result = operations.get_analytic(time_range, segmentation_requests)
+    segmentation_requests_result = logger_operations.get_analytic(time_range, segmentation_requests)
 
     text_requests = 0
     if TYPE_TEXT_CONTENT_REQUEST in segmentation_requests_result["counts"]:
@@ -159,16 +161,14 @@ if __name__ == '__main__':
         notification_messages = segmentation_messages_result["counts"][TYPE_NOTIFICATION_MESSAGE]
     analytics_file_writer.writerow(["messages from wenet", notification_messages, "The number of messages sent by the WeNet platform"])
 
-    tasks = task_manager_connector.get_tasks(args.appid, created_from, created_to)
+    tasks = task_manager_interface.get_tasks(args.appid, created_from, created_to)
+    task_file = open(args.tfile, "w")
+    json.dump([task.to_repr() for task in tasks], task_file, ensure_ascii=False, indent=2)
+    task_file.close()
     analytics_file_writer.writerow(["questions", len(tasks), "The number of questions asked by the users"])
 
-    transactions = task_manager_connector.get_transactions(args.appid, created_from, created_to)
-    # file.writerow(["actions on questions and answers", len(transactions), "The total number of actions performed on questions and answers by the users"])
-
+    transactions = task_manager_interface.get_transactions(args.appid, created_from, created_to)
     transaction_labels = [transaction.label for transaction in transactions]
-
-    # created_task_transactions = transaction_labels.count(LABEL_CREATE_TASK_TRANSACTION)
-    # file.writerow(["created questions", created_task_transactions, "The number of questions created"])  # it should be equal to `questions`, it is a duplicate
 
     report_question_transactions = transaction_labels.count(LABEL_REPORT_QUESTION_TRANSACTION)
     analytics_file_writer.writerow(["question reports", report_question_transactions, "The number of reports created for questions (e.g. usually for malicious contents)"])
@@ -239,10 +239,10 @@ if __name__ == '__main__':
     users_file_writer.writerow([])
     users_file_writer.writerow(["name", "surname", "email", "gender", "incentive cohort", "ilog"])
 
-    cohorts = incentive_server_connector.get_cohorts()
+    cohorts = incentive_server_interface.get_cohorts()
     ilog_user_ids = hub_interface.get_user_ids_for_app(args.ilog)
     for user_id in user_ids:
-        user = profile_manager_connector.get_user_profile(user_id)
+        user = profile_manager_interface.get_user_profile(user_id)
         user_cohort = None
         for cohort in cohorts:
             if cohort.get("app_id") == args.appid:
@@ -264,3 +264,13 @@ if __name__ == '__main__':
             logger.warning(f"User [{user.profile_id}] does not have an associated email")
 
     users_file.close()
+
+    # extracting messages dump
+    messages = [Message.from_repr(message) for message in logger_operations.get_messages(created_from, created_to, max_size=10000)]
+    while len(messages) < total_messages:
+        message = messages.pop(-1)
+        messages.extend([Message.from_repr(message) for message in logger_operations.get_messages(message.timestamp, created_to, max_size=10000)])
+
+    dump_file = open(args.dfile, "w")
+    json.dump([message.to_repr() for message in messages], dump_file, ensure_ascii=False, indent=2)
+    dump_file.close()

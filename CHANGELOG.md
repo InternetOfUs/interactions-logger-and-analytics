@@ -2,6 +2,12 @@
 
 ## Version 1.*
 
+### NEXT
+
+* Imported wenet common models as PyPi package
+* Improved script for analytics and added the export of the tasks and messages in dedicated json files
+* Added script for getting the association between the id and the email of users
+
 ### 1.3.0
 
 * Added project filter into queries for message endpoint and other minor fixes

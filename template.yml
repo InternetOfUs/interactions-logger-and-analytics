@@ -22,13 +22,22 @@
         gunicorn_app: build_production_app()
     docker_registry: docker.io
 
-    ci_stages:
-      - build
-      - test
-      - push
     ci_environments:
-      - staging
-      - production
+      issue:
+        stages:
+          - name: build
+            manual: true
+          - name: test
+      staging:
+        stages:
+          - name: build
+          - name: test
+          - name: push
+      production:
+        stages:
+          - name: build
+          - name: test
+          - name: push
 
   roles:
     - uh.project_template
