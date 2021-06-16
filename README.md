@@ -26,6 +26,15 @@ CELERY_BROKER_URL='redis://localhost:6379/0'
 CELERY_RESULT_BACKEND='redis://localhost:6379/0'
 ```
 
+You'll need a worker to get things done, run the following command in a separate terminal tab:
+
+```bash
+celery worker -A memex_logging.ws.celery_worker.celery
+```
+
+Note that it requires all the environment variables of the web service to work.
+
+
 There is also a script for computing the analytics, questions, users. Analytics, questions and users will be stored in dedicated .csv/.tsv files.
 It also extracts the tasks and a dump of the messages using the logger, the task manager, the hub, the profile manager and the incentive server. The tasks and the messages will be stored in dedicated .json files.
 

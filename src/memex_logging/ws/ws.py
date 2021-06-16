@@ -17,7 +17,6 @@ from __future__ import absolute_import, annotations
 import logging
 import os
 
-from celery import Celery
 from elasticsearch import Elasticsearch
 from flask import Flask
 from flask_restful import Api
@@ -45,31 +44,14 @@ class WsInterface(object):
             CELERY_BROKER_URL=os.getenv("CELERY_BROKER_URL", None)
         )
         self._api = Api(app=self._app)
-        self._celery = self.make_celery(self._app)
-        self._init_modules(self._dao_collector, self._es, self._celery)
+        self._init_modules(self._dao_collector, self._es)
 
-    def make_celery(self, app):
-        celery = Celery(
-            app.import_name,
-            backend=app.config['CELERY_RESULT_BACKEND'],
-            broker=app.config['CELERY_BROKER_URL']
-        )
-        celery.conf.update(app.config)
-
-        class ContextTask(celery.Task):
-            def __call__(self, *args, **kwargs):
-                with app.app_context():
-                    return self.run(*args, **kwargs)
-
-        celery.Task = ContextTask
-        return celery
-
-    def _init_modules(self, dao_collector: DaoCollector, es: Elasticsearch, celery: Celery) -> None:
+    def _init_modules(self, dao_collector: DaoCollector, es: Elasticsearch) -> None:
         active_routes = [
             (MessageResourceBuilder.routes(dao_collector), ""),
             (LoggingResourceBuilder.routes(es), ""),
             (PerformancesResourceBuilder.routes(es), "/performance"),
-            (AnalyticsResourceBuilder.routes(es, celery), ""),
+            (AnalyticsResourceBuilder.routes(es), ""),
             (DocumentationResourceBuilder.routes(), "")
         ]
 
@@ -83,3 +65,15 @@ class WsInterface(object):
 
     def get_application(self):
         return self._app
+
+    @staticmethod
+    def init_celery(celery, app):
+        celery.conf.update(app.config)
+        TaskBase = celery.Task
+
+        class ContextTask(TaskBase):
+            def __call__(self, *args, **kwargs):
+                with app.app_context():
+                    return self.run(*args, **kwargs)
+
+        celery.Task = ContextTask
