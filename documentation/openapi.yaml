@@ -297,7 +297,7 @@ paths:
       summary: Retrieve a single log by specifying the trace id
       description: This end-point can be used to retrieve all the information of a single log
       parameters:
-        - in: path
+        - in: query
           name: id
           schema:
             type: string
@@ -324,7 +324,7 @@ paths:
       summary: Update an already existing log
       description: This method should be used to update existing logs
       parameters:
-        - in: path
+        - in: query
           name: id
           schema:
             type: string
@@ -350,7 +350,7 @@ paths:
       summary: Delete a log
       description: This method should be used to delete a log from the database
       parameters:
-        - in: path
+        - in: query
           name: id
           schema:
             type: string
@@ -397,6 +397,17 @@ paths:
       `m:segmentation`: the segmentation of the messages based on the type in a certain time range;
       `r:segmentation`: the segmentation of the request messages based on the type in a certain time range;
 
+      * TaskMetrics with `dimension` set to `task`, you can set `metric` to:
+      `t:total`: the number of total tasks in a certain time range;
+      `t:active`: the number of active/open tasks in a certain time range;
+      `t:closed`: the number of closed tasks in a certain time range;
+      `t:new`: the number of new tasks in a certain time range;
+
+      * TransactionMetrics with `dimension` set to `transaction`, you can set `metric` to:
+      `t:total`: the number of total transactions in a certain time range;
+      `t:new`: the number of new transactions in a certain time range;
+      `t:segmentation`: the segmentation of the transactions based on the type in a certain time range;
+
       * ConversationMetrics with `dimension` set to `conversation`, you can set `metric` to:
       `c:total`: the number of conversation in a certain time range;
       `c:new`: the number of new conversation in a certain time range;
@@ -418,7 +429,13 @@ paths:
           application/json:
             schema:
               oneOf:
-                - $ref: '#/components/schemas/Analytic'
+                - $ref: '#/components/schemas/UserAnalytic'
+                - $ref: '#/components/schemas/MessageAnalytic'
+                - $ref: '#/components/schemas/TaskAnalytic'
+                - $ref: '#/components/schemas/TransactionAnalytic'
+                - $ref: '#/components/schemas/ConversationAnalytic'
+                - $ref: '#/components/schemas/DialogueAnalytic'
+                - $ref: '#/components/schemas/BotAnalytic'
                 - $ref: '#/components/schemas/Aggregation'
       responses:
         '200':
@@ -1007,13 +1024,7 @@ components:
       items:
         $ref: '#/components/schemas/Log'
 
-    Analytic:
-      oneOf:
-        - $ref: '#/components/schemas/UserMetrics'
-        - $ref: '#/components/schemas/MessageMetrics'
-        - $ref: '#/components/schemas/ConversationMetrics'
-        - $ref: '#/components/schemas/DialogueMetrics'
-        - $ref: '#/components/schemas/BotMetrics'
+    CommonAnalytic:
       type: object
       properties:
         project:
@@ -1083,7 +1094,9 @@ components:
         - operation
         - value
 
-    UserMetrics:
+    UserAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
       properties:
         dimension:
           type: string
@@ -1097,7 +1110,9 @@ components:
         - dimension
         - metric
 
-    MessageMetrics:
+    MessageAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
       properties:
         dimension:
           type: string
@@ -1111,7 +1126,41 @@ components:
         - dimension
         - metric
 
-    ConversationMetrics:
+    TaskAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
+      properties:
+        dimension:
+          type: string
+          enum: ["task"]
+          example: "task"
+        metric:
+          type: string
+          enum: ["t:total", "t:active", "t:closed", "t:new"]
+          example: "t:active"
+      required:
+        - dimension
+        - metric
+
+    TransactionAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
+      properties:
+        dimension:
+          type: string
+          enum: ["transaction"]
+          example: "transaction"
+        metric:
+          type: string
+          enum: ["t:total", "u:new", "t:segmentation"]
+          example: "t:new"
+      required:
+        - dimension
+        - metric
+
+    ConversationAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
       properties:
         dimension:
           type: string
@@ -1125,7 +1174,9 @@ components:
         - dimension
         - metric
 
-    DialogueMetrics:
+    DialogueAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
       properties:
         dimension:
           type: string
@@ -1139,7 +1190,9 @@ components:
         - dimension
         - metric
 
-    BotMetrics:
+    BotAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
       properties:
         dimension:
           type: string
@@ -1218,7 +1271,13 @@ components:
       properties:
         query:
           oneOf:
-            - $ref: '#/components/schemas/Analytic'
+            - $ref: '#/components/schemas/UserAnalytic'
+            - $ref: '#/components/schemas/MessageAnalytic'
+            - $ref: '#/components/schemas/TaskAnalytic'
+            - $ref: '#/components/schemas/TransactionAnalytic'
+            - $ref: '#/components/schemas/ConversationAnalytic'
+            - $ref: '#/components/schemas/DialogueAnalytic'
+            - $ref: '#/components/schemas/BotAnalytic'
         result:
           type: object
           properties:
@@ -1241,7 +1300,13 @@ components:
       properties:
         query:
           oneOf:
-            - $ref: '#/components/schemas/Analytic'
+            - $ref: '#/components/schemas/UserAnalytic'
+            - $ref: '#/components/schemas/MessageAnalytic'
+            - $ref: '#/components/schemas/TaskAnalytic'
+            - $ref: '#/components/schemas/TransactionAnalytic'
+            - $ref: '#/components/schemas/ConversationAnalytic'
+            - $ref: '#/components/schemas/DialogueAnalytic'
+            - $ref: '#/components/schemas/BotAnalytic'
         result:
           type: object
           properties:
@@ -1260,7 +1325,13 @@ components:
       properties:
         query:
           oneOf:
-            - $ref: '#/components/schemas/Analytic'
+            - $ref: '#/components/schemas/UserAnalytic'
+            - $ref: '#/components/schemas/MessageAnalytic'
+            - $ref: '#/components/schemas/TaskAnalytic'
+            - $ref: '#/components/schemas/TransactionAnalytic'
+            - $ref: '#/components/schemas/ConversationAnalytic'
+            - $ref: '#/components/schemas/DialogueAnalytic'
+            - $ref: '#/components/schemas/BotAnalytic'
         conversations:
           type: object
           properties:
