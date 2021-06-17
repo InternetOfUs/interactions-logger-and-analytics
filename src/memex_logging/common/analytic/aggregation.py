@@ -16,7 +16,7 @@ from __future__ import absolute_import, annotations
 
 import logging
 
-import datetime
+from datetime import datetime
 from elasticsearch import Elasticsearch
 
 from memex_logging.common.model.aggregation import Filter, Aggregation
@@ -76,8 +76,8 @@ class AggregationComputation:
                     return False
         elif str(analytic['timespan']['type']).upper() == CustomTime.CUSTOM_TIME_TYPE:
             try:
-                datetime.datetime.fromisoformat(analytic['timespan']['start']).isoformat()
-                datetime.datetime.fromisoformat(analytic['timespan']['end']).isoformat()
+                datetime.fromisoformat(analytic['timespan']['start']).isoformat()
+                datetime.fromisoformat(analytic['timespan']['end']).isoformat()
             except Exception as e:
                 logger.debug("timespan.start or timespan.end failed", exc_info=e)
                 return False

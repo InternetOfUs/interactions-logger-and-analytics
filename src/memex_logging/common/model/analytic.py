@@ -214,7 +214,7 @@ class TaskAnalytic(CommonAnalytic):
 class TransactionAnalytic(CommonAnalytic):
 
     TRANSACTION_DIMENSION = "transaction"
-    ALLOWED_TRANSACTION_METRIC_VALUES = ["t:total", "u:new", "t:segmentation"]
+    ALLOWED_TRANSACTION_METRIC_VALUES = ["t:total", "t:new", "t:segmentation"]
 
     def __init__(self, timespan: Union[DefaultTime, CustomTime], project: str, metric: str, task_id: str = None):
         super().__init__(timespan, project, self.TRANSACTION_DIMENSION, metric)

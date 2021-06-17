@@ -16,8 +16,9 @@ from __future__ import absolute_import, annotations
 
 import logging
 
-import datetime
+from datetime import datetime
 from elasticsearch import Elasticsearch
+from wenet.common.interface.task_manager import TaskManagerInterface
 
 from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, TaskAnalytic, TransactionAnalytic, \
     ConversationAnalytic, DialogueAnalytic, BotAnalytic
@@ -73,8 +74,8 @@ class AnalyticComputation:
                     return False
         elif str(analytic['timespan']['type']).upper() == CustomTime.CUSTOM_TIME_TYPE:
             try:
-                datetime.datetime.fromisoformat(analytic['timespan']['start']).isoformat()
-                datetime.datetime.fromisoformat(analytic['timespan']['end']).isoformat()
+                datetime.fromisoformat(analytic['timespan']['start']).isoformat()
+                datetime.fromisoformat(analytic['timespan']['end']).isoformat()
             except Exception as e:
                 logger.debug("timespan.start or timespan.end failed", exc_info=e)
                 return False
@@ -854,6 +855,15 @@ class AnalyticComputation:
             logger.warning("The number of buckets is limited at `65535` but the number of unhandled messages is higher")
 
         return total_len, messages
+
+    @staticmethod
+    def compute_t_total(analytic: dict, task_manager_interface: TaskManagerInterface, project: str):
+        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
+        min_bound = datetime.fromisoformat(time_bound[0])
+        max_bound = datetime.fromisoformat(time_bound[1])
+
+        tasks = task_manager_interface.get_tasks(project, min_bound, max_bound)
+        return len(tasks), [task.task_id for task in tasks]
 
     @staticmethod
     def compute_c_total(analytic: dict, es: Elasticsearch, project: str):

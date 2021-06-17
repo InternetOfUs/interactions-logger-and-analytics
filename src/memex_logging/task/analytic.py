@@ -18,6 +18,8 @@ import logging
 import os
 
 from elasticsearch import Elasticsearch
+from wenet.common.interface.client import ApikeyClient
+from wenet.common.interface.task_manager import TaskManagerInterface
 
 from memex_logging.common.analytic.aggregation import AggregationComputation
 from memex_logging.common.analytic.analytic import AnalyticComputation
@@ -32,6 +34,8 @@ logger = logging.getLogger("logger.task.analytic")
 @celery.task()
 def compute_analytic(analytic: dict, static_id: str):
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
+    client = ApikeyClient(os.getenv("APIKEY"))
+    task_manager_interface = TaskManagerInterface(client, instance=os.getenv("INSTANCE"))
     if str(analytic['type']).lower() == CommonAnalytic.ANALYTIC_TYPE:
         if AnalyticComputation.analytic_validity_check(analytic):
             metric = str(analytic['metric']).lower()
@@ -162,6 +166,17 @@ def compute_analytic(analytic: dict, static_id: str):
                         "count": answer[0],
                         "items": answer[1],
                         "type": "messageId"
+                    },
+                    "staticId": static_id
+                }
+            elif metric == "t:total":  # TODO also for "t:total", "t:active", "t:closed", "t:new" x le task e per "t:total", "t:new", "t:segmentation" x le transaction (total è comune differenziare per dimension)
+                answer = AnalyticComputation.compute_t_total(analytic, task_manager_interface, analytic['project'])
+                json_response = {
+                    "query": analytic,
+                    "result": {
+                        "count": answer[0],
+                        "items": answer[1],
+                        "type": "taskId"
                     },
                     "staticId": static_id
                 }
