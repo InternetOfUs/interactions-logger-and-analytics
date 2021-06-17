@@ -18,11 +18,11 @@ import json
 import logging
 from datetime import datetime
 from time import sleep
-from typing import Optional, List, Union
+from typing import Optional, List
 
 import requests
 
-from memex_logging.common.model.analytic import DefaultTime, CustomTime, Metric, CommonAnalytic
+from memex_logging.common.model.analytic import CommonAnalytic
 from memex_logging.common.model.message import Entity, ActionResponse, CarouselCardResponse
 
 
