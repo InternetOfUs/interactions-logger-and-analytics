@@ -406,7 +406,8 @@ paths:
       * TransactionMetrics with `dimension` set to `transaction`, you can set `metric` to:
       `t:total`: the number of total transactions in a certain time range;
       `t:new`: the number of new transactions in a certain time range;
-      `t:segmentation`: the segmentation of the transactions based on the type in a certain time range;
+      `t:segmentation`: the segmentation of the transactions based on the type in a certain time range.
+      For this metric you can also specify the task id of intered using the field `taskId`;
 
       * ConversationMetrics with `dimension` set to `conversation`, you can set `metric` to:
       `c:total`: the number of conversation in a certain time range;
@@ -1154,6 +1155,9 @@ components:
           type: string
           enum: ["t:total", "u:new", "t:segmentation"]
           example: "t:new"
+        taskId:
+          type: string
+          example: "704ad78d6d52bf159d1d7a97"
       required:
         - dimension
         - metric
