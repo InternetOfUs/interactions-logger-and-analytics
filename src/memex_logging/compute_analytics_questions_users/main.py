@@ -28,8 +28,9 @@ from wenet.common.interface.profile_manager import ProfileManagerInterface
 from wenet.common.interface.task_manager import TaskManagerInterface
 
 from memex_logging.common.log.logging import get_logging_configuration
-from memex_logging.common.model.analytic import DefaultTime, UserMetric, MessageMetric, CustomTime
+from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic
 from memex_logging.common.model.message import Message
+from memex_logging.common.model.time import DefaultTime, CustomTime
 from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
 from memex_logging.utils.utils import Utils
 from wenet.common.interface.hub import HubInterface
@@ -109,24 +110,24 @@ if __name__ == '__main__':
     analytics_file_writer.writerow([])
     analytics_file_writer.writerow(["metric", "count", "description"])
 
-    total_users = UserMetric("u:total")
-    total_users_result = logger_operations.get_analytic(time_range, total_users)
+    total_users = UserAnalytic(time_range, args.project, "u:total")
+    total_users_result = logger_operations.get_analytic(total_users)
     analytics_file_writer.writerow(["total users", total_users_result["count"], "The total number of users of the application"])
 
-    active_users = UserMetric("u:active")
-    active_users_result = logger_operations.get_analytic(time_range, active_users)
+    active_users = UserAnalytic(time_range, args.project, "u:active")
+    active_users_result = logger_operations.get_analytic(active_users)
     analytics_file_writer.writerow(["active users", active_users_result["count"], "The number of users who used the application"])
 
-    engaged_users = UserMetric("u:engaged")
-    engaged_users_result = logger_operations.get_analytic(time_range, engaged_users)
+    engaged_users = UserAnalytic(time_range, args.project, "u:engaged")
+    engaged_users_result = logger_operations.get_analytic(engaged_users)
     analytics_file_writer.writerow(["engaged users", engaged_users_result["count"], "The number of users who received a notification from the platform (incentive, prompt, badge, ..)"])
 
-    new_users = UserMetric("u:new")
-    new_users_result = logger_operations.get_analytic(time_range, new_users)
+    new_users = UserAnalytic(time_range, args.project, "u:new")
+    new_users_result = logger_operations.get_analytic(new_users)
     analytics_file_writer.writerow(["new users", new_users_result["count"], "The number of new users who activated the application during the period of this analysis"])
 
-    segmentation_messages = MessageMetric("m:segmentation")
-    segmentation_messages_result = logger_operations.get_analytic(time_range, segmentation_messages)
+    segmentation_messages = MessageAnalytic(time_range, args.project, "m:segmentation")
+    segmentation_messages_result = logger_operations.get_analytic(segmentation_messages)
 
     total_messages = 0
     for key in segmentation_messages_result["counts"]:
@@ -138,8 +139,8 @@ if __name__ == '__main__':
         request_messages = segmentation_messages_result["counts"][TYPE_REQUEST_MESSAGE]
     analytics_file_writer.writerow(["messages from users", request_messages, "The number of messages sent by users (textual messages, clicked buttons and commands)"])
 
-    segmentation_requests = MessageMetric("r:segmentation")
-    segmentation_requests_result = logger_operations.get_analytic(time_range, segmentation_requests)
+    segmentation_requests = MessageAnalytic(time_range, args.project, "r:segmentation")
+    segmentation_requests_result = logger_operations.get_analytic(segmentation_requests)
 
     text_requests = 0
     if TYPE_TEXT_CONTENT_REQUEST in segmentation_requests_result["counts"]:

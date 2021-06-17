@@ -22,7 +22,7 @@ from typing import Optional, List, Union
 
 import requests
 
-from memex_logging.common.model.analytic import DefaultTime, CustomTime, Metric
+from memex_logging.common.model.analytic import DefaultTime, CustomTime, Metric, CommonAnalytic
 from memex_logging.common.model.message import Entity, ActionResponse, CarouselCardResponse
 
 
@@ -1139,15 +1139,9 @@ class LoggingUtility:
         else:
             raise ValueError("The log has not been logged")
 
-    def get_analytic(self, temporal_range: Union[DefaultTime, CustomTime], metric: Metric, sleep_time: int = 1) -> dict:
+    def get_analytic(self, analytic: CommonAnalytic, sleep_time: int = 1) -> dict:
 
-        json_payload = {
-            "project": self._project,
-            "timespan": temporal_range.to_repr(),
-            "type": "analytic"
-        }
-
-        json_payload.update(metric.to_repr())
+        json_payload = analytic.to_repr()
 
         api_point = self._access_point + "/analytic"
 

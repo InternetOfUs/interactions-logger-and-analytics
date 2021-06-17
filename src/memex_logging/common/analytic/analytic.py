@@ -19,6 +19,9 @@ import logging
 import datetime
 from elasticsearch import Elasticsearch
 
+from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, TaskAnalytic, TransactionAnalytic, \
+    ConversationAnalytic, DialogueAnalytic, BotAnalytic
+from memex_logging.common.model.time import DefaultTime, CustomTime
 from memex_logging.utils.utils import Utils
 
 
@@ -56,17 +59,16 @@ class AnalyticComputation:
             logger.debug("timespan.type.key failed")
             return False
 
-        if str(analytic['timespan']['type']).lower() not in ["default", "custom"]:
+        if str(analytic['timespan']['type']).lower() not in [DefaultTime.DEFAULT_TIME_TYPE, CustomTime.CUSTOM_TIME_TYPE]:
             logger.debug("timespan.type.value failed")
             return False
 
-        allowed_time_defaults = ["30D", "10D", "7D", "1D", "TODAY"]
-        if str(analytic['timespan']['type']).lower() == "default":
+        if str(analytic['timespan']['type']).upper() == DefaultTime.DEFAULT_TIME_TYPE:
             if 'value' not in analytic['timespan']:
                 logger.debug("timespan.value.key failed")
                 return False
             else:
-                if str(analytic['timespan']['value']).upper() not in allowed_time_defaults:
+                if str(analytic['timespan']['value']).upper() not in DefaultTime.ALLOWED_DEFAULT_TIME_VALUES:
                     logger.debug("timespan.value.value failed")
                     return False
         else:
@@ -77,38 +79,37 @@ class AnalyticComputation:
                 logger.debug("timespan.start or timespan.end failed", exc_info=e)
                 return False
 
-        # list the allowed dimensions and the allowed metrics split per sub_type
-        allowed_dimensions = ["user", "message", "conversation", "dialogue", "bot"]
-        if str(analytic['dimension']).lower() not in allowed_dimensions:
+        if str(analytic['dimension']).lower() == UserAnalytic.USER_DIMENSION:
+            if str(analytic['metric']).lower() not in UserAnalytic.ALLOWED_USER_METRIC_VALUES:
+                logger.debug("metric.value failed")
+                return False
+        elif str(analytic['dimension']).lower() == MessageAnalytic.MESSAGE_DIMENSION:
+            if str(analytic['metric']).lower() not in MessageAnalytic.ALLOWED_MESSAGE_METRIC_VALUES:
+                logger.debug("metric.value failed")
+                return False
+        elif str(analytic['dimension']).lower() == TaskAnalytic.TASK_DIMENSION:
+            if str(analytic['metric']).lower() not in TaskAnalytic.ALLOWED_TASK_METRIC_VALUES:
+                logger.debug("metric.value failed")
+                return False
+        elif str(analytic['dimension']).lower() == TransactionAnalytic.TRANSACTION_DIMENSION:
+            if str(analytic['metric']).lower() not in TransactionAnalytic.ALLOWED_TRANSACTION_METRIC_VALUES:
+                logger.debug("metric.value failed")
+                return False
+        elif str(analytic['dimension']).lower() == ConversationAnalytic.CONVERSATION_DIMENSION:
+            if str(analytic['metric']).lower() not in ConversationAnalytic.ALLOWED_CONVERSATION_METRIC_VALUES:
+                logger.debug("metric.value failed")
+                return False
+        elif str(analytic['dimension']).lower() == DialogueAnalytic.DIALOGUE_DIMENSION:
+            if str(analytic['metric']).lower() not in DialogueAnalytic.ALLOWED_DIALOGUE_METRIC_VALUES:
+                logger.debug("metric.value failed")
+                return False
+        elif str(analytic['dimension']).lower() == BotAnalytic.BOT_DIMENSION:
+            if str(analytic['metric']).lower() not in BotAnalytic.ALLOWED_BOT_METRIC_VALUES:
+                logger.debug("metric.value failed")
+                return False
+        else:
             logger.debug("dimension.value failed")
             return False
-
-        allowed_metrics_user = ["u:total", "u:active", "u:engaged", "u:new"]
-        allowed_metrics_message = ["m:from_users", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
-        allowed_metrics_conversation = ["c:total", "c:new", "c:length", "c:path"]
-        allowed_metrics_dialogue = ["d:fallback", "d:intents", "d:domains"]
-        allowed_metrics_bot = ["b:response"]
-
-        if str(analytic['dimension']).lower() == "user":
-            if str(analytic['metric']).lower() not in allowed_metrics_user:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == "message":
-            if str(analytic['metric']).lower() not in allowed_metrics_message:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == "conversation":
-            if str(analytic['metric']).lower() not in allowed_metrics_conversation:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == "dialogue":
-            if str(analytic['metric']).lower() not in allowed_metrics_dialogue:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == "bot":
-            if str(analytic['metric']).lower() not in allowed_metrics_bot:
-                logger.debug("metric.value failed")
-                return False
 
         return True
 

@@ -19,6 +19,8 @@ import logging
 import datetime
 from elasticsearch import Elasticsearch
 
+from memex_logging.common.model.aggregation import Filter, Aggregation
+from memex_logging.common.model.time import DefaultTime, CustomTime
 from memex_logging.utils.utils import Utils
 
 
@@ -46,6 +48,10 @@ class AggregationComputation:
             logger.debug("dimension failed")
             return False
 
+        if str(analytic['aggregation']).lower() not in Aggregation.ALLOWED_AGGREGATION_VALUES:
+            logger.debug("dimension.value failed")
+            return False
+
         # check if field is in the dict
         if 'field' not in analytic:
             logger.debug("metric failed")
@@ -56,17 +62,16 @@ class AggregationComputation:
             logger.debug("timespan.type.key failed")
             return False
 
-        if str(analytic['timespan']['type']).lower() not in ["default", "custom"]:
+        if str(analytic['timespan']['type']).lower() not in [DefaultTime.DEFAULT_TIME_TYPE, CustomTime.CUSTOM_TIME_TYPE]:
             logger.debug("timespan.type.value failed")
             return False
 
-        allowed_time_defaults = ["30D", "10D", "7D", "1D", "TODAY"]
-        if str(analytic['timespan']['type']).lower() == "default":
+        if str(analytic['timespan']['type']).upper() == DefaultTime.DEFAULT_TIME_TYPE:
             if 'value' not in analytic['timespan']:
                 logger.debug("timespan.value.key failed")
                 return False
             else:
-                if str(analytic['timespan']['value']).upper() not in allowed_time_defaults:
+                if str(analytic['timespan']['value']).upper() not in DefaultTime.ALLOWED_DEFAULT_TIME_VALUES:
                     logger.debug("timespan.value.value failed")
                     return False
         else:
@@ -85,8 +90,7 @@ class AggregationComputation:
                 if 'operation' not in item:
                     logger.debug("filters.operation failed")
                     return False
-                allowed_operation = ["gre"]
-                if item['operation'] not in allowed_operation:
+                if item['operation'] not in Filter.ALLOWED_OPERATIONS:
                     logger.debug("filters.operation.value failed")
                     return False
                 if 'value' not in item:
