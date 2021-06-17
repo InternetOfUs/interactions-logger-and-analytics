@@ -93,7 +93,7 @@ paths:
           name: project
           schema:
             type: string
-          example: "MeMex"
+          example: "wenet-ask-for-help"
           description: the name of the project related to the messages you want to retrieve
           required: true
         - in: query
@@ -168,7 +168,7 @@ paths:
           name: project
           schema:
             type: string
-          example: "MeMex"
+          example: "wenet-ask-for-help"
           description: the name of the project related to the message you want to retrieve
         - in: query
           name: messageId
@@ -224,7 +224,7 @@ paths:
           name: project
           schema:
             type: string
-          example: "MeMex"
+          example: "wenet-ask-for-help"
           description: the name of the project related to the message you want to delete
         - in: query
           name: messageId
@@ -481,7 +481,7 @@ paths:
           name: project
           schema:
             type: string
-          example: "MeMex"
+          example: "wenet-ask-for-help"
           description: the name of the project related to the analytic you want to retrieve
           required: true
       responses:
@@ -586,7 +586,7 @@ components:
         traceId:
           type: string
           example: "bcpg8XYBHD_pmQ1jA7b8"
-      example: { "messageId": "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8", "channel": "FACEBOOK", "userId": "USR-JDKHEIU2-31NJDTE94", "conversationId": "CONV-DAJKWPENVOA-314CAD", "timestamp": "2021-01-25T14:18:36.141378", "content": { "type": "text", "value": "devo fare un bonifico di 40 euro" }, "domain": "pagamenti", "intent": { "name": "bonifico", "confidence": 0.87 }, "entities": [ { "type": "@city", "value": "Boston", "confidence": 0.94 } ], "project": "MeMex", "language": "IT", "metadata": { }, "type": "REQUEST", "traceId": "bcpg8XYBHD_pmQ1jA7b8" }
+      example: { "messageId": "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8", "channel": "FACEBOOK", "userId": "USR-JDKHEIU2-31NJDTE94", "conversationId": "CONV-DAJKWPENVOA-314CAD", "timestamp": "2021-01-25T14:18:36.141378", "content": { "type": "text", "value": "devo fare un bonifico di 40 euro" }, "domain": "pagamenti", "intent": { "name": "bonifico", "confidence": 0.87 }, "entities": [ { "type": "@city", "value": "Boston", "confidence": 0.94 } ], "project": "wenet-ask-for-help", "language": "IT", "metadata": { }, "type": "REQUEST", "traceId": "bcpg8XYBHD_pmQ1jA7b8" }
 
     RequestMessage:
       type: object
@@ -649,7 +649,7 @@ components:
           nullable: true
         project:
           type: string
-          example: "MeMex"
+          example: "wenet-ask-for-help"
         type:
           type: string
           enum: [ "request" ]
@@ -701,7 +701,7 @@ components:
           nullable: true
         project:
           type: string
-          example: "MemEx"
+          example: "wenet-ask-for-help"
         type:
           type: string
           enum: [ "response" ]
@@ -751,7 +751,7 @@ components:
           nullable: true
         project:
           type: string
-          example: "MemEx"
+          example: "wenet-ask-for-help"
         type:
           type: string
           enum: [ "notification" ]
@@ -994,7 +994,7 @@ components:
           example: "LOG31235141"
         project:
           type: string
-          example: "memex"
+          example: "wenet-ask-for-help"
         component:
           type: string
           example: "dimension"
@@ -1030,7 +1030,7 @@ components:
       properties:
         project:
           type: string
-          example: "memex"
+          example: "wenet-ask-for-help"
         timespan:
           type: object
           oneOf:
@@ -1050,7 +1050,7 @@ components:
       properties:
         project:
           type: string
-          example: "memex"
+          example: "wenet-ask-for-help"
         timespan:
           type: object
           oneOf:
@@ -1131,6 +1131,10 @@ components:
       allOf:
         - $ref: '#/components/schemas/CommonAnalytic'
       properties:
+        project:
+          type: string
+          description: "For the task analytics the project is not related to the name used in the db. It is requested the id of the application"
+          example: "I2BIO3UXx6"
         dimension:
           type: string
           enum: ["task"]
@@ -1147,6 +1151,10 @@ components:
       allOf:
         - $ref: '#/components/schemas/CommonAnalytic'
       properties:
+        project:
+          type: string
+          description: "For the transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
+          example: "I2BIO3UXx6"
         dimension:
           type: string
           enum: ["transaction"]

@@ -32,7 +32,7 @@ class AnalyticComputation:
 
     @staticmethod
     def analytic_validity_check(analytic: dict):
-        logger.info("ANALYTIC.DISPLACEMENT: " + str(analytic))
+        logger.info("Checking analytic: " + str(analytic))
 
         # check if timespan is in the dict
         if 'timespan' not in analytic:
@@ -59,7 +59,7 @@ class AnalyticComputation:
             logger.debug("timespan.type.key failed")
             return False
 
-        if str(analytic['timespan']['type']).lower() not in [DefaultTime.DEFAULT_TIME_TYPE, CustomTime.CUSTOM_TIME_TYPE]:
+        if str(analytic['timespan']['type']).upper() not in [DefaultTime.DEFAULT_TIME_TYPE, CustomTime.CUSTOM_TIME_TYPE]:
             logger.debug("timespan.type.value failed")
             return False
 
@@ -71,13 +71,16 @@ class AnalyticComputation:
                 if str(analytic['timespan']['value']).upper() not in DefaultTime.ALLOWED_DEFAULT_TIME_VALUES:
                     logger.debug("timespan.value.value failed")
                     return False
-        else:
+        elif str(analytic['timespan']['type']).upper() == CustomTime.CUSTOM_TIME_TYPE:
             try:
                 datetime.datetime.fromisoformat(analytic['timespan']['start']).isoformat()
                 datetime.datetime.fromisoformat(analytic['timespan']['end']).isoformat()
             except Exception as e:
                 logger.debug("timespan.start or timespan.end failed", exc_info=e)
                 return False
+        else:
+            logger.debug("timespan.type.value failed")
+            return False
 
         if str(analytic['dimension']).lower() == UserAnalytic.USER_DIMENSION:
             if str(analytic['metric']).lower() not in UserAnalytic.ALLOWED_USER_METRIC_VALUES:
@@ -113,7 +116,8 @@ class AnalyticComputation:
 
         return True
 
-    def compute_u_total(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_u_total(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -166,7 +170,8 @@ class AnalyticComputation:
 
         return response['aggregations']['type_count']['value'], user_list
 
-    def compute_u_active(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_u_active(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -224,7 +229,8 @@ class AnalyticComputation:
 
         return response['aggregations']['type_count']['value'], user_list
 
-    def compute_u_engaged(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_u_engaged(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -282,7 +288,8 @@ class AnalyticComputation:
 
         return response['aggregations']['type_count']['value'], user_list
 
-    def compute_u_new(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_u_new(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -375,7 +382,8 @@ class AnalyticComputation:
 
         return len(final_users), list(final_users)
 
-    def compute_m_from_users(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_m_from_users(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -429,7 +437,8 @@ class AnalyticComputation:
 
         return total_counter, user_list
 
-    def compute_m_segmentation(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_m_segmentation(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -476,7 +485,8 @@ class AnalyticComputation:
 
         return type_counter
 
-    def compute_r_segmentation(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_r_segmentation(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -528,7 +538,8 @@ class AnalyticComputation:
 
         return type_counter
 
-    def compute_m_conversation(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_m_conversation(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -577,7 +588,8 @@ class AnalyticComputation:
 
         return total_len, conversation_list
 
-    def compute_m_from_bot(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_m_from_bot(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -677,7 +689,8 @@ class AnalyticComputation:
 
         return total_len, messages
 
-    def compute_m_responses(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_m_responses(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -731,7 +744,8 @@ class AnalyticComputation:
 
         return total_len, messages
 
-    def compute_m_notifications(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_m_notifications(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -785,7 +799,8 @@ class AnalyticComputation:
 
         return total_len, messages
 
-    def compute_m_unhandled(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_m_unhandled(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -840,7 +855,8 @@ class AnalyticComputation:
 
         return total_len, messages
 
-    def compute_c_total(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_c_total(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -889,7 +905,8 @@ class AnalyticComputation:
 
         return total_len, conversation_list
 
-    def compute_c_new(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_c_new(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -982,7 +999,8 @@ class AnalyticComputation:
 
         return len(final_conv), list(final_conv)
 
-    def compute_c_length(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_c_length(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -1031,7 +1049,8 @@ class AnalyticComputation:
 
         return total_len, conversation_list
 
-    def compute_c_path(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_c_path(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -1133,7 +1152,8 @@ class AnalyticComputation:
 
         return len(paths), paths
 
-    def compute_d_fallback(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_d_fallback(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -1221,8 +1241,8 @@ class AnalyticComputation:
 
         return total_missed, total_messages
 
-    def compute_d_intents(self, analytic: dict, es: Elasticsearch, project: str):
-
+    @staticmethod
+    def compute_d_intents(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -1279,7 +1299,8 @@ class AnalyticComputation:
 
         return value, intent_list
 
-    def compute_d_domains(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_d_domains(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -1338,7 +1359,8 @@ class AnalyticComputation:
 
         return value, domain_list
 
-    def compute_b_response(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def compute_b_response(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]

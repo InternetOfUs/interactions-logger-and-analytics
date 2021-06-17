@@ -47,7 +47,7 @@ class Aggregation:
     @staticmethod
     def from_repr(raw_data: dict) -> Aggregation:
         if 'type' in raw_data:
-            if str(raw_data['timespan']['type']).lower() != Aggregation.AGGREGATION_TYPE:
+            if str(raw_data['type']).lower() != Aggregation.AGGREGATION_TYPE:
                 raise ValueError("Unrecognized type for Aggregation")
         else:
             raise ValueError("Aggregation must contain a type")

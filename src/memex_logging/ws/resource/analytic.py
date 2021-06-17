@@ -22,8 +22,7 @@ from elasticsearch import Elasticsearch
 from flask import request, Response
 from flask_restful import Resource, abort
 
-from memex_logging.common.analytic.aggregation import AggregationComputation
-from memex_logging.common.analytic.analytic import AnalyticComputation
+from memex_logging.common.analytic.builder import AnalyticBuilder
 from memex_logging.task.analytic import compute_analytic
 from memex_logging.utils.utils import Utils
 
@@ -78,32 +77,16 @@ class AnalyticsPerformer(Resource):
                 "code": 400
             }, 400
 
-        if 'type' not in analytic:
+        try:
+            analytic = AnalyticBuilder.from_repr(analytic)
+        except ValueError as e:
             return {
-                "status": "Malformed request: `type` not present in the request body",
-                "code": 400
-            }, 400
-
-        if str(analytic['type']).lower() == "analytic":
-            if not AnalyticComputation.analytic_validity_check(analytic):
-                return {
-                    "status": "Malformed request: analytic not valid",
-                    "code": 400
-                }, 400
-        elif str(analytic['type']).lower() == "aggregation":
-            if not AggregationComputation.aggregation_validity_check(analytic):
-                return {
-                    "status": "Malformed request: aggregation not valid",
-                    "code": 400
-                }, 400
-        else:
-            return {
-                "status": "Malformed request: `type` not valid",
+                "status": f"Malformed request: analytic not valid. {e.args[0]}",
                 "code": 400
             }, 400
 
         static_id = str(uuid.uuid4())
-        compute_analytic.delay(analytic=analytic, static_id=static_id)
+        compute_analytic.delay(analytic=analytic.to_repr(), static_id=static_id)
         return {"staticId": static_id}, 200
 
 

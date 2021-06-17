@@ -24,7 +24,7 @@ from elasticsearch import Elasticsearch
 from flask_restful import abort
 
 from memex_logging.common.model.message import RequestMessage, ResponseMessage, NotificationMessage
-
+from memex_logging.common.model.time import DefaultTime, CustomTime
 
 logger = logging.getLogger("logger.utils.utils")
 
@@ -59,7 +59,7 @@ class Utils:
 
     @staticmethod
     def extract_range_timestamps(time_object: dict) -> Tuple[str, str]:
-        if str(time_object['type']).lower() == "default":
+        if str(time_object['type']).upper() == DefaultTime.DEFAULT_TIME_TYPE:
             if str(time_object['value']).upper() == "30D":
                 now = datetime.now()
                 delta = timedelta(days=30)
@@ -86,10 +86,12 @@ class Utils:
                 return temp_old.isoformat(), now.isoformat()
             else:
                 raise ValueError(f"Unable to handle the interval [{time_object['value']}]")
-        else:
+        elif str(time_object['type']).upper() == CustomTime.CUSTOM_TIME_TYPE:
             start = datetime.fromisoformat(time_object['start']).isoformat()
             end = datetime.fromisoformat(time_object['end']).isoformat()
             return start, end
+        else:
+            raise ValueError("Unrecognized type for timespan")
 
     # TODO stop using this and remove!!!!!
     @staticmethod

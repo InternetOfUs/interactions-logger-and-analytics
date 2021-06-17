@@ -31,7 +31,7 @@ class AggregationComputation:
 
     @staticmethod
     def aggregation_validity_check(analytic: dict):
-        logging.info("AGGREGATION.DISPLACEMENT: " + str(analytic))
+        logger.info("Checking aggregation: " + str(analytic))
 
         # check if timespan is in the dict
         if 'timespan' not in analytic:
@@ -62,7 +62,7 @@ class AggregationComputation:
             logger.debug("timespan.type.key failed")
             return False
 
-        if str(analytic['timespan']['type']).lower() not in [DefaultTime.DEFAULT_TIME_TYPE, CustomTime.CUSTOM_TIME_TYPE]:
+        if str(analytic['timespan']['type']).upper() not in [DefaultTime.DEFAULT_TIME_TYPE, CustomTime.CUSTOM_TIME_TYPE]:
             logger.debug("timespan.type.value failed")
             return False
 
@@ -74,13 +74,16 @@ class AggregationComputation:
                 if str(analytic['timespan']['value']).upper() not in DefaultTime.ALLOWED_DEFAULT_TIME_VALUES:
                     logger.debug("timespan.value.value failed")
                     return False
-        else:
+        elif str(analytic['timespan']['type']).upper() == CustomTime.CUSTOM_TIME_TYPE:
             try:
                 datetime.datetime.fromisoformat(analytic['timespan']['start']).isoformat()
                 datetime.datetime.fromisoformat(analytic['timespan']['end']).isoformat()
             except Exception as e:
                 logger.debug("timespan.start or timespan.end failed", exc_info=e)
                 return False
+        else:
+            logger.debug("timespan.type.value failed")
+            return False
 
         if 'filters' in analytic:
             for item in analytic['filters']:
@@ -99,7 +102,8 @@ class AggregationComputation:
 
         return True
 
-    def max_aggr(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def max_aggr(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -138,7 +142,8 @@ class AggregationComputation:
         response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def min_aggr(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def min_aggr(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -177,7 +182,8 @@ class AggregationComputation:
         response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def avg_aggr(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def avg_aggr(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -216,7 +222,8 @@ class AggregationComputation:
         response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def cardinality_aggr(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def cardinality_aggr(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -255,7 +262,8 @@ class AggregationComputation:
         response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def extended_stats_aggr(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def extended_stats_aggr(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -294,7 +302,8 @@ class AggregationComputation:
         response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def percentiles_aggr(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def percentiles_aggr(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -333,7 +342,8 @@ class AggregationComputation:
         response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def stats_aggr(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def stats_aggr(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -372,7 +382,8 @@ class AggregationComputation:
         response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def sum_aggr(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def sum_aggr(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]
@@ -411,7 +422,8 @@ class AggregationComputation:
         response = es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    def value_count_aggr(self, analytic: dict, es: Elasticsearch, project: str):
+    @staticmethod
+    def value_count_aggr(analytic: dict, es: Elasticsearch, project: str):
         time_bound = Utils.extract_range_timestamps(analytic['timespan'])
         min_bound = time_bound[0]
         max_bound = time_bound[1]

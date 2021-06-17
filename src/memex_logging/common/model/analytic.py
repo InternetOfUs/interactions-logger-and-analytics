@@ -158,7 +158,7 @@ class MessageAnalytic(CommonAnalytic):
         else:
             raise ValueError("A dimension must be defined in the MessageAnalytic object")
 
-        if 'metric' not in raw_data:
+        if 'metric' in raw_data:
             if str(raw_data['metric']).lower() not in MessageAnalytic.ALLOWED_MESSAGE_METRIC_VALUES:
                 raise ValueError('Unknown value for metric in the MessageAnalytic')
         else:
@@ -202,7 +202,7 @@ class TaskAnalytic(CommonAnalytic):
         else:
             raise ValueError("A dimension must be defined in the TaskAnalytic object")
 
-        if 'metric' not in raw_data:
+        if 'metric' in raw_data:
             if str(raw_data['metric']).lower() not in TaskAnalytic.ALLOWED_TASK_METRIC_VALUES:
                 raise ValueError('Unknown value for metric in the TaskAnalytic')
         else:
@@ -252,7 +252,7 @@ class TransactionAnalytic(CommonAnalytic):
         else:
             raise ValueError("A dimension must be defined in the TransactionAnalytic object")
 
-        if 'metric' not in raw_data:
+        if 'metric' in raw_data:
             if str(raw_data['metric']).lower() not in TransactionAnalytic.ALLOWED_TRANSACTION_METRIC_VALUES:
                 raise ValueError('Unknown value for metric in the TransactionAnalytic')
         else:
@@ -296,7 +296,7 @@ class ConversationAnalytic(CommonAnalytic):
         else:
             raise ValueError("A dimension must be defined in the ConversationAnalytic object")
 
-        if 'metric' not in raw_data:
+        if 'metric' in raw_data:
             if str(raw_data['metric']).lower() not in ConversationAnalytic.ALLOWED_CONVERSATION_METRIC_VALUES:
                 raise ValueError('Unknown value for metric in the ConversationAnalytic')
         else:
@@ -340,7 +340,7 @@ class DialogueAnalytic(CommonAnalytic):
         else:
             raise ValueError("A dimension must be defined in the DialogueAnalytic object")
 
-        if 'metric' not in raw_data:
+        if 'metric' in raw_data:
             if str(raw_data['metric']).lower() not in DialogueAnalytic.ALLOWED_DIALOGUE_METRIC_VALUES:
                 raise ValueError('Unknown value for metric in the DialogueAnalytic')
         else:
@@ -384,7 +384,7 @@ class BotAnalytic(CommonAnalytic):
         else:
             raise ValueError("A dimension must be defined in the BotAnalytic object")
 
-        if 'metric' not in raw_data:
+        if 'metric' in raw_data:
             if str(raw_data['metric']).lower() not in BotAnalytic.ALLOWED_BOT_METRIC_VALUES:
                 raise ValueError('Unknown value for metric in the BotAnalytic')
         else:

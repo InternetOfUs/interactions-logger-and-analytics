@@ -84,7 +84,7 @@ if __name__ == '__main__':
     logger_operations = LoggingUtility(args.instance + "/logger", args.project, {ApikeyClient.COMPONENT_AUTHORIZATION_APIKEY_HEADER: args.apikey})
 
     if args.start and args.end:
-        time_range = CustomTime(args.start, args.end)
+        time_range = CustomTime.from_isoformat(args.start, args.end)
     else:
         time_range = DefaultTime(args.range)
 

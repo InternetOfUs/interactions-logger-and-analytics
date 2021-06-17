@@ -14,6 +14,8 @@
 
 from __future__ import absolute_import, annotations
 
+from datetime import datetime
+
 
 class DefaultTime:
 
@@ -50,16 +52,20 @@ class CustomTime:
 
     CUSTOM_TIME_TYPE = "CUSTOM"
 
-    def __init__(self, start: str, end: str):
+    def __init__(self, start: datetime, end: datetime):
         self.start = start
         self.end = end
 
     def to_repr(self) -> dict:
         return{
             'type': self.CUSTOM_TIME_TYPE,
-            'start': self.start,
-            'end': self.end
+            'start': self.start.isoformat(),
+            'end': self.end.isoformat()
         }
+
+    @staticmethod
+    def from_isoformat(start: str, end: str) -> CustomTime:
+        return CustomTime(datetime.fromisoformat(start), datetime.fromisoformat(end))
 
     @staticmethod
     def from_repr(raw_data: dict) -> CustomTime:
@@ -72,4 +78,4 @@ class CustomTime:
         if 'start' not in raw_data or 'end' not in raw_data:
             raise ValueError('Start and end must be defined in the CustomTime object')
 
-        return CustomTime(raw_data['start'], raw_data['end'])
+        return CustomTime.from_isoformat(raw_data['start'], raw_data['end'])
