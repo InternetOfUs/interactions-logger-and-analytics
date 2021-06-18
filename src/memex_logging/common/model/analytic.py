@@ -14,12 +14,13 @@
 
 from __future__ import absolute_import, annotations
 
+from abc import ABC
 from typing import Union
 
 from memex_logging.common.model.time import DefaultTime, CustomTime
 
 
-class CommonAnalytic:
+class CommonAnalytic(ABC):
 
     ANALYTIC_TYPE = "analytic"
 

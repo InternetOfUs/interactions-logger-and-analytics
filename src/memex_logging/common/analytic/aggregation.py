@@ -215,7 +215,7 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
-        return response['aggregations']['type_count']['value']
+        return response['aggregations']['type_count']
 
     @staticmethod
     def percentiles_aggr(analytic: Aggregation, es: Elasticsearch):
@@ -253,7 +253,7 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
-        return response['aggregations']['type_count']['value']
+        return response['aggregations']['type_count']['values']
 
     @staticmethod
     def stats_aggr(analytic: Aggregation, es: Elasticsearch):
@@ -291,7 +291,7 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
-        return response['aggregations']['type_count']['value']
+        return response['aggregations']['type_count']
 
     @staticmethod
     def sum_aggr(analytic: Aggregation, es: Elasticsearch):

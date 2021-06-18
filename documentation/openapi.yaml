@@ -460,13 +460,19 @@ paths:
         - analytic
       summary: Retrieve an analytic
       description: "
-      This end-point allows to retrieve an analytic based on a `staticId`.
+      This end-point allows to retrieve an analytic/aggreagtions based on a `staticId`.
 
-      If the analytic requested is a `MessageMetrics` with metric `m:segmentation` or `r:segmentation` it will return a `HTTP_200_ANALYTIC_SEGMENTATION` object.
 
-      If the analytic requested is a `ConversationMetrics` it will return a `HTTP_200_ANALYTIC_CONVERSATION` object.
+      For the analytics will return a `HTTP_200_ANALYTIC` object. The object contained in the `result` field is a:
 
-      In all the other analytic cases will return a `HTTP_200_ANALYTIC` object.
+      * `SegmentationResult` object if the analytic requested is a segmentation metric;
+
+      * `ConversationLengthResult` object if the analytic requested is a `ConversationMetrics` with metric `c:length`;
+
+      * `ConversationPathResult` object if the analytic requested is a `ConversationMetrics` with metric `c:path`;
+
+      * `AnalyticResult` in all the other cases.
+
 
       For the aggreagtions will return a `HTTP_200_AGGREGATION` object.
       "
@@ -492,8 +498,6 @@ paths:
               schema:
                 oneOf:
                   - $ref: '#/components/schemas/HTTP_200_ANALYTIC'
-                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC_SEGMENTATION'
-                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC_CONVERSATION'
                   - $ref: '#/components/schemas/HTTP_200_AGGREGATION'
         '400':
           description: malformed request
@@ -1287,93 +1291,110 @@ components:
             - $ref: '#/components/schemas/MessageAnalytic'
             - $ref: '#/components/schemas/TaskAnalytic'
             - $ref: '#/components/schemas/TransactionAnalytic'
-            - $ref: '#/components/schemas/ConversationAnalytic'
             - $ref: '#/components/schemas/DialogueAnalytic'
             - $ref: '#/components/schemas/BotAnalytic'
         result:
-          type: object
-          properties:
-            count:
-              type: number
-              format: int32
-            items:
-              type: array
-              items:
-                type: string
-            type:
-              type: string
-              example: "messageId"
-        static_id:
+          oneOf:
+            - $ref: '#/components/schemas/AnalyticResult'
+            - $ref: '#/components/schemas/SegmentationResult'
+            - $ref: '#/components/schemas/ConversationLengthResult'
+            - $ref: '#/components/schemas/ConversationPathResult'
+        staticId:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"
 
-    HTTP_200_ANALYTIC_SEGMENTATION:
+    AnalyticResult:
       type: object
       properties:
-        query:
-          oneOf:
-            - $ref: '#/components/schemas/UserAnalytic'
-            - $ref: '#/components/schemas/MessageAnalytic'
-            - $ref: '#/components/schemas/TaskAnalytic'
-            - $ref: '#/components/schemas/TransactionAnalytic'
-            - $ref: '#/components/schemas/ConversationAnalytic'
-            - $ref: '#/components/schemas/DialogueAnalytic'
-            - $ref: '#/components/schemas/BotAnalytic'
-        result:
-          type: object
-          properties:
-            counts:
-              type: object
-              example: { "text": 26 }
-            type:
-              type: string
-              example: "type"
-        static_id:
+        count:
+          type: number
+          format: int32
+        items:
+          type: array
+          items:
+            type: string
+        type:
           type: string
-          example: "wAu4EW4BFurD9NUGZY3z"
+          example: "messageId"
 
-    HTTP_200_ANALYTIC_CONVERSATION:
+    SegmentationResult:
       type: object
       properties:
-        query:
-          oneOf:
-            - $ref: '#/components/schemas/UserAnalytic'
-            - $ref: '#/components/schemas/MessageAnalytic'
-            - $ref: '#/components/schemas/TaskAnalytic'
-            - $ref: '#/components/schemas/TransactionAnalytic'
-            - $ref: '#/components/schemas/ConversationAnalytic'
-            - $ref: '#/components/schemas/DialogueAnalytic'
-            - $ref: '#/components/schemas/BotAnalytic'
-        conversations:
-          type: object
-          properties:
-            count:
-              type: number
-              format: int32
-            items:
-              type: array
-              items:
+        counts:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
                 type: string
-            type:
-              type: string
-              example: "messageId"
-        static_id:
+                example: "response"
+              count:
+                type: number
+                format: int32
+                example: 26
+        type:
           type: string
-          example: "wAu4EW4BFurD9NUGZY3z"
+          example: "type"
+
+    ConversationLengthResult:
+      type: object
+      properties:
+        count:
+          type: number
+          format: int32
+        lengths:
+          type: array
+          items:
+            type: object
+            properties:
+              conversationId:
+                type: string
+                example: "CONV-DOWI41-DAJPRTI3"
+              length:
+                type: number
+                format: int32
+                example: 3
+        type:
+          type: string
+          example: "length"
+
+    ConversationPathResult:
+      type: object
+      properties:
+        count:
+          type: number
+          format: int32
+        paths:
+          type: array
+          items:
+            type: object
+            properties:
+              conversationId:
+                type: string
+                example: "CONV-DOWI41-DAJPRTI3"
+              messages:
+                type: array
+                items:
+                  type: string
+                  example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A9"
+        type:
+          type: string
+          example: "path"
 
     HTTP_200_AGGREGATION:
       type: object
       properties:
         query:
-          oneOf:
+          allOf:
             - $ref: '#/components/schemas/Aggregation'
         result:
           type: object
           properties:
-            metric:
-              type: string
-              example: "answer"
-        static_id:
+            <aggregation>:
+              type: number
+              description: "It is a number in the case of the simple stats. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
+              example: 3
+        staticId:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"
 
