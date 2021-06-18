@@ -88,9 +88,7 @@ if __name__ == '__main__':
     else:
         time_range = DefaultTime(args.range)
 
-    created_from, created_to = Utils.extract_range_timestamps(time_range.to_repr())
-    created_from = datetime.fromisoformat(created_from)
-    created_to = datetime.fromisoformat(created_to)
+    created_from, created_to = Utils.extract_range_timestamps(time_range)
 
     # get analytics
     name, extension = os.path.splitext(args.afile)

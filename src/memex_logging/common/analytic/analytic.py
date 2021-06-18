@@ -16,13 +16,11 @@ from __future__ import absolute_import, annotations
 
 import logging
 
-from datetime import datetime
 from elasticsearch import Elasticsearch
 from wenet.common.interface.task_manager import TaskManagerInterface
 
 from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, TaskAnalytic, TransactionAnalytic, \
     ConversationAnalytic, DialogueAnalytic, BotAnalytic
-from memex_logging.common.model.time import DefaultTime, CustomTime
 from memex_logging.utils.utils import Utils
 
 
@@ -32,103 +30,15 @@ logger = logging.getLogger("logger.common.analytic.analytic")
 class AnalyticComputation:
 
     @staticmethod
-    def analytic_validity_check(analytic: dict):
-        logger.info("Checking analytic: " + str(analytic))
-
-        # check if timespan is in the dict
-        if 'timespan' not in analytic:
-            logger.debug("timespan failed")
-            return False
-
-        # check if project is in the dict
-        if 'project' not in analytic:
-            logger.debug("project failed")
-            return False
-
-        # check if dimension is in the dict
-        if 'dimension' not in analytic:
-            logger.debug("dimension failed")
-            return False
-
-        # check if metric is in the dict
-        if 'metric' not in analytic:
-            logger.debug("metric failed")
-            return False
-
-        # check timespan details
-        if 'type' not in (analytic["timespan"]):
-            logger.debug("timespan.type.key failed")
-            return False
-
-        if str(analytic['timespan']['type']).upper() not in [DefaultTime.DEFAULT_TIME_TYPE, CustomTime.CUSTOM_TIME_TYPE]:
-            logger.debug("timespan.type.value failed")
-            return False
-
-        if str(analytic['timespan']['type']).upper() == DefaultTime.DEFAULT_TIME_TYPE:
-            if 'value' not in analytic['timespan']:
-                logger.debug("timespan.value.key failed")
-                return False
-            else:
-                if str(analytic['timespan']['value']).upper() not in DefaultTime.ALLOWED_DEFAULT_TIME_VALUES:
-                    logger.debug("timespan.value.value failed")
-                    return False
-        elif str(analytic['timespan']['type']).upper() == CustomTime.CUSTOM_TIME_TYPE:
-            try:
-                datetime.fromisoformat(analytic['timespan']['start']).isoformat()
-                datetime.fromisoformat(analytic['timespan']['end']).isoformat()
-            except Exception as e:
-                logger.debug("timespan.start or timespan.end failed", exc_info=e)
-                return False
-        else:
-            logger.debug("timespan.type.value failed")
-            return False
-
-        if str(analytic['dimension']).lower() == UserAnalytic.USER_DIMENSION:
-            if str(analytic['metric']).lower() not in UserAnalytic.ALLOWED_USER_METRIC_VALUES:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == MessageAnalytic.MESSAGE_DIMENSION:
-            if str(analytic['metric']).lower() not in MessageAnalytic.ALLOWED_MESSAGE_METRIC_VALUES:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == TaskAnalytic.TASK_DIMENSION:
-            if str(analytic['metric']).lower() not in TaskAnalytic.ALLOWED_TASK_METRIC_VALUES:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == TransactionAnalytic.TRANSACTION_DIMENSION:
-            if str(analytic['metric']).lower() not in TransactionAnalytic.ALLOWED_TRANSACTION_METRIC_VALUES:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == ConversationAnalytic.CONVERSATION_DIMENSION:
-            if str(analytic['metric']).lower() not in ConversationAnalytic.ALLOWED_CONVERSATION_METRIC_VALUES:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == DialogueAnalytic.DIALOGUE_DIMENSION:
-            if str(analytic['metric']).lower() not in DialogueAnalytic.ALLOWED_DIALOGUE_METRIC_VALUES:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == BotAnalytic.BOT_DIMENSION:
-            if str(analytic['metric']).lower() not in BotAnalytic.ALLOWED_BOT_METRIC_VALUES:
-                logger.debug("metric.value failed")
-                return False
-        else:
-            logger.debug("dimension.value failed")
-            return False
-
-        return True
-
-    @staticmethod
-    def compute_u_total(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_u_total(analytic: UserAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -136,8 +46,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -159,7 +69,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         user_list = []
 
@@ -172,10 +82,8 @@ class AnalyticComputation:
         return response['aggregations']['type_count']['value'], user_list
 
     @staticmethod
-    def compute_u_active(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_u_active(analytic: UserAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -187,7 +95,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -195,8 +103,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -218,7 +126,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         user_list = []
 
@@ -231,10 +139,8 @@ class AnalyticComputation:
         return response['aggregations']['type_count']['value'], user_list
 
     @staticmethod
-    def compute_u_engaged(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_u_engaged(analytic: UserAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -246,7 +152,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -254,8 +160,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -277,7 +183,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         user_list = []
 
@@ -290,17 +196,15 @@ class AnalyticComputation:
         return response['aggregations']['type_count']['value'], user_list
 
     @staticmethod
-    def compute_u_new(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_u_new(analytic: UserAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -308,8 +212,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -326,7 +230,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         users_in_period = []
         for item in response['aggregations']['terms_count']['buckets']:
@@ -343,7 +247,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -351,7 +255,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "lt": min_bound
+                                    "lt": min_bound.isoformat()
                                 }
                             }
                         }
@@ -368,7 +272,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         users_out_period = []
         for item in response['aggregations']['terms_count']['buckets']:
@@ -384,10 +288,8 @@ class AnalyticComputation:
         return len(final_users), list(final_users)
 
     @staticmethod
-    def compute_m_from_users(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_m_from_users(analytic: MessageAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -399,7 +301,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -407,8 +309,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -425,7 +327,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         user_list = []
         total_counter = 0
@@ -439,17 +341,15 @@ class AnalyticComputation:
         return total_counter, user_list
 
     @staticmethod
-    def compute_m_segmentation(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_m_segmentation(analytic: MessageAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -457,8 +357,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -475,7 +375,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         type_counter = {}
         for item in response['aggregations']['terms_count']['buckets']:
@@ -487,10 +387,8 @@ class AnalyticComputation:
         return type_counter
 
     @staticmethod
-    def compute_r_segmentation(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_r_segmentation(analytic: MessageAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -502,7 +400,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -510,8 +408,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -528,7 +426,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         type_counter = {}
         for item in response['aggregations']['terms_count']['buckets']:
@@ -540,17 +438,15 @@ class AnalyticComputation:
         return type_counter
 
     @staticmethod
-    def compute_m_conversation(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_m_conversation(analytic: MessageAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -558,8 +454,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -576,7 +472,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
@@ -590,10 +486,8 @@ class AnalyticComputation:
         return total_len, conversation_list
 
     @staticmethod
-    def compute_m_from_bot(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_m_from_bot(analytic: MessageAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -605,7 +499,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -613,8 +507,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -631,7 +525,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
@@ -653,7 +547,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -661,8 +555,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -679,7 +573,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         for item in response['aggregations']['terms_count']['buckets']:
             messages.append(item['key'])
@@ -691,10 +585,8 @@ class AnalyticComputation:
         return total_len, messages
 
     @staticmethod
-    def compute_m_responses(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_m_responses(analytic: MessageAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -706,7 +598,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -714,8 +606,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -732,7 +624,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
@@ -746,10 +638,8 @@ class AnalyticComputation:
         return total_len, messages
 
     @staticmethod
-    def compute_m_notifications(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_m_notifications(analytic: MessageAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -761,7 +651,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -769,8 +659,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -787,7 +677,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
@@ -801,10 +691,8 @@ class AnalyticComputation:
         return total_len, messages
 
     @staticmethod
-    def compute_m_unhandled(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_m_unhandled(analytic: MessageAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -816,7 +704,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -824,8 +712,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -842,7 +730,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
@@ -857,26 +745,27 @@ class AnalyticComputation:
         return total_len, messages
 
     @staticmethod
-    def compute_t_total(analytic: dict, task_manager_interface: TaskManagerInterface, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = datetime.fromisoformat(time_bound[0])
-        max_bound = datetime.fromisoformat(time_bound[1])
-
-        tasks = task_manager_interface.get_tasks(project, min_bound, max_bound)
+    def compute_task_t_total(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        tasks = task_manager_interface.get_tasks(analytic.project, min_bound, max_bound)
         return len(tasks), [task.task_id for task in tasks]
 
     @staticmethod
-    def compute_c_total(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_transaction_t_total(analytic: TransactionAnalytic, task_manager_interface: TaskManagerInterface):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        transactions = task_manager_interface.get_transactions(analytic.project, min_bound, max_bound)
+        return len(transactions), [transaction.id for transaction in transactions]
+
+    @staticmethod
+    def compute_c_total(analytic: ConversationAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -884,8 +773,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -902,7 +791,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
@@ -916,17 +805,15 @@ class AnalyticComputation:
         return total_len, conversation_list
 
     @staticmethod
-    def compute_c_new(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_c_new(analytic: ConversationAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -934,8 +821,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -952,7 +839,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conv_in_period = []
         for item in response['aggregations']['terms_count']['buckets']:
@@ -969,7 +856,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -977,7 +864,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "lt": min_bound
+                                    "lt": min_bound.isoformat()
                                 }
                             }
                         }
@@ -994,7 +881,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conv_out_period = []
         for item in response['aggregations']['terms_count']['buckets']:
@@ -1010,17 +897,15 @@ class AnalyticComputation:
         return len(final_conv), list(final_conv)
 
     @staticmethod
-    def compute_c_length(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_c_length(analytic: ConversationAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1028,8 +913,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1046,7 +931,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
@@ -1060,17 +945,15 @@ class AnalyticComputation:
         return total_len, conversation_list
 
     @staticmethod
-    def compute_c_path(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_c_path(analytic: ConversationAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1078,8 +961,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1096,7 +979,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conversation_list = []
         for item in response['aggregations']['terms_count']['buckets']:
@@ -1109,9 +992,6 @@ class AnalyticComputation:
         paths = []
 
         for item in conversation_list:
-            time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-            min_bound = time_bound[0]
-            max_bound = time_bound[1]
             body = {
                 "query": {
                     "bool": {
@@ -1123,7 +1003,7 @@ class AnalyticComputation:
                             },
                             {
                                 "match": {
-                                    "project.keyword": project
+                                    "project.keyword": analytic.project
                                 }
                             }
                         ],
@@ -1131,8 +1011,8 @@ class AnalyticComputation:
                             {
                                 "range": {
                                     "timestamp": {
-                                        "gte": min_bound,
-                                        "lte": max_bound
+                                        "gte": min_bound.isoformat(),
+                                        "lte": max_bound.isoformat()
                                     }
                                 }
                             }
@@ -1149,7 +1029,7 @@ class AnalyticComputation:
                 }
             }
 
-            index = Utils.generate_index(data_type="message", project=project)
+            index = Utils.generate_index(data_type="message", project=analytic.project)
             response = es.search(index=index, body=body, size=0)
             message_list = []
             for obj in response['aggregations']['terms_count']['buckets']:
@@ -1163,10 +1043,8 @@ class AnalyticComputation:
         return len(paths), paths
 
     @staticmethod
-    def compute_d_fallback(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_d_fallback(analytic: DialogueAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -1178,7 +1056,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1186,8 +1064,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1203,22 +1081,19 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         total_missed = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_missed = response['aggregations']['type_count']['value']
 
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1226,8 +1101,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1243,7 +1118,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         total_messages = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -1252,17 +1127,15 @@ class AnalyticComputation:
         return total_missed, total_messages
 
     @staticmethod
-    def compute_d_intents(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_d_intents(analytic: DialogueAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1270,8 +1143,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1293,7 +1166,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         intent_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -1310,17 +1183,15 @@ class AnalyticComputation:
         return value, intent_list
 
     @staticmethod
-    def compute_d_domains(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_d_domains(analytic: DialogueAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1328,8 +1199,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1351,7 +1222,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         domain_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
@@ -1370,17 +1241,15 @@ class AnalyticComputation:
         return value, domain_list
 
     @staticmethod
-    def compute_b_response(analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_b_response(analytic: BotAnalytic, es: Elasticsearch):
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1388,8 +1257,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1405,23 +1274,20 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         total_messages = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in \
                 response['aggregations']['type_count']:
             total_messages = response['aggregations']['type_count']['value']
 
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1429,8 +1295,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1447,7 +1313,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         total_not_working = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \

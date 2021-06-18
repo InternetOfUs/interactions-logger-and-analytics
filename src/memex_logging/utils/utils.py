@@ -17,7 +17,7 @@ from __future__ import absolute_import, annotations
 from datetime import datetime, timezone, timedelta
 import logging
 import uuid
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import dateutil.parser
 from elasticsearch import Elasticsearch
@@ -58,38 +58,36 @@ class Utils:
         return index_name
 
     @staticmethod
-    def extract_range_timestamps(time_object: dict) -> Tuple[str, str]:
-        if str(time_object['type']).upper() == DefaultTime.DEFAULT_TIME_TYPE:
-            if str(time_object['value']).upper() == "30D":
+    def extract_range_timestamps(time_object: Union[DefaultTime, CustomTime]) -> Tuple[datetime, datetime]:
+        if isinstance(time_object, DefaultTime):
+            if str(time_object.value).upper() == "30D":
                 now = datetime.now()
                 delta = timedelta(days=30)
                 temp_old = now - delta
-                return temp_old.isoformat(), now.isoformat()
-            elif str(time_object['value']).upper() == "10D":
+                return temp_old, now
+            elif str(time_object.value).upper() == "10D":
                 now = datetime.now()
                 delta = timedelta(days=10)
                 temp_old = now - delta
-                return temp_old.isoformat(), now.isoformat()
-            elif str(time_object['value']).upper() == "7D":
+                return temp_old, now
+            elif str(time_object.value).upper() == "7D":
                 now = datetime.now()
                 delta = timedelta(days=7)
                 temp_old = now - delta
-                return temp_old.isoformat(), now.isoformat()
-            elif str(time_object['value']).upper() == "1D":
+                return temp_old, now
+            elif str(time_object.value).upper() == "1D":
                 now = datetime.now()
                 delta = timedelta(days=1)
                 temp_old = now - delta
-                return temp_old.isoformat(), now.isoformat()
-            elif str(time_object['value']).upper() == "TODAY":
+                return temp_old, now
+            elif str(time_object.value).upper() == "TODAY":
                 now = datetime.now()
                 temp_old = datetime(now.year, now.month, now.day)
-                return temp_old.isoformat(), now.isoformat()
+                return temp_old, now
             else:
-                raise ValueError(f"Unable to handle the interval [{time_object['value']}]")
-        elif str(time_object['type']).upper() == CustomTime.CUSTOM_TIME_TYPE:
-            start = datetime.fromisoformat(time_object['start']).isoformat()
-            end = datetime.fromisoformat(time_object['end']).isoformat()
-            return start, end
+                raise ValueError(f"Unable to handle the interval [{time_object.value}]")
+        elif isinstance(time_object, CustomTime):
+            return time_object.start, time_object.end
         else:
             raise ValueError("Unrecognized type for timespan")
 
