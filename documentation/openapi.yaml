@@ -1065,7 +1065,8 @@ components:
           enum: ["aggregation"]
         field:
           type: string
-          example: "messageId"
+          description: The field has to be a numeric field
+          example: "intent.confidence"
         aggregation:
           type: string
           enum: ["avg", "min", "max", "sum", "stats", "extended_stats", "value_count", "cardinality", "percentiles"]
