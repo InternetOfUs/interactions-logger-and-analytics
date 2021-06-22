@@ -1,0 +1,50 @@
+---
+version: '3.1'
+
+services:
+
+  logging:
+    image: internetofus/logger:latest
+    container_name: "wenet_logger"
+    restart: unless-stopped
+    environment:
+        EL_HOST: "wenet-elasticsearch.wenet" # elasticsearch host
+        EL_PORT: 9200 # elasticsearch port
+        DOCUMENTATION_PATH: "/documentation" # documentation path inside the docker image
+        EL_USERNAME: username # elasticsearch username
+        EL_PASSWORD: password # elasticsearch password
+        LOG_LEVEL: DEBUG
+        LOGS_DIR: /var/log/logger
+    volumes:
+        - ./logger_logs:/var/log/logger
+    networks:
+        - wenet
+
+  elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.8.0
+        restart: unless-stopped
+        container_name: wenet-elasticsearch
+        environment:
+            - ES_JAVA_OPTS=-Xms512m -Xmx1024m
+        networks:
+            - wenet
+        volumes:
+            - wenet-elasticsearch:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.8.0
+    restart: unless-stopped
+    container_name: wenet-kibana
+    networks:
+        - wenet
+    depends_on:
+        - elasticsearch
+
+
+volumes:
+  wenet-elasticsearch:
+    external: true
+
+networks:
+  wenet:
+    external: true

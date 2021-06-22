@@ -14,8 +14,6 @@ venv.bak/
 
 *.log
 
-docker-compose.yml
-
 .idea
 
 roles
