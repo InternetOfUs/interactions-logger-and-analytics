@@ -55,6 +55,12 @@ The web service allows to set the following environment variables:
 * `CELERY_BROKER_URL` (optional, the default value is `None`): the information about the broker to use the Celery instance, it must be in the following format: `redis://:password@hostname:port/db_number`;
 * `CELERY_RESULT_BACKEND` (optional, the default value is `None`): the information about the result backend to use the Celery instance, it must be in the following format: `redis://:password@hostname:port/db_number`.
 
+Optionally is it possible to configure sentry in order to track any problem. Just set the following environment variables:
+
+* `SENTRY_DSN` (optional) The data source name for sentry, if not set the project will not create any event
+* `SENTRY_RELEASE` (optional) If set, sentry will associate the events to the given release
+* `SENTRY_ENVIRONMENT` (optional) If set, sentry will associate the events to the given environment (ex. `production`, `staging`)
+
 
 The script for computing the analytics, questions, users and for extracting the tasks and the messages allows to set the following environment variables:
 

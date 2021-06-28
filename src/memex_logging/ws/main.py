@@ -19,7 +19,10 @@ import logging.config
 import os
 from typing import Optional
 
+import sentry_sdk
 from elasticsearch import Elasticsearch
+from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from memex_logging.common.dao.collector import DaoCollector
 from memex_logging.common.log.logging import get_logging_configuration
@@ -28,6 +31,19 @@ from memex_logging.ws.ws import WsInterface
 
 logging.config.dictConfig(get_logging_configuration("logger"))
 logger = logging.getLogger("logger.ws.main")
+
+sentry_logging = LoggingIntegration(
+    level=logging.INFO,  # Capture info and above as breadcrumbs
+    event_level=logging.ERROR  # Send errors as events
+)
+
+sentry_sdk.init(
+    integrations=[FlaskIntegration()],
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0
+)
 
 
 def init_ws(
