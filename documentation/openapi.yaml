@@ -6,32 +6,12 @@ openapi: 3.0.0
 #######################
 info:
 
-  title: Memorable Experience
-  description: "
+  title: WeNet - Interactions Logger and Analytics APIs
+  description: This component is responsible for collecting and analyzing the messages produced by the WeNet applications together with lower level component logs that allow to monitor the functioning of the applications built on top of the platform and of the platform itself.
 
-    This document details the APIs exposed by the MemEx big data platform, realise by U-Hopper srl within the context of the FESR-funded Memorable Experiences (MemEx) project. The platform logs all interactions among tourists and a purposefully designed chatbot.
-
-    There are three kind of implemented APIs:
-
-    1. messages: to store, retrieve and delete messages;
-
-    2. logs: to store, retrieve and delete logs;
-
-    3. analytics/performances: to retrieve some performances of the system.
-
-
-    A part from the entities and models representing the responses, there are three main entities involved in the system: `Message`, `Log` and `Performance`.
-
-    A message can be a `ResponseMessage`, a `RequestMessage` or a `Notification`. A response message represents a response to a request message while the latter represent a message from the user. A notification is a special kind of message sent, for example, by the local administration or the hotel.
-
-
-    Concerning `Log`, it represents a metric to track the status of the system and what drove to a particular choice.
-
-    "
-
-  version: "0.0.5"
+  version: "1.3.0"
   contact:
-    email: "massimiliano.luca@unitn.it"
+    email: "carlo.caprini@u-hopper.com"
 
 servers:
 
@@ -43,11 +23,11 @@ servers:
 tags:
 
   - name: message
-    description: APIs to log the conversation into the database
+    description: APIs allowing to register incoming and outgoing messages of a conversation
   - name: logging
-    description: APIs to log additional information of the modules
+    description: APIs allowing to log events
   - name: analytic
-    description: APIs to retrieve useful information from the database. What follows can be used to analyze the performances of the bot
+    description: APIs to retrieve analytics based on messages
 
 paths:
 
