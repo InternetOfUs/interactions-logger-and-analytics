@@ -355,9 +355,10 @@ paths:
     post:
       tags:
         - analytic
-      summary: Post an analytic
+      summary: Create an analytic
       description: "
-      This end-point allows to post an analytic based on the messages in the database, it returns a `staticId` that you have to use to retrieve the analytics.
+      This end-point allows to create an analytic based on the messages in the database, it returns a `staticId` that you have to use to retrieve the analytic.
+
 
       The allowed analytics are:
 
@@ -402,6 +403,7 @@ paths:
       * BotMetrics with `dimension` set to `bot`, you can set `metric` to:
       `b:response`: the number of users and messages in a certain time range.
 
+
       It could be possible to post also aggregations.
       "
       requestBody:
@@ -439,7 +441,7 @@ paths:
         - analytic
       summary: Retrieve an analytic
       description: "
-      This end-point allows to retrieve an analytic/aggreagtions based on a `staticId`.
+      This end-point allows to retrieve an analytic based on a `staticId`.
 
 
       For the analytics will return a `HTTP_200_ANALYTIC` object. The object contained in the `result` field is a:
