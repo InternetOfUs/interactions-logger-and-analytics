@@ -342,7 +342,7 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "userId.keyword",
+                        "field": "messageId.keyword",
                         "size": 65535
                     }
                 }
@@ -351,18 +351,18 @@ class AnalyticComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
-        user_list = []
+        messages = []
         total_counter = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
-                user_list.append(item['key'])
+                messages.append(item['key'])
                 total_counter = total_counter + int(item['doc_count'])
 
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        return AnalyticResult(total_counter, user_list, "userId")
+        return AnalyticResult(total_counter, messages, "messageId")
 
     @staticmethod
     def compute_m_segmentation(analytic: MessageAnalytic, es: Elasticsearch) -> SegmentationAnalyticResult:
@@ -464,56 +464,6 @@ class AnalyticComputation:
                 logger.warning("The number of buckets is limited at `10` but the number of content types is higher")
 
         return SegmentationAnalyticResult(type_counter, "content.type")
-
-    @staticmethod
-    def compute_m_conversation(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        body = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "match": {
-                                "project.keyword": analytic.project
-                            }
-                        }
-                    ],
-                    "filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound.isoformat(),
-                                    "lte": max_bound.isoformat()
-                                }
-                            }
-                        }
-                    ]
-                }
-            },
-            "aggs": {
-                "terms_count": {
-                    "terms": {
-                        "field": "conversationId.keyword",
-                        "size": 65535
-                    }
-                }
-            }
-        }
-
-        index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
-        conversation_list = []
-        total_len = 0
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-            for item in response['aggregations']['terms_count']['buckets']:
-                conversation_list.append(item['key'])
-                total_len = total_len + 1
-
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
-
-        return AnalyticResult(total_len, conversation_list, "conversationId")
 
     @staticmethod
     def compute_m_from_bot(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
@@ -725,61 +675,6 @@ class AnalyticComputation:
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
-
-        return AnalyticResult(total_len, messages, "messageId")
-
-    @staticmethod
-    def compute_m_unhandled(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        body = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "match": {
-                                "handled.keyword": True
-                            }
-                        },
-                        {
-                            "match": {
-                                "project.keyword": analytic.project
-                            }
-                        }
-                    ],
-                    "filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound.isoformat(),
-                                    "lte": max_bound.isoformat()
-                                }
-                            }
-                        }
-                    ]
-                }
-            },
-            "aggs": {
-                "terms_count": {
-                    "terms": {
-                        "field": "messageId.keyword",
-                        "size": 65535
-                    }
-                }
-            }
-        }
-
-        index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
-        messages = []
-        total_len = 0
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-            for item in response['aggregations']['terms_count']['buckets']:
-                messages.append(item['key'])
-                total_len = total_len + item['doc_count']
-
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-                logger.warning("The number of buckets is limited at `65535` but the number of unhandled messages is higher")
 
         return AnalyticResult(total_len, messages, "messageId")
 
