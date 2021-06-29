@@ -1139,7 +1139,7 @@ class LoggingUtility:
         else:
             raise ValueError("The log has not been logged")
 
-    def get_analytic(self, analytic: CommonAnalytic, sleep_time: int = 1) -> dict:
+    def get_analytic(self, analytic: CommonAnalytic, sleep_time: int = 1, number_of_trials: int = 10) -> dict:
 
         json_payload = analytic.to_repr()
 
@@ -1153,7 +1153,7 @@ class LoggingUtility:
 
         static_id = json.loads(response.content)["staticId"]
 
-        for i in range(10):
+        for i in range(number_of_trials):
             sleep(sleep_time)
             response = requests.get(api_point, headers=self._custom_headers, params={"staticId": static_id, "project": self._project})
             if response.status_code == 200:

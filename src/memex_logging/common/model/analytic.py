@@ -79,6 +79,12 @@ class CommonAnalytic(ABC):
         else:
             raise ValueError("An Analytic must contain a dimension")
 
+    def __eq__(self, o) -> bool:
+        if isinstance(o, CommonAnalytic):
+            return o.timespan == self.timespan and o.project == self.project and o.dimension == self.dimension and o.metric == self.metric
+        else:
+            return False
+
 
 class UserAnalytic(CommonAnalytic):
 
@@ -215,7 +221,7 @@ class TaskAnalytic(CommonAnalytic):
 class TransactionAnalytic(CommonAnalytic):
 
     TRANSACTION_DIMENSION = "transaction"
-    ALLOWED_TRANSACTION_METRIC_VALUES = ["t:total", "t:new", "t:segmentation"]
+    ALLOWED_TRANSACTION_METRIC_VALUES = ["t:total", "t:segmentation"]
 
     def __init__(self, timespan: Union[DefaultTime, CustomTime], project: str, metric: str, task_id: str = None):
         super().__init__(timespan, project, self.TRANSACTION_DIMENSION, metric)

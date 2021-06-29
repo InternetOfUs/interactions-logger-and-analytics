@@ -405,9 +405,8 @@ paths:
 
       * TransactionMetrics with `dimension` set to `transaction`, you can set `metric` to:
       `t:total`: the number of total transactions in a certain time range;
-      `t:new`: the number of new transactions in a certain time range;
       `t:segmentation`: the segmentation of the transactions based on the type in a certain time range.
-      For this metric you can also specify the task id of intered using the field `taskId`;
+      For this metric you can also specify the task id of interest using the field `taskId`;
 
       * ConversationMetrics with `dimension` set to `conversation`, you can set `metric` to:
       `c:total`: the number of conversation in a certain time range;
@@ -470,6 +469,8 @@ paths:
       * `ConversationLengthResult` object if the analytic requested is a `ConversationMetrics` with metric `c:length`;
 
       * `ConversationPathResult` object if the analytic requested is a `ConversationMetrics` with metric `c:path`;
+
+      * `TransactionResult` object if the analytic requested is a `TransactionMetrics`;
 
       * `AnalyticResult` in all the other cases.
 
@@ -1166,7 +1167,7 @@ components:
           example: "transaction"
         metric:
           type: string
-          enum: ["t:total", "u:new", "t:segmentation"]
+          enum: ["t:total", "t:segmentation"]
           example: "t:new"
         taskId:
           type: string
@@ -1298,6 +1299,7 @@ components:
           oneOf:
             - $ref: '#/components/schemas/AnalyticResult'
             - $ref: '#/components/schemas/SegmentationResult'
+            - $ref: '#/components/schemas/TransactionResult'
             - $ref: '#/components/schemas/ConversationLengthResult'
             - $ref: '#/components/schemas/ConversationPathResult'
         staticId:
@@ -1336,6 +1338,29 @@ components:
         type:
           type: string
           example: "type"
+
+    TransactionResult:
+      type: object
+      properties:
+        count:
+          type: number
+          format: int32
+        transactions:
+          type: array
+          items:
+            type: object
+            properties:
+              taskId:
+                type: string
+                example: "604ad78d6d61bf149d1d7a97"
+              trnsactionIds:
+                type: array
+                items:
+                  type: string
+                  example: "1"
+        type:
+          type: string
+          example: "transactions"
 
     ConversationLengthResult:
       type: object

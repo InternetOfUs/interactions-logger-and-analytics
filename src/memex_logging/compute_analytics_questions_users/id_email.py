@@ -18,24 +18,23 @@ import argparse
 import csv
 import os
 
-from wenet.common.interface.client import ApikeyClient
-from wenet.common.interface.component import ComponentInterface
-from wenet.common.interface.hub import HubInterface
-from wenet.common.interface.profile_manager import ProfileManagerInterface
+from wenet.interface.client import ApikeyClient
+from wenet.interface.hub import HubInterface
+from wenet.interface.profile_manager import ProfileManagerInterface
 
 
 if __name__ == '__main__':
 
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-f", "--file", type=str, default=os.getenv("FILE"), help="The path of csv/tsv file where to store id-email associations")
-    arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", ComponentInterface.DEVELOPMENT_INSTANCE), help="The target WeNet instance")
+    arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
     arg_parser.add_argument("-ai", "--appid", type=str, default=os.getenv("APP_ID"), help="The id of the application from which take the users")
     args = arg_parser.parse_args()
 
     client = ApikeyClient(args.apikey)
-    hub_interface = HubInterface(client, instance=args.instance)
-    profile_manager_interface = ProfileManagerInterface(client, instance=args.instance)
+    hub_interface = HubInterface(client, args.instance)
+    profile_manager_interface = ProfileManagerInterface(client, args.instance)
 
     name, extension = os.path.splitext(args.file)
     file = open(args.file, "w")

@@ -7,6 +7,10 @@
 * Imported wenet common models as PyPi package
 * Improved script for analytics and added the export of the tasks and messages in dedicated json files
 * Added script for getting the association between the id and the email of users
+* Made celery work
+* Updated documentation
+* Refactored analytics models and analytics computations
+* Added task and transaction analytics
 
 ### 1.3.0
 

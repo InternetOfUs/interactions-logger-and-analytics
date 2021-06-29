@@ -17,12 +17,13 @@ from __future__ import absolute_import, annotations
 import logging
 
 from elasticsearch import Elasticsearch
-from wenet.common.interface.task_manager import TaskManagerInterface
+from wenet.interface.task_manager import TaskManagerInterface
 
 from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, TaskAnalytic, TransactionAnalytic, \
     ConversationAnalytic, DialogueAnalytic, BotAnalytic
 from memex_logging.common.model.result import AnalyticResult, SegmentationAnalyticResult, \
-    ConversationLengthAnalyticResult, ConversationPathAnalyticResult, Segmentation, ConversationLength, ConversationPath
+    ConversationLengthAnalyticResult, ConversationPathAnalyticResult, Segmentation, ConversationLength, \
+    ConversationPath, TransactionAnalyticResult, TransactionReturn
 from memex_logging.utils.utils import Utils
 
 
@@ -74,14 +75,19 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         user_list = []
+        number_of_users = 0
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                user_list.append(item['key'])
 
-        for item in response['aggregations']['terms_count']['buckets']:
-            user_list.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            number_of_users = response['aggregations']['type_count']['value']
 
-        return AnalyticResult(response['aggregations']['type_count']['value'], user_list, "userId")
+        return AnalyticResult(number_of_users, user_list, "userId")
 
     @staticmethod
     def compute_u_active(analytic: UserAnalytic, es: Elasticsearch) -> AnalyticResult:
@@ -131,14 +137,19 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         user_list = []
+        number_of_users = 0
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                user_list.append(item['key'])
 
-        for item in response['aggregations']['terms_count']['buckets']:
-            user_list.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            number_of_users = response['aggregations']['type_count']['value']
 
-        return AnalyticResult(response['aggregations']['type_count']['value'], user_list, "userId")
+        return AnalyticResult(number_of_users, user_list, "userId")
 
     @staticmethod
     def compute_u_engaged(analytic: UserAnalytic, es: Elasticsearch) -> AnalyticResult:
@@ -188,14 +199,19 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         user_list = []
+        number_of_users = 0
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                user_list.append(item['key'])
 
-        for item in response['aggregations']['terms_count']['buckets']:
-            user_list.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            number_of_users = response['aggregations']['type_count']['value']
 
-        return AnalyticResult(response['aggregations']['type_count']['value'], user_list, "userId")
+        return AnalyticResult(number_of_users, user_list, "userId")
 
     @staticmethod
     def compute_u_new(analytic: UserAnalytic, es: Elasticsearch) -> AnalyticResult:
@@ -235,11 +251,13 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         users_in_period = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            users_in_period.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                users_in_period.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         users_in_period = set(users_in_period)
 
@@ -277,11 +295,13 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         users_out_period = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            users_out_period.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                users_out_period.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         users_out_period = set(users_out_period)
 
@@ -333,14 +353,16 @@ class AnalyticComputation:
         response = es.search(index=index, body=body, size=0)
         user_list = []
         total_counter = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            user_list.append(item['key'])
-            total_counter = total_counter + int(item['doc_count'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                user_list.append(item['key'])
+                total_counter = total_counter + int(item['doc_count'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        return  AnalyticResult(total_counter, user_list, "userId")
+        return AnalyticResult(total_counter, user_list, "userId")
 
     @staticmethod
     def compute_m_segmentation(analytic: MessageAnalytic, es: Elasticsearch) -> SegmentationAnalyticResult:
@@ -380,11 +402,13 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         type_counter = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            type_counter.append(Segmentation(item['key'], item['doc_count']))
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                type_counter.append(Segmentation(item['key'], item['doc_count']))
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `5` but the number of types is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `5` but the number of types is higher")
 
         return SegmentationAnalyticResult(type_counter, "type")
 
@@ -431,11 +455,13 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         type_counter = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            type_counter.append(Segmentation(item['key'], item['doc_count']))
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                type_counter.append(Segmentation(item['key'], item['doc_count']))
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `10` but the number of content types is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `10` but the number of content types is higher")
 
         return SegmentationAnalyticResult(type_counter, "content.type")
 
@@ -478,12 +504,14 @@ class AnalyticComputation:
         response = es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            conversation_list.append(item['key'])
-            total_len = total_len + 1
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                conversation_list.append(item['key'])
+                total_len = total_len + 1
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         return AnalyticResult(total_len, conversation_list, "conversationId")
 
@@ -531,12 +559,14 @@ class AnalyticComputation:
         response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            messages.append(item['key'])
-            total_len = total_len + item['doc_count']
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                messages.append(item['key'])
+                total_len = total_len + item['doc_count']
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of response messages is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of response messages is higher")
 
         body = {
             "query": {
@@ -577,12 +607,14 @@ class AnalyticComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
-        for item in response['aggregations']['terms_count']['buckets']:
-            messages.append(item['key'])
-            total_len = total_len + item['doc_count']
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                messages.append(item['key'])
+                total_len = total_len + item['doc_count']
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
 
         return AnalyticResult(total_len, messages, "messageId")
 
@@ -630,12 +662,14 @@ class AnalyticComputation:
         response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            messages.append(item['key'])
-            total_len = total_len + item['doc_count']
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                messages.append(item['key'])
+                total_len = total_len + item['doc_count']
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         return AnalyticResult(total_len, messages, "messageId")
 
@@ -683,12 +717,14 @@ class AnalyticComputation:
         response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            messages.append(item['key'])
-            total_len = total_len + item['doc_count']
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                messages.append(item['key'])
+                total_len = total_len + item['doc_count']
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
 
         return AnalyticResult(total_len, messages, "messageId")
 
@@ -741,22 +777,54 @@ class AnalyticComputation:
                 messages.append(item['key'])
                 total_len = total_len + item['doc_count']
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of unhandled messages is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of unhandled messages is higher")
 
         return AnalyticResult(total_len, messages, "messageId")
 
     @staticmethod
     def compute_task_t_total(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        tasks = task_manager_interface.get_tasks(analytic.project, min_bound, max_bound)
+        tasks = []
+        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
+        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound))
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
 
     @staticmethod
-    def compute_transaction_t_total(analytic: TransactionAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
+    def compute_task_t_active(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        transactions = task_manager_interface.get_transactions(analytic.project, min_bound, max_bound)
-        return AnalyticResult(len(transactions), [transaction.id for transaction in transactions], "transactionId")
+        tasks = task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False)
+        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
+
+    @staticmethod
+    def compute_task_t_closed(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        tasks = task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound)
+        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
+
+    @staticmethod
+    def compute_task_t_new(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        tasks = task_manager_interface.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound)
+        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
+
+    @staticmethod
+    def compute_transaction_t_total(analytic: TransactionAnalytic, task_manager_interface: TaskManagerInterface) -> TransactionAnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        transactions = task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
+        task_ids = set([transaction.task_id for transaction in transactions])
+        transaction_returns = [TransactionReturn(task_id, [transaction.id for transaction in transactions if transaction.task_id == task_id]) for task_id in task_ids]
+        return TransactionAnalyticResult(len(transactions), transaction_returns, "transactions")
+
+    @staticmethod
+    def compute_transaction_t_segmentation(analytic: TransactionAnalytic, task_manager_interface: TaskManagerInterface) -> SegmentationAnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        transactions = task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
+        transaction_labels = [transaction.label for transaction in transactions]
+        unique_labels = set(transaction_labels)
+        type_counter = [Segmentation(label, transaction_labels.count(label)) for label in unique_labels]
+        return SegmentationAnalyticResult(type_counter, "label")
 
     @staticmethod
     def compute_c_total(analytic: ConversationAnalytic, es: Elasticsearch) -> AnalyticResult:
@@ -797,12 +865,14 @@ class AnalyticComputation:
         response = es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            conversation_list.append(item['key'])
-            total_len = total_len + 1
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                conversation_list.append(item['key'])
+                total_len = total_len + 1
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         return AnalyticResult(total_len, conversation_list, "conversationId")
 
@@ -844,11 +914,13 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conv_in_period = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            conv_in_period.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                conv_in_period.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         conv_in_period = set(conv_in_period)
 
@@ -886,11 +958,13 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conv_out_period = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            conv_out_period.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                conv_out_period.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         conv_out_period = set(conv_out_period)
 
@@ -937,12 +1011,14 @@ class AnalyticComputation:
         response = es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            conversation_list.append(ConversationLength(item['key'], item['doc_count']))
-            total_len = total_len + 1
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                conversation_list.append(ConversationLength(item['key'], item['doc_count']))
+                total_len = total_len + 1
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         return ConversationLengthAnalyticResult(total_len, conversation_list, "length")
 
@@ -984,11 +1060,13 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conversation_list = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            conversation_list.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                conversation_list.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         conversation_list = list(set(conversation_list))
         paths = []
@@ -1034,13 +1112,15 @@ class AnalyticComputation:
             index = Utils.generate_index(data_type="message", project=analytic.project)
             response = es.search(index=index, body=body, size=0)
             message_list = []
-            for obj in response['aggregations']['terms_count']['buckets']:
-                message_list.append(obj['key'])
+            if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+                for obj in response['aggregations']['terms_count']['buckets']:
+                    message_list.append(obj['key'])
 
-            paths.append(ConversationPath(item, message_list))
+                paths.append(ConversationPath(item, message_list))
 
-            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-                logger.warning("The number of buckets is limited at `65535` but the number of messages is higher")
+            if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+                if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                    logger.warning("The number of buckets is limited at `65535` but the number of messages is higher")
 
         return ConversationPathAnalyticResult(len(paths), paths, "path")
 
@@ -1175,8 +1255,9 @@ class AnalyticComputation:
             for item in response['aggregations']['terms_count']['buckets']:
                 intent_list.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of intents is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of intents is higher")
 
         value = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -1227,17 +1308,16 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         domain_list = []
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
-                response['aggregations']['terms_count']:
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
                 domain_list.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of domains is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of domains is higher")
 
         value = 0
-        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in \
-                response['aggregations']['type_count']:
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
         return AnalyticResult(value, domain_list, "domain")
@@ -1279,8 +1359,7 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         total_messages = 0
-        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in \
-                response['aggregations']['type_count']:
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_messages = response['aggregations']['type_count']['value']
 
         body = {
@@ -1318,13 +1397,13 @@ class AnalyticComputation:
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         total_not_working = 0
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
-                response['aggregations']['terms_count']:
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
                 if item['doc_count'] == 1:
                     total_not_working = total_not_working + 1
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         return AnalyticResult(total_not_working, total_messages, "score")

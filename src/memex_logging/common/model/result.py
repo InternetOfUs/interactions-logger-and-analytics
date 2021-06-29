@@ -32,10 +32,12 @@ class CommonResult(ABC):
             return ConversationLengthAnalyticResult.from_repr(raw_data)
         elif 'count' in raw_data and 'paths' in raw_data and 'type' in raw_data:
             return ConversationPathAnalyticResult.from_repr(raw_data)
+        elif 'count' in raw_data and 'transactions' in raw_data and 'type' in raw_data:
+            return TransactionAnalyticResult.from_repr(raw_data)
         elif 'counts' in raw_data and 'type' in raw_data:
-            return ConversationLengthAnalyticResult.from_repr(raw_data)
+            return SegmentationAnalyticResult.from_repr(raw_data)
         else:
-            raise ValueError("Unrecognized dimension for Analytic")
+            raise ValueError("Unrecognized type of result")
 
 
 class AnalyticResult(CommonResult):
@@ -65,6 +67,12 @@ class AnalyticResult(CommonResult):
 
         return AnalyticResult(raw_data['count'], raw_data['items'], raw_data['type'])
 
+    def __eq__(self, o) -> bool:
+        if isinstance(o, AnalyticResult):
+            return o.count == self.count and o.items == self.items and o.item_type == self.item_type
+        else:
+            return False
+
 
 class ConversationLength:
 
@@ -87,6 +95,12 @@ class ConversationLength:
             raise ValueError("ConversationLength must contain a length field")
 
         return ConversationLength(raw_data['conversationId'], raw_data['length'])
+
+    def __eq__(self, o) -> bool:
+        if isinstance(o, ConversationLength):
+            return o.conversation_id == self.conversation_id and o.length == self.length
+        else:
+            return False
 
 
 class ConversationLengthAnalyticResult(CommonResult):
@@ -118,6 +132,12 @@ class ConversationLengthAnalyticResult(CommonResult):
 
         return ConversationLengthAnalyticResult(raw_data['count'], lengths, raw_data['type'])
 
+    def __eq__(self, o) -> bool:
+        if isinstance(o, ConversationLengthAnalyticResult):
+            return o.count == self.count and o.lengths == self.lengths and o.item_type == self.item_type
+        else:
+            return False
+
 
 class ConversationPath:
 
@@ -140,6 +160,12 @@ class ConversationPath:
             raise ValueError("ConversationPath must contain a messages field")
 
         return ConversationPath(raw_data['conversationId'], raw_data['messages'])
+
+    def __eq__(self, o) -> bool:
+        if isinstance(o, ConversationPath):
+            return o.conversation_id == self.conversation_id and o.messages == self.messages
+        else:
+            return False
 
 
 class ConversationPathAnalyticResult(CommonResult):
@@ -171,6 +197,12 @@ class ConversationPathAnalyticResult(CommonResult):
 
         return ConversationPathAnalyticResult(raw_data['count'], paths, raw_data['type'])
 
+    def __eq__(self, o) -> bool:
+        if isinstance(o, ConversationPathAnalyticResult):
+            return o.count == self.count and o.paths == self.paths and o.item_type == self.item_type
+        else:
+            return False
+
 
 class Segmentation:
 
@@ -192,7 +224,13 @@ class Segmentation:
         if 'type' not in raw_data:
             raise ValueError("Segmentation must contain a type field")
 
-        return Segmentation(raw_data['count'], raw_data['type'])
+        return Segmentation(raw_data['type'], raw_data['count'])
+
+    def __eq__(self, o) -> bool:
+        if isinstance(o, Segmentation):
+            return o.segmentation_type == self.segmentation_type and o.count == self.count
+        else:
+            return False
 
 
 class SegmentationAnalyticResult(CommonResult):
@@ -218,3 +256,74 @@ class SegmentationAnalyticResult(CommonResult):
             raise ValueError("SegmentationAnalyticResult must contain a type field")
 
         return SegmentationAnalyticResult(counts, raw_data['type'])
+
+    def __eq__(self, o) -> bool:
+        if isinstance(o, SegmentationAnalyticResult):
+            return o.counts == self.counts and o.count_type == self.count_type
+        else:
+            return False
+
+
+class TransactionReturn:
+
+    def __init__(self, task_id: str, transaction_ids: List[str]) -> None:
+        self.task_id = task_id
+        self.transaction_ids = transaction_ids
+
+    def to_repr(self) -> dict:
+        return {
+            'taskId': self.task_id,
+            'transactionIds': self.transaction_ids
+        }
+
+    @staticmethod
+    def from_repr(raw_data: dict) -> TransactionReturn:
+        if 'taskId' not in raw_data:
+            raise ValueError("TransactionReturn must contain a taskId field")
+
+        if 'transactionIds' not in raw_data:
+            raise ValueError("TransactionReturn must contain a transactionIds field")
+
+        return TransactionReturn(raw_data['taskId'], raw_data['transactionIds'])
+
+    def __eq__(self, o) -> bool:
+        if isinstance(o, TransactionReturn):
+            return o.task_id == self.task_id and o.transaction_ids == self.transaction_ids
+        else:
+            return False
+
+
+class TransactionAnalyticResult(CommonResult):
+
+    def __init__(self, count: int, transactions: List[TransactionReturn], item_type: str) -> None:
+        self.count = count
+        self.transactions = transactions
+        self.item_type = item_type
+
+    def to_repr(self) -> dict:
+        return {
+            'count': self.count,
+            'transactions': [transaction.to_repr() for transaction in self.transactions],
+            'type': self.item_type
+        }
+
+    @staticmethod
+    def from_repr(raw_data: dict) -> TransactionAnalyticResult:
+        if 'count' not in raw_data:
+            raise ValueError("TransactionResult must contain a count field")
+
+        if 'transactions' in raw_data:
+            transactions = [TransactionReturn.from_repr(transaction) for transaction in raw_data['transactions']]
+        else:
+            raise ValueError("TransactionResult must contain a transactions field")
+
+        if 'type' not in raw_data:
+            raise ValueError("TransactionResult must contain a type field")
+
+        return TransactionAnalyticResult(raw_data['count'], transactions, raw_data['type'])
+
+    def __eq__(self, o) -> bool:
+        if isinstance(o, TransactionAnalyticResult):
+            return o.count == self.count and o.transactions == self.transactions and o.item_type == self.item_type
+        else:
+            return False

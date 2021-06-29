@@ -84,6 +84,12 @@ class Aggregation:
 
         return Aggregation(timespan, raw_data['project'], raw_data['field'], raw_data['aggregation'], filters)
 
+    def __eq__(self, o) -> bool:
+        if isinstance(o, Aggregation):
+            return o.timespan == self.timespan and o.project == self.project and o.field == self.field and o.aggregation == self.aggregation and o.filters == self.filters
+        else:
+            return False
+
 
 class Filter:
 
@@ -116,6 +122,12 @@ class Filter:
             raise ValueError('Value must be defined in an Filter object')
 
         return Filter(raw_data['field'], raw_data['operation'], raw_data['value'])
+
+    def __eq__(self, o) -> bool:
+        if isinstance(o, Filter):
+            return o.field == self.field and o.operation == self.operation and o.value == self.value
+        else:
+            return False
 
 
 # These classes was defined previously but never used nor documented

@@ -19,21 +19,20 @@ import csv
 import json
 import logging.config
 import os
-from datetime import datetime
 
-from wenet.common.interface.client import ApikeyClient
-from wenet.common.interface.component import ComponentInterface
-from wenet.common.interface.incentive_server import IncentiveServerInterface
-from wenet.common.interface.profile_manager import ProfileManagerInterface
-from wenet.common.interface.task_manager import TaskManagerInterface
+from wenet.interface.client import ApikeyClient
+from wenet.interface.hub import HubInterface
+from wenet.interface.incentive_server import IncentiveServerInterface
+from wenet.interface.profile_manager import ProfileManagerInterface
+from wenet.interface.task_manager import TaskManagerInterface
 
 from memex_logging.common.log.logging import get_logging_configuration
 from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic
 from memex_logging.common.model.message import Message
+from memex_logging.common.model.result import AnalyticResult, SegmentationAnalyticResult
 from memex_logging.common.model.time import DefaultTime, CustomTime
 from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
 from memex_logging.utils.utils import Utils
-from wenet.common.interface.hub import HubInterface
 
 
 logging.config.dictConfig(get_logging_configuration("compute_analytics"))
@@ -66,7 +65,7 @@ if __name__ == '__main__':
     arg_parser.add_argument("-uf", "--ufile", type=str, default=os.getenv("USERS_FILE"), help="The path of csv/tsv file where to store users")
     arg_parser.add_argument("-tf", "--tfile", type=str, default=os.getenv("TASK_FILE"), help="The path of json file where to store the tasks")
     arg_parser.add_argument("-df", "--dfile", type=str, default=os.getenv("DUMP_FILE"), help="The path of json file where to store the dump of messages")
-    arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", ComponentInterface.DEVELOPMENT_INSTANCE), help="The target WeNet instance")
+    arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
     arg_parser.add_argument("-ai", "--appid", type=str, default=os.getenv("APP_ID"), help="The id of the application in which compute the analytics")
     arg_parser.add_argument("-il", "--ilog", type=str, default=os.getenv("ILOG"), help="The id of the ilog application to check if the user has enabled it or not")
@@ -77,18 +76,18 @@ if __name__ == '__main__':
     args = arg_parser.parse_args()
 
     client = ApikeyClient(args.apikey)
-    task_manager_interface = TaskManagerInterface(client, instance=args.instance)
-    hub_interface = HubInterface(client, instance=args.instance)
-    profile_manager_interface = ProfileManagerInterface(client, instance=args.instance)
-    incentive_server_interface = IncentiveServerInterface(client, instance=args.instance)
-    logger_operations = LoggingUtility(args.instance + "/logger", args.project, {ApikeyClient.COMPONENT_AUTHORIZATION_APIKEY_HEADER: args.apikey})
+    task_manager_interface = TaskManagerInterface(client, args.instance)
+    hub_interface = HubInterface(client, args.instance)
+    profile_manager_interface = ProfileManagerInterface(client, args.instance)
+    incentive_server_interface = IncentiveServerInterface(client, args.instance)
+    logger_operations = LoggingUtility("http://0.0.0.0:80/", args.project, {"x-wenet-component-apikey": args.apikey})
 
     if args.start and args.end:
         time_range = CustomTime.from_isoformat(args.start, args.end)
     else:
         time_range = DefaultTime(args.range)
 
-    created_from, created_to = Utils.extract_range_timestamps(time_range)
+    creation_from, creation_to = Utils.extract_range_timestamps(time_range)
 
     # get analytics
     name, extension = os.path.splitext(args.afile)
@@ -103,70 +102,68 @@ if __name__ == '__main__':
 
     analytics_file_writer.writerow(["app id", args.appid])
     analytics_file_writer.writerow(["project", args.project])
-    analytics_file_writer.writerow(["from", created_from])
-    analytics_file_writer.writerow(["to", created_to])
+    analytics_file_writer.writerow(["from", creation_from])
+    analytics_file_writer.writerow(["to", creation_to])
     analytics_file_writer.writerow([])
     analytics_file_writer.writerow(["metric", "count", "description"])
 
     total_users = UserAnalytic(time_range, args.project, "u:total")
-    total_users_result = logger_operations.get_analytic(total_users)
-    analytics_file_writer.writerow(["total users", total_users_result["count"], "The total number of users of the application"])
+    total_users_result = AnalyticResult.from_repr(logger_operations.get_analytic(total_users))
+    analytics_file_writer.writerow(["total users", total_users_result.count, "The total number of users of the application"])
 
     active_users = UserAnalytic(time_range, args.project, "u:active")
-    active_users_result = logger_operations.get_analytic(active_users)
-    analytics_file_writer.writerow(["active users", active_users_result["count"], "The number of users who used the application"])
+    active_users_result = AnalyticResult.from_repr(logger_operations.get_analytic(active_users))
+    analytics_file_writer.writerow(["active users", active_users_result.count, "The number of users who used the application"])
 
     engaged_users = UserAnalytic(time_range, args.project, "u:engaged")
-    engaged_users_result = logger_operations.get_analytic(engaged_users)
-    analytics_file_writer.writerow(["engaged users", engaged_users_result["count"], "The number of users who received a notification from the platform (incentive, prompt, badge, ..)"])
+    engaged_users_result = AnalyticResult.from_repr(logger_operations.get_analytic(engaged_users))
+    analytics_file_writer.writerow(["engaged users", engaged_users_result.count, "The number of users who received a notification from the platform (incentive, prompt, badge, ..)"])
 
     new_users = UserAnalytic(time_range, args.project, "u:new")
-    new_users_result = logger_operations.get_analytic(new_users)
-    analytics_file_writer.writerow(["new users", new_users_result["count"], "The number of new users who activated the application during the period of this analysis"])
+    new_users_result = AnalyticResult.from_repr(logger_operations.get_analytic(new_users))
+    analytics_file_writer.writerow(["new users", new_users_result.count, "The number of new users who activated the application during the period of this analysis"])
 
     segmentation_messages = MessageAnalytic(time_range, args.project, "m:segmentation")
-    segmentation_messages_result = logger_operations.get_analytic(segmentation_messages)
+    segmentation_messages_result = SegmentationAnalyticResult.from_repr(logger_operations.get_analytic(segmentation_messages))
 
     total_messages = 0
-    for key in segmentation_messages_result["counts"]:
-        total_messages += segmentation_messages_result["counts"][key]
-    analytics_file_writer.writerow(["total messages", total_messages, "The total number of messages exchanged"])
-
     request_messages = 0
-    if TYPE_REQUEST_MESSAGE in segmentation_messages_result["counts"]:
-        request_messages = segmentation_messages_result["counts"][TYPE_REQUEST_MESSAGE]
-    analytics_file_writer.writerow(["messages from users", request_messages, "The number of messages sent by users (textual messages, clicked buttons and commands)"])
+    response_messages = 0
+    notification_messages = 0
+    for segmentation in segmentation_messages_result.counts:
+        total_messages += segmentation.count
+        if TYPE_REQUEST_MESSAGE == segmentation.segmentation_type:
+            request_messages = segmentation.count
+        if TYPE_RESPONSE_MESSAGE == segmentation.segmentation_type:
+            response_messages = segmentation.count
+        if TYPE_NOTIFICATION_MESSAGE == segmentation.segmentation_type:
+            notification_messages = segmentation.count
 
     segmentation_requests = MessageAnalytic(time_range, args.project, "r:segmentation")
-    segmentation_requests_result = logger_operations.get_analytic(segmentation_requests)
+    segmentation_requests_result = SegmentationAnalyticResult.from_repr(logger_operations.get_analytic(segmentation_requests))
 
     text_requests = 0
-    if TYPE_TEXT_CONTENT_REQUEST in segmentation_requests_result["counts"]:
-        text_requests = segmentation_requests_result["counts"][TYPE_TEXT_CONTENT_REQUEST]
-    analytics_file_writer.writerow(["user textual messages", text_requests, "The number of textual messages sent by the users"])
-
     action_requests = 0
-    if TYPE_ACTION_CONTENT_REQUEST in segmentation_requests_result["counts"]:
-        action_requests = segmentation_requests_result["counts"][TYPE_ACTION_CONTENT_REQUEST]
+    for segmentation in segmentation_requests_result.counts:
+        if TYPE_TEXT_CONTENT_REQUEST == segmentation.segmentation_type:
+            text_requests = segmentation.count
+        if TYPE_ACTION_CONTENT_REQUEST == segmentation.segmentation_type:
+            action_requests = segmentation.count
+
+    analytics_file_writer.writerow(["total messages", total_messages, "The total number of messages exchanged"])
+    analytics_file_writer.writerow(["messages from users", request_messages, "The number of messages sent by users (textual messages, clicked buttons and commands)"])
+    analytics_file_writer.writerow(["user textual messages", text_requests, "The number of textual messages sent by the users"])
     analytics_file_writer.writerow(["user action messages", action_requests, "The number of action messages (buttons and commands) sent by the users"])
-
-    response_messages = 0
-    if TYPE_RESPONSE_MESSAGE in segmentation_messages_result["counts"]:
-        response_messages = segmentation_messages_result["counts"][TYPE_RESPONSE_MESSAGE]
     analytics_file_writer.writerow(["messages from bot", response_messages, "The number of messages sent by the application"])
-
-    notification_messages = 0
-    if TYPE_NOTIFICATION_MESSAGE in segmentation_messages_result["counts"]:
-        notification_messages = segmentation_messages_result["counts"][TYPE_NOTIFICATION_MESSAGE]
     analytics_file_writer.writerow(["messages from wenet", notification_messages, "The number of messages sent by the WeNet platform"])
 
-    tasks = task_manager_interface.get_tasks(args.appid, created_from, created_to)
+    tasks = task_manager_interface.get_all_tasks(app_id=args.appid, creation_from=creation_from, creation_to=creation_to)
     task_file = open(args.tfile, "w")
     json.dump([task.to_repr() for task in tasks], task_file, ensure_ascii=False, indent=2)
     task_file.close()
     analytics_file_writer.writerow(["questions", len(tasks), "The number of questions asked by the users"])
 
-    transactions = task_manager_interface.get_transactions(args.appid, created_from, created_to)
+    transactions = task_manager_interface.get_all_transactions(app_id=args.appid, creation_from=creation_from, creation_to=creation_to)
     transaction_labels = [transaction.label for transaction in transactions]
 
     report_question_transactions = transaction_labels.count(LABEL_REPORT_QUESTION_TRANSACTION)
@@ -202,8 +199,8 @@ if __name__ == '__main__':
 
     questions_file_writer.writerow(["app id", args.appid])
     questions_file_writer.writerow(["project", args.project])
-    questions_file_writer.writerow(["from", created_from])
-    questions_file_writer.writerow(["to", created_to])
+    questions_file_writer.writerow(["from", creation_from])
+    questions_file_writer.writerow(["to", creation_to])
     questions_file_writer.writerow(["total questions", len(tasks)])
     questions_file_writer.writerow([])
     questions_file_writer.writerow(["question", "answer"])
@@ -265,10 +262,10 @@ if __name__ == '__main__':
     users_file.close()
 
     # extracting messages dump
-    messages = [Message.from_repr(message) for message in logger_operations.get_messages(created_from, created_to, max_size=10000)]
+    messages = [Message.from_repr(message) for message in logger_operations.get_messages(creation_from, creation_to, max_size=10000)]
     while len(messages) < total_messages:
         message = messages.pop(-1)
-        messages.extend([Message.from_repr(message) for message in logger_operations.get_messages(message.timestamp, created_to, max_size=10000)])
+        messages.extend([Message.from_repr(message) for message in logger_operations.get_messages(message.timestamp, creation_to, max_size=10000)])
 
     dump_file = open(args.dfile, "w")
     json.dump([message.to_repr() for message in messages], dump_file, ensure_ascii=False, indent=2)

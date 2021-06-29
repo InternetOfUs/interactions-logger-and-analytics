@@ -14,6 +14,8 @@
 
 from __future__ import absolute_import, annotations
 
+from typing import Union
+
 from memex_logging.common.model.aggregation import Aggregation
 from memex_logging.common.model.analytic import CommonAnalytic
 from memex_logging.common.model.result import AnalyticResult, CommonResult
@@ -38,22 +40,28 @@ class AnalyticResponse:
         if 'query' in raw_data:
             analytic = CommonAnalytic.from_repr(raw_data['query'])
         else:
-            raise ValueError("UserAnalytic must contain a type")
+            raise ValueError("AnalyticResponse must contain a query")
 
         if 'result' in raw_data:
             result = AnalyticResult.from_repr(raw_data['result'])
         else:
-            raise ValueError("UserAnalytic must contain a project")
+            raise ValueError("AnalyticResponse must contain a result")
 
-        if 'static_id' not in raw_data:
-            raise ValueError("UserAnalytic must contain a project")
+        if 'staticId' not in raw_data:
+            raise ValueError("AnalyticResponse must contain a staticId")
 
-        return AnalyticResponse(analytic, result, raw_data['static_id'])
+        return AnalyticResponse(analytic, result, raw_data['staticId'])
+
+    def __eq__(self, o) -> bool:
+        if isinstance(o, AnalyticResponse):
+            return o.analytic == self.analytic and o.result == self.result and o.static_id == self.static_id
+        else:
+            return False
 
 
 class AggregationResponse:
 
-    def __init__(self, analytic: Aggregation, result: int, static_id: str) -> None:
+    def __init__(self, analytic: Aggregation, result: Union[float, dict], static_id: str) -> None:
         self.analytic = analytic
         self.result = result
         self.static_id = static_id
@@ -72,15 +80,20 @@ class AggregationResponse:
         if 'query' in raw_data:
             analytic = Aggregation.from_repr(raw_data['query'])
         else:
-            raise ValueError("AggregationResponse must contain a type")
+            raise ValueError("AggregationResponse must contain a query")
 
         if 'result' in raw_data:
             result = raw_data['result'][analytic.aggregation]
         else:
-            raise ValueError("AggregationResponse must contain a project")
+            raise ValueError("AggregationResponse must contain a result")
 
-        if 'static_id' not in raw_data:
-            raise ValueError("AggregationResponse must contain a project")
+        if 'staticId' not in raw_data:
+            raise ValueError("AggregationResponse must contain a staticId")
 
-        return AggregationResponse(analytic, result, raw_data['static_id'])
+        return AggregationResponse(analytic, result, raw_data['staticId'])
 
+    def __eq__(self, o) -> bool:
+        if isinstance(o, AggregationResponse):
+            return o.analytic == self.analytic and o.result == self.result and o.static_id == self.static_id
+        else:
+            return False

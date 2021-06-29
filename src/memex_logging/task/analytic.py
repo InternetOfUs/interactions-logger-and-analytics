@@ -18,8 +18,8 @@ import logging
 import os
 
 from elasticsearch import Elasticsearch
-from wenet.common.interface.client import ApikeyClient
-from wenet.common.interface.task_manager import TaskManagerInterface
+from wenet.interface.client import ApikeyClient
+from wenet.interface.task_manager import TaskManagerInterface
 
 from memex_logging.common.analytic.aggregation import AggregationComputation
 from memex_logging.common.analytic.analytic import AnalyticComputation
@@ -38,7 +38,7 @@ logger = logging.getLogger("logger.task.analytic")
 def compute_analytic(analytic: dict, static_id: str):
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     client = ApikeyClient(os.getenv("APIKEY"))
-    task_manager_interface = TaskManagerInterface(client, instance=os.getenv("INSTANCE"))
+    task_manager_interface = TaskManagerInterface(client, os.getenv("INSTANCE"))
     logger.info("Computing analytic: " + str(analytic))
 
     try:
@@ -82,15 +82,23 @@ def compute_analytic(analytic: dict, static_id: str):
                 return
 
         elif isinstance(analytic, TaskAnalytic):
-            if analytic.metric.lower() == "t:total":  # TODO also for "t:active", "t:closed", "t:new"
+            if analytic.metric.lower() == "t:total":
                 result = AnalyticComputation.compute_task_t_total(analytic, task_manager_interface)
+            elif analytic.metric.lower() == "t:active":
+                result = AnalyticComputation.compute_task_t_active(analytic, task_manager_interface)
+            elif analytic.metric.lower() == "t:closed":
+                result = AnalyticComputation.compute_task_t_closed(analytic, task_manager_interface)
+            elif analytic.metric.lower() == "t:new":
+                result = AnalyticComputation.compute_task_t_new(analytic, task_manager_interface)
             else:
                 logger.info("Task metric value not valid")
                 return
 
         elif isinstance(analytic, TransactionAnalytic):
-            if analytic.metric.lower() == "t:total":  # TODO also for "t:new", "t:segmentation"
+            if analytic.metric.lower() == "t:total":
                 result = AnalyticComputation.compute_transaction_t_total(analytic, task_manager_interface)
+            elif analytic.metric.lower() == "t:segmentation":
+                result = AnalyticComputation.compute_transaction_t_segmentation(analytic, task_manager_interface)
             else:
                 logger.info("Transaction metric value not valid")
                 return

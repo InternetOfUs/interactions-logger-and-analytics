@@ -47,6 +47,12 @@ class DefaultTime:
 
         return DefaultTime(raw_data['value'])
 
+    def __eq__(self, o) -> bool:
+        if isinstance(o, DefaultTime):
+            return o.value == self.value
+        else:
+            return False
+
 
 class CustomTime:
 
@@ -79,3 +85,9 @@ class CustomTime:
             raise ValueError('Start and end must be defined in the CustomTime object')
 
         return CustomTime.from_isoformat(raw_data['start'], raw_data['end'])
+
+    def __eq__(self, o) -> bool:
+        if isinstance(o, CustomTime):
+            return o.start == self.start and o.end == self.end
+        else:
+            return False
