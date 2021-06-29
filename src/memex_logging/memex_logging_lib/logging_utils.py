@@ -1155,7 +1155,7 @@ class LoggingUtility:
 
         for i in range(number_of_trials):
             sleep(sleep_time)
-            response = requests.get(api_point, headers=self._custom_headers, params={"staticId": static_id, "project": self._project})
+            response = requests.get(api_point, headers=self._custom_headers, params={"staticId": static_id, "project": analytic.project})
             if response.status_code == 200:
                 break
 
