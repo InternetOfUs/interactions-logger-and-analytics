@@ -80,7 +80,7 @@ if __name__ == '__main__':
     hub_interface = HubInterface(client, args.instance)
     profile_manager_interface = ProfileManagerInterface(client, args.instance)
     incentive_server_interface = IncentiveServerInterface(client, args.instance)
-    logger_operations = LoggingUtility("http://0.0.0.0:80/", args.project, {"x-wenet-component-apikey": args.apikey})
+    logger_operations = LoggingUtility(args.instance + "/logger", args.project, {"x-wenet-component-apikey": args.apikey})
 
     if args.start and args.end:
         time_range = CustomTime.from_isoformat(args.start, args.end)
