@@ -4,10 +4,12 @@
 
 ### NEXT
 
-* Imported wenet common models as PyPi package
-* Improved script for analytics and added the export of the tasks and messages in dedicated json files
-* Added script for getting the association between the id and the email of users
-* Made celery work
+* Imported wenet common models `2.0.0-alpha`.
+* Improved script for computing analytics.
+* Allowing to export the list of both tasks and messages in dedicated json files.
+* Added new script for getting the association between user ids and their emails.
+* Added Sentry integration.
+* Integrated celery worker
 * Updated documentation
 * Refactored analytics models and analytics computations
 * Added task and transaction analytics
