@@ -180,6 +180,7 @@ class TestAnalyticComputation(TestCase):
 
         self.task_manager_interface.get_all_tasks = Mock(side_effect=[
             [Task("task_id1", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
+            [],
             []
         ])
         total_tasks = AnalyticComputation.compute_task_t_total(TaskAnalytic(self.time_range, "app_id", "t:total"), self.task_manager_interface)
@@ -188,21 +189,59 @@ class TestAnalyticComputation(TestCase):
 
         self.task_manager_interface.get_all_tasks = Mock(side_effect=[
             [],
-            [Task("task_id2", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2021, 6, 12).timestamp())]
+            [Task("task_id2", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2022, 1, 1).timestamp())],
+            []
         ])
         total_tasks = AnalyticComputation.compute_task_t_total(TaskAnalytic(self.time_range, "app_id", "t:total"), self.task_manager_interface)
         self.assertEqual(1, total_tasks.count)
         self.assertEqual(["task_id2"], total_tasks.items)
+
+        self.task_manager_interface.get_all_tasks = Mock(side_effect=[
+            [],
+            [],
+            [Task("task_id3", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2021, 6, 12).timestamp())]
+        ])
+        total_tasks = AnalyticComputation.compute_task_t_total(TaskAnalytic(self.time_range, "app_id", "t:total"), self.task_manager_interface)
+        self.assertEqual(1, total_tasks.count)
+        self.assertEqual(["task_id3"], total_tasks.items)
+
+        self.task_manager_interface.get_all_tasks = Mock(side_effect=[
+            [Task("task_id1", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
+            [Task("task_id2", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2022, 1, 1).timestamp())],
+            [Task("task_id3", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2021, 6, 12).timestamp())]
+        ])
+        total_tasks = AnalyticComputation.compute_task_t_total(TaskAnalytic(self.time_range, "app_id", "t:total"), self.task_manager_interface)
+        self.assertEqual(3, total_tasks.count)
+        self.assertEqual(["task_id1", "task_id2", "task_id3"], total_tasks.items)
 
     def test_compute_task_t_active(self):
         self.task_manager_interface.get_all_tasks = Mock(return_value=[])
         active_tasks = AnalyticComputation.compute_task_t_active(TaskAnalytic(self.time_range, "app_id", "t:active"), self.task_manager_interface)
         self.assertEqual(0, active_tasks.count)
 
-        self.task_manager_interface.get_all_tasks = Mock(return_value=[Task("task_id", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))])
+        self.task_manager_interface.get_all_tasks = Mock(side_effect=[
+            [Task("task_id1", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
+            []
+        ])
         active_tasks = AnalyticComputation.compute_task_t_active(TaskAnalytic(self.time_range, "app_id", "t:active"), self.task_manager_interface)
         self.assertEqual(1, active_tasks.count)
-        self.assertEqual(["task_id"], active_tasks.items)
+        self.assertEqual(["task_id1"], active_tasks.items)
+
+        self.task_manager_interface.get_all_tasks = Mock(side_effect=[
+            [],
+            [Task("task_id2", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2022, 1, 1).timestamp())]
+        ])
+        active_tasks = AnalyticComputation.compute_task_t_active(TaskAnalytic(self.time_range, "app_id", "t:active"), self.task_manager_interface)
+        self.assertEqual(1, active_tasks.count)
+        self.assertEqual(["task_id2"], active_tasks.items)
+
+        self.task_manager_interface.get_all_tasks = Mock(side_effect=[
+            [Task("task_id1", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
+            [Task("task_id2", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2022, 1, 1).timestamp())]
+        ])
+        active_tasks = AnalyticComputation.compute_task_t_active(TaskAnalytic(self.time_range, "app_id", "t:active"), self.task_manager_interface)
+        self.assertEqual(2, active_tasks.count)
+        self.assertEqual(["task_id1", "task_id2"], active_tasks.items)
 
     def test_compute_task_t_closed(self):
         self.task_manager_interface.get_all_tasks = Mock(return_value=[])

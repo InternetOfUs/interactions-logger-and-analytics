@@ -683,13 +683,16 @@ class AnalyticComputation:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = []
         tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
+        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
         tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound))
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
 
     @staticmethod
     def compute_task_t_active(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        tasks = task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False)
+        tasks = []
+        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
+        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
 
     @staticmethod
