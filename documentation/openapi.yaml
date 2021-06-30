@@ -373,6 +373,7 @@ paths:
       `m:from_bot`: the number of messages from the bot in a certain time range;
       `m:responses`: the number of response messages in a certain time range;
       `m:notifications`: the number of notification messages in a certain time range;
+      `m:unhandled`: the number of unhandled messages in a certain time range;
       `m:segmentation`: the segmentation of the messages based on the type in a certain time range;
       `r:segmentation`: the segmentation of the request messages based on the type in a certain time range;
 
@@ -1107,7 +1108,7 @@ components:
           example: "message"
         metric:
           type: string
-          enum: ["m:from_users", "m:from_bot", "m:responses", "m:notifications", "m:segmentation", "r:segmentation"]
+          enum: ["m:from_users", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
           example: "m:from_users"
       required:
         - dimension

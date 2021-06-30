@@ -679,6 +679,61 @@ class AnalyticComputation:
         return AnalyticResult(total_len, messages, "messageId")
 
     @staticmethod
+    def compute_m_unhandled(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        body = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "match": {
+                                "handled.keyword": True
+                            }
+                        },
+                        {
+                            "match": {
+                                "project.keyword": analytic.project
+                            }
+                        }
+                    ],
+                    "filter": [
+                        {
+                            "range": {
+                                "timestamp": {
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "aggs": {
+                "terms_count": {
+                    "terms": {
+                        "field": "messageId.keyword",
+                        "size": 65535
+                    }
+                }
+            }
+        }
+
+        index = Utils.generate_index(data_type="message", project=analytic.project)
+        response = es.search(index=index, body=body, size=0)
+        messages = []
+        total_len = 0
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                messages.append(item['key'])
+                total_len = total_len + item['doc_count']
+
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of unhandled messages is higher")
+
+        return AnalyticResult(total_len, messages, "messageId")
+
+    @staticmethod
     def compute_task_t_total(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = []

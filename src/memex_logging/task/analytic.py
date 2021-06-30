@@ -73,6 +73,8 @@ def compute_analytic(analytic: dict, static_id: str):
                 result = AnalyticComputation.compute_m_responses(analytic, es)
             elif analytic.metric.lower() == "m:notifications":
                 result = AnalyticComputation.compute_m_notifications(analytic, es)
+            elif analytic.metric.lower() == "m:unhandled":
+                result = AnalyticComputation.compute_m_unhandled(analytic, es)
             else:
                 logger.info("Message metric value not valid")
                 return
