@@ -16,14 +16,14 @@ from __future__ import absolute_import, annotations
 
 from typing import Union
 
-from memex_logging.common.model.aggregation import Aggregation
-from memex_logging.common.model.analytic import CommonAnalytic
+from memex_logging.common.model.aggregation import AggregationAnalytic
+from memex_logging.common.model.analytic import DimensionAnalytic
 from memex_logging.common.model.result import AnalyticResult, CommonResult
 
 
 class AnalyticResponse:
 
-    def __init__(self, analytic: CommonAnalytic, result: CommonResult, static_id: str) -> None:
+    def __init__(self, analytic: DimensionAnalytic, result: CommonResult, static_id: str) -> None:
         self.analytic = analytic
         self.result = result
         self.static_id = static_id
@@ -37,19 +37,8 @@ class AnalyticResponse:
 
     @staticmethod
     def from_repr(raw_data: dict) -> AnalyticResponse:
-        if 'query' in raw_data:
-            analytic = CommonAnalytic.from_repr(raw_data['query'])
-        else:
-            raise ValueError("AnalyticResponse must contain a query")
-
-        if 'result' in raw_data:
-            result = AnalyticResult.from_repr(raw_data['result'])
-        else:
-            raise ValueError("AnalyticResponse must contain a result")
-
-        if 'staticId' not in raw_data:
-            raise ValueError("AnalyticResponse must contain a staticId")
-
+        analytic = DimensionAnalytic.from_repr(raw_data['query'])
+        result = AnalyticResult.from_repr(raw_data['result'])
         return AnalyticResponse(analytic, result, raw_data['staticId'])
 
     def __eq__(self, o) -> bool:
@@ -61,7 +50,7 @@ class AnalyticResponse:
 
 class AggregationResponse:
 
-    def __init__(self, analytic: Aggregation, result: Union[float, dict], static_id: str) -> None:
+    def __init__(self, analytic: AggregationAnalytic, result: Union[float, dict], static_id: str) -> None:
         self.analytic = analytic
         self.result = result
         self.static_id = static_id
@@ -77,19 +66,8 @@ class AggregationResponse:
 
     @staticmethod
     def from_repr(raw_data: dict) -> AggregationResponse:
-        if 'query' in raw_data:
-            analytic = Aggregation.from_repr(raw_data['query'])
-        else:
-            raise ValueError("AggregationResponse must contain a query")
-
-        if 'result' in raw_data:
-            result = raw_data['result'][analytic.aggregation]
-        else:
-            raise ValueError("AggregationResponse must contain a result")
-
-        if 'staticId' not in raw_data:
-            raise ValueError("AggregationResponse must contain a staticId")
-
+        analytic = AggregationAnalytic.from_repr(raw_data['query'])
+        result = raw_data['result'][analytic.aggregation]
         return AggregationResponse(analytic, result, raw_data['staticId'])
 
     def __eq__(self, o) -> bool:

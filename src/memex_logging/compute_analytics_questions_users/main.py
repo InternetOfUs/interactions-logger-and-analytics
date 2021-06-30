@@ -30,9 +30,9 @@ from memex_logging.common.log.logging import get_logging_configuration
 from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic
 from memex_logging.common.model.message import Message
 from memex_logging.common.model.result import AnalyticResult, SegmentationAnalyticResult
-from memex_logging.common.model.time import DefaultTime, CustomTime
+from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
 from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
-from memex_logging.utils.utils import Utils
+from memex_logging.common.utils import Utils
 
 
 logging.config.dictConfig(get_logging_configuration("compute_analytics"))
@@ -83,9 +83,9 @@ if __name__ == '__main__':
     logger_operations = LoggingUtility(args.instance + "/logger", args.project, {"x-wenet-component-apikey": args.apikey})
 
     if args.start and args.end:
-        time_range = CustomTime.from_isoformat(args.start, args.end)
+        time_range = FixedTimeWindow.from_isoformat(args.start, args.end)
     else:
-        time_range = DefaultTime(args.range)
+        time_range = MovingTimeWindow(args.range)
 
     creation_from, creation_to = Utils.extract_range_timestamps(time_range)
 

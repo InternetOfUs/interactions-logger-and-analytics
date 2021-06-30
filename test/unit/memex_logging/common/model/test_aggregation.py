@@ -17,15 +17,15 @@ from __future__ import absolute_import, annotations
 from unittest import TestCase
 
 from memex_logging.common.analytic.builder import AnalyticBuilder
-from memex_logging.common.model.aggregation import Aggregation, Filter
-from memex_logging.common.model.time import DefaultTime
+from memex_logging.common.model.aggregation import AggregationAnalytic, Filter
+from memex_logging.common.model.time import MovingTimeWindow
 
 
 class TestAggregation(TestCase):
 
     def test_repr(self):
-        aggregation = Aggregation(DefaultTime("7D"), "project", "intent.confidence", "avg", None)
-        self.assertEqual(aggregation, Aggregation.from_repr(aggregation.to_repr()))
+        aggregation = AggregationAnalytic(MovingTimeWindow("7D"), "project", "intent.confidence", "avg", None)
+        self.assertEqual(aggregation, AggregationAnalytic.from_repr(aggregation.to_repr()))
         self.assertEqual(aggregation, AnalyticBuilder.from_repr(aggregation.to_repr()))
 
 

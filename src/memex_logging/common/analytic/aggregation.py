@@ -18,8 +18,8 @@ import logging
 
 from elasticsearch import Elasticsearch
 
-from memex_logging.common.model.aggregation import Aggregation
-from memex_logging.utils.utils import Utils
+from memex_logging.common.model.aggregation import AggregationAnalytic
+from memex_logging.common.utils import Utils
 
 
 logger = logging.getLogger("logger.common.analytic.aggregation")
@@ -28,7 +28,7 @@ logger = logging.getLogger("logger.common.analytic.aggregation")
 class AggregationComputation:
 
     @staticmethod
-    def max_aggr(analytic: Aggregation, es: Elasticsearch):
+    def max(analytic: AggregationAnalytic, es: Elasticsearch):
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -66,7 +66,7 @@ class AggregationComputation:
         return response['aggregations']['type_count']['value']
 
     @staticmethod
-    def min_aggr(analytic: Aggregation, es: Elasticsearch):
+    def min(analytic: AggregationAnalytic, es: Elasticsearch):
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -104,7 +104,7 @@ class AggregationComputation:
         return response['aggregations']['type_count']['value']
 
     @staticmethod
-    def avg_aggr(analytic: Aggregation, es: Elasticsearch):
+    def avg(analytic: AggregationAnalytic, es: Elasticsearch):
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -142,7 +142,7 @@ class AggregationComputation:
         return response['aggregations']['type_count']['value']
 
     @staticmethod
-    def cardinality_aggr(analytic: Aggregation, es: Elasticsearch):
+    def cardinality(analytic: AggregationAnalytic, es: Elasticsearch):
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -180,7 +180,7 @@ class AggregationComputation:
         return response['aggregations']['type_count']['value']
 
     @staticmethod
-    def extended_stats_aggr(analytic: Aggregation, es: Elasticsearch):
+    def extended_stats(analytic: AggregationAnalytic, es: Elasticsearch):
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -218,7 +218,7 @@ class AggregationComputation:
         return response['aggregations']['type_count']
 
     @staticmethod
-    def percentiles_aggr(analytic: Aggregation, es: Elasticsearch):
+    def percentiles(analytic: AggregationAnalytic, es: Elasticsearch):
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -256,7 +256,7 @@ class AggregationComputation:
         return response['aggregations']['type_count']['values']
 
     @staticmethod
-    def stats_aggr(analytic: Aggregation, es: Elasticsearch):
+    def stats(analytic: AggregationAnalytic, es: Elasticsearch):
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -294,7 +294,7 @@ class AggregationComputation:
         return response['aggregations']['type_count']
 
     @staticmethod
-    def sum_aggr(analytic: Aggregation, es: Elasticsearch):
+    def sum(analytic: AggregationAnalytic, es: Elasticsearch):
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -332,7 +332,7 @@ class AggregationComputation:
         return response['aggregations']['type_count']['value']
 
     @staticmethod
-    def value_count_aggr(analytic: Aggregation, es: Elasticsearch):
+    def value_count(analytic: AggregationAnalytic, es: Elasticsearch):
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {

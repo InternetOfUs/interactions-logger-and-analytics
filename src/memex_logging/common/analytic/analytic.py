@@ -24,7 +24,7 @@ from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, T
 from memex_logging.common.model.result import AnalyticResult, SegmentationAnalyticResult, \
     ConversationLengthAnalyticResult, ConversationPathAnalyticResult, Segmentation, ConversationLength, \
     ConversationPath, TransactionAnalyticResult, TransactionReturn
-from memex_logging.utils.utils import Utils
+from memex_logging.common.utils import Utils
 
 
 logger = logging.getLogger("logger.common.analytic.analytic")
@@ -410,7 +410,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `5` but the number of types is higher")
 
-        return SegmentationAnalyticResult(type_counter, "type")
+        return SegmentationAnalyticResult(type_counter)
 
     @staticmethod
     def compute_r_segmentation(analytic: MessageAnalytic, es: Elasticsearch) -> SegmentationAnalyticResult:
@@ -463,7 +463,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `10` but the number of content types is higher")
 
-        return SegmentationAnalyticResult(type_counter, "content.type")
+        return SegmentationAnalyticResult(type_counter)
 
     @staticmethod
     def compute_m_from_bot(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
@@ -768,7 +768,7 @@ class AnalyticComputation:
         transactions = task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
         task_ids = set([transaction.task_id for transaction in transactions])
         transaction_returns = [TransactionReturn(task_id, [transaction.id for transaction in transactions if transaction.task_id == task_id]) for task_id in task_ids]
-        return TransactionAnalyticResult(len(transactions), transaction_returns, "transactions")
+        return TransactionAnalyticResult(len(transactions), transaction_returns)
 
     @staticmethod
     def compute_transaction_t_segmentation(analytic: TransactionAnalytic, task_manager_interface: TaskManagerInterface) -> SegmentationAnalyticResult:
@@ -777,7 +777,7 @@ class AnalyticComputation:
         transaction_labels = [transaction.label for transaction in transactions]
         unique_labels = set(transaction_labels)
         type_counter = [Segmentation(label, transaction_labels.count(label)) for label in unique_labels]
-        return SegmentationAnalyticResult(type_counter, "label")
+        return SegmentationAnalyticResult(type_counter)
 
     @staticmethod
     def compute_c_total(analytic: ConversationAnalytic, es: Elasticsearch) -> AnalyticResult:
@@ -973,7 +973,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
-        return ConversationLengthAnalyticResult(total_len, conversation_list, "length")
+        return ConversationLengthAnalyticResult(total_len, conversation_list)
 
     @staticmethod
     def compute_c_path(analytic: ConversationAnalytic, es: Elasticsearch) -> ConversationPathAnalyticResult:
@@ -1075,7 +1075,7 @@ class AnalyticComputation:
                 if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                     logger.warning("The number of buckets is limited at `65535` but the number of messages is higher")
 
-        return ConversationPathAnalyticResult(len(paths), paths, "path")
+        return ConversationPathAnalyticResult(len(paths), paths)
 
     @staticmethod
     def compute_d_fallback(analytic: DialogueAnalytic, es: Elasticsearch) -> AnalyticResult:

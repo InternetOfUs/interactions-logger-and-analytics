@@ -14,21 +14,17 @@
 
 from __future__ import absolute_import, annotations
 
-from datetime import datetime
-from unittest import TestCase
+import os
 
-from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
-
-
-class TestDefaultTime(TestCase):
-
-    def test_repr(self):
-        time = MovingTimeWindow("7D")
-        self.assertEqual(time, MovingTimeWindow.from_repr(time.to_repr()))
+from celery import Celery
 
 
-class TestCustomTime(TestCase):
+def make_celery(app_name=__name__):
+    return Celery(
+            app_name,
+            backend=os.getenv("CELERY_RESULT_BACKEND", None),
+            broker=os.getenv("CELERY_BROKER_URL", None)
+        )
 
-    def test_repr(self):
-        time = FixedTimeWindow(datetime.now(), datetime.now())
-        self.assertEqual(time, FixedTimeWindow.from_repr(time.to_repr()))
+
+celery = make_celery()

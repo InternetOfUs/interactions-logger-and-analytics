@@ -17,6 +17,8 @@ from __future__ import absolute_import, annotations
 from datetime import datetime
 from typing import Optional, List, Tuple
 
+from elasticsearch import Elasticsearch
+
 from memex_logging.common.dao.collector import DaoCollector
 from memex_logging.common.dao.message import MessageDao
 from memex_logging.common.model.message import Message
@@ -52,5 +54,5 @@ class MockDaoCollectorBuilder:
     @staticmethod
     def build_mock_daos() -> DaoCollector:
         return DaoCollector(
-            MockMessageDao(None)
+            MockMessageDao(Elasticsearch())
         )

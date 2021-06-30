@@ -29,7 +29,7 @@ CELERY_RESULT_BACKEND='redis://localhost:6379/0'
 You'll need a worker to get things done, run the following command in a separate terminal tab:
 
 ```bash
-celery worker -A memex_logging.ws.celery_worker.celery
+celery worker -A memex_logging.celery.initialize.celery
 ```
 
 Note that it requires all the environment variables of the web service to work.

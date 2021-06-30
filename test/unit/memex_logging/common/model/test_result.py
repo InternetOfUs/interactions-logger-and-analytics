@@ -38,7 +38,7 @@ class TestConversationLength(TestCase):
 class TestConversationLengthAnalyticResult(TestCase):
 
     def test_repr(self):
-        response = ConversationLengthAnalyticResult(1, [ConversationLength("1", 2)], "length")
+        response = ConversationLengthAnalyticResult(1, [ConversationLength("1", 2)])
         self.assertEqual(response, ConversationLengthAnalyticResult.from_repr(response.to_repr()))
 
 
@@ -52,7 +52,7 @@ class TestConversationPath(TestCase):
 class TestConversationPathAnalyticResult(TestCase):
 
     def test_repr(self):
-        response = ConversationPathAnalyticResult(1, [ConversationPath("1", ["1"])], "path")
+        response = ConversationPathAnalyticResult(1, [ConversationPath("1", ["1"])])
         self.assertEqual(response, ConversationPathAnalyticResult.from_repr(response.to_repr()))
 
 
@@ -66,7 +66,7 @@ class TestSegmentation(TestCase):
 class TestSegmentationAnalyticResult(TestCase):
 
     def test_repr(self):
-        response = SegmentationAnalyticResult([Segmentation("type1", 1)], "type")
+        response = SegmentationAnalyticResult([Segmentation("type1", 1)])
         self.assertEqual(response, SegmentationAnalyticResult.from_repr(response.to_repr()))
 
 
@@ -80,5 +80,5 @@ class TestTransactionReturn(TestCase):
 class TestTransactionAnalyticResult(TestCase):
 
     def test_repr(self):
-        response = TransactionAnalyticResult(1, [TransactionReturn("task_id", ["1"])], "transactions")
+        response = TransactionAnalyticResult(1, [TransactionReturn("task_id", ["1"])])
         self.assertEqual(response, TransactionAnalyticResult.from_repr(response.to_repr()))

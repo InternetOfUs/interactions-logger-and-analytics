@@ -17,6 +17,7 @@ from __future__ import absolute_import, annotations
 import logging
 import os
 
+from celery import Celery
 from elasticsearch import Elasticsearch
 from flask import Flask
 from flask_restful import Api
@@ -60,13 +61,13 @@ class WsInterface(object):
                 logger.debug("Installing route %s", prefix + path)
                 self._api.add_resource(resource, prefix + path, resource_class_args=args)
 
-    def run_server(self, host: str = "0.0.0.0", port: int = 80):
+    def run_server(self, host: str = "0.0.0.0", port: int = 80) -> None:
         self._app.run(host=host, port=port, debug=False)
 
-    def get_application(self):
+    def get_application(self) -> Flask:
         return self._app
 
-    def init_celery(self, celery):
+    def init_celery(self, celery: Celery) -> None:
         app = self.get_application()
         celery.conf.update(app.config)
         TaskBase = celery.Task

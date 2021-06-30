@@ -24,7 +24,8 @@ from elasticsearch import Elasticsearch
 from flask_restful import abort
 
 from memex_logging.common.model.message import RequestMessage, ResponseMessage, NotificationMessage
-from memex_logging.common.model.time import DefaultTime, CustomTime
+from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
+
 
 logger = logging.getLogger("logger.utils.utils")
 
@@ -58,8 +59,8 @@ class Utils:
         return index_name
 
     @staticmethod
-    def extract_range_timestamps(time_object: Union[DefaultTime, CustomTime]) -> Tuple[datetime, datetime]:
-        if isinstance(time_object, DefaultTime):
+    def extract_range_timestamps(time_object: Union[MovingTimeWindow, FixedTimeWindow]) -> Tuple[datetime, datetime]:
+        if isinstance(time_object, MovingTimeWindow):
             if str(time_object.value).upper() == "30D":
                 now = datetime.now()
                 delta = timedelta(days=30)
@@ -86,7 +87,7 @@ class Utils:
                 return temp_old, now
             else:
                 raise ValueError(f"Unable to handle the interval [{time_object.value}]")
-        elif isinstance(time_object, CustomTime):
+        elif isinstance(time_object, FixedTimeWindow):
             return time_object.start, time_object.end
         else:
             raise ValueError("Unrecognized type for timespan")

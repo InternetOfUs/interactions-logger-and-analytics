@@ -18,69 +18,69 @@ from datetime import datetime
 from unittest import TestCase
 
 from memex_logging.common.analytic.builder import AnalyticBuilder
-from memex_logging.common.model.analytic import UserAnalytic, CommonAnalytic, MessageAnalytic, TaskAnalytic, \
+from memex_logging.common.model.analytic import UserAnalytic, DimensionAnalytic, MessageAnalytic, TaskAnalytic, \
     TransactionAnalytic, ConversationAnalytic, DialogueAnalytic, BotAnalytic
-from memex_logging.common.model.time import DefaultTime, CustomTime
+from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
 
 
 class TestUserAnalytic(TestCase):
 
     def test_repr(self):
-        analytic = UserAnalytic(DefaultTime("7D"), "project", "u:total")
+        analytic = UserAnalytic(MovingTimeWindow("7D"), "project", "u:total")
         self.assertEqual(analytic, UserAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, CommonAnalytic.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
         self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
 
 
 class TestMessageAnalytic(TestCase):
 
     def test_repr(self):
-        analytic = MessageAnalytic(CustomTime(datetime.now(), datetime.now()), "project", "m:segmentation")
+        analytic = MessageAnalytic(FixedTimeWindow(datetime.now(), datetime.now()), "project", "m:segmentation")
         self.assertEqual(analytic, MessageAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, CommonAnalytic.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
         self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
 
 
 class TestTaskAnalytic(TestCase):
 
     def test_repr(self):
-        analytic = TaskAnalytic(DefaultTime("7D"), "project", "t:active")
+        analytic = TaskAnalytic(MovingTimeWindow("7D"), "project", "t:active")
         self.assertEqual(analytic, TaskAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, CommonAnalytic.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
         self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
 
 
 class TestTransactionAnalytic(TestCase):
 
     def test_repr(self):
-        analytic = TransactionAnalytic(DefaultTime("7D"), "project", "t:segmentation")
+        analytic = TransactionAnalytic(MovingTimeWindow("7D"), "project", "t:segmentation")
         self.assertEqual(analytic, TransactionAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, CommonAnalytic.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
         self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
 
 
 class TestConversationAnalytic(TestCase):
 
     def test_repr(self):
-        analytic = ConversationAnalytic(DefaultTime("7D"), "project", "c:new")
+        analytic = ConversationAnalytic(MovingTimeWindow("7D"), "project", "c:new")
         self.assertEqual(analytic, ConversationAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, CommonAnalytic.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
         self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
 
 
 class TestDialogueAnalytic(TestCase):
 
     def test_repr(self):
-        analytic = DialogueAnalytic(DefaultTime("7D"), "project", "d:fallback")
+        analytic = DialogueAnalytic(MovingTimeWindow("7D"), "project", "d:fallback")
         self.assertEqual(analytic, DialogueAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, CommonAnalytic.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
         self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
 
 
 class TestBotAnalytic(TestCase):
 
     def test_repr(self):
-        analytic = BotAnalytic(DefaultTime("7D"), "project", "b:response")
+        analytic = BotAnalytic(MovingTimeWindow("7D"), "project", "b:response")
         self.assertEqual(analytic, BotAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, CommonAnalytic.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
         self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))

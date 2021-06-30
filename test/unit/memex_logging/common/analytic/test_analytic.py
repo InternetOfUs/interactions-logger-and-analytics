@@ -27,7 +27,7 @@ from wenet.model.task.transaction import TaskTransaction
 from memex_logging.common.analytic.analytic import AnalyticComputation
 from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, TaskAnalytic, TransactionAnalytic
 from memex_logging.common.model.result import TransactionReturn, Segmentation
-from memex_logging.common.model.time import CustomTime
+from memex_logging.common.model.time import FixedTimeWindow
 
 
 class TestAnalyticComputation(TestCase):
@@ -36,7 +36,7 @@ class TestAnalyticComputation(TestCase):
         super().setUp()
         self.es = Elasticsearch()
         self.task_manager_interface = TaskManagerInterface(ApikeyClient("apikey"), "platform_url")
-        self.time_range = CustomTime(datetime(2021, 1, 1), datetime(2021, 12, 31))
+        self.time_range = FixedTimeWindow(datetime(2021, 1, 1), datetime(2021, 12, 31))
 
     def test_compute_u_total(self):
         self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}, 'type_count': {'value': 0}}})

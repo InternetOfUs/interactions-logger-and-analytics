@@ -17,7 +17,7 @@ from __future__ import absolute_import, annotations
 from datetime import datetime
 
 
-class DefaultTime:
+class MovingTimeWindow:
 
     DEFAULT_TIME_TYPE = "DEFAULT"
     ALLOWED_DEFAULT_TIME_VALUES = ["30D", "10D", "7D", "1D", "TODAY"]
@@ -32,9 +32,9 @@ class DefaultTime:
         }
 
     @staticmethod
-    def from_repr(raw_data: dict) -> DefaultTime:
+    def from_repr(raw_data: dict) -> MovingTimeWindow:
         if 'type' in raw_data:
-            if str(raw_data['type']).upper() != DefaultTime.DEFAULT_TIME_TYPE:
+            if str(raw_data['type']).upper() != MovingTimeWindow.DEFAULT_TIME_TYPE:
                 raise ValueError("Unrecognized type for DefaultTime")
         else:
             raise ValueError("DefaultTime must contain a type")
@@ -42,19 +42,19 @@ class DefaultTime:
         if 'value' not in raw_data:
             raise ValueError('Value must be defined in the DefaultTime object')
 
-        if str(raw_data['value']).upper() not in DefaultTime.ALLOWED_DEFAULT_TIME_VALUES:
+        if str(raw_data['value']).upper() not in MovingTimeWindow.ALLOWED_DEFAULT_TIME_VALUES:
             raise ValueError('Unknown value for value in the DefaultTime')
 
-        return DefaultTime(raw_data['value'])
+        return MovingTimeWindow(raw_data['value'])
 
     def __eq__(self, o) -> bool:
-        if isinstance(o, DefaultTime):
+        if isinstance(o, MovingTimeWindow):
             return o.value == self.value
         else:
             return False
 
 
-class CustomTime:
+class FixedTimeWindow:
 
     CUSTOM_TIME_TYPE = "CUSTOM"
 
@@ -70,13 +70,13 @@ class CustomTime:
         }
 
     @staticmethod
-    def from_isoformat(start: str, end: str) -> CustomTime:
-        return CustomTime(datetime.fromisoformat(start), datetime.fromisoformat(end))
+    def from_isoformat(start: str, end: str) -> FixedTimeWindow:
+        return FixedTimeWindow(datetime.fromisoformat(start), datetime.fromisoformat(end))
 
     @staticmethod
-    def from_repr(raw_data: dict) -> CustomTime:
+    def from_repr(raw_data: dict) -> FixedTimeWindow:
         if 'type' in raw_data:
-            if str(raw_data['type']).upper() != CustomTime.CUSTOM_TIME_TYPE:
+            if str(raw_data['type']).upper() != FixedTimeWindow.CUSTOM_TIME_TYPE:
                 raise ValueError("Unrecognized type for CustomTime")
         else:
             raise ValueError("CustomTime must contain a type")
@@ -84,10 +84,10 @@ class CustomTime:
         if 'start' not in raw_data or 'end' not in raw_data:
             raise ValueError('Start and end must be defined in the CustomTime object')
 
-        return CustomTime.from_isoformat(raw_data['start'], raw_data['end'])
+        return FixedTimeWindow.from_isoformat(raw_data['start'], raw_data['end'])
 
     def __eq__(self, o) -> bool:
-        if isinstance(o, CustomTime):
+        if isinstance(o, FixedTimeWindow):
             return o.start == self.start and o.end == self.end
         else:
             return False

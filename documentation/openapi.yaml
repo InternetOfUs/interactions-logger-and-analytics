@@ -1318,7 +1318,8 @@ components:
                 example: 26
         type:
           type: string
-          example: "type"
+          enum: [ "segmentation" ]
+          example: "segmentation"
 
     TransactionResult:
       type: object
@@ -1341,7 +1342,8 @@ components:
                   example: "1"
         type:
           type: string
-          example: "transactions"
+          enum: [ "transaction" ]
+          example: "transaction"
 
     ConversationLengthResult:
       type: object
@@ -1363,6 +1365,7 @@ components:
                 example: 3
         type:
           type: string
+          enum: [ "length" ]
           example: "length"
 
     ConversationPathResult:
@@ -1386,6 +1389,7 @@ components:
                   example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A9"
         type:
           type: string
+          enum: [ "path" ]
           example: "path"
 
     HTTP_200_AGGREGATION:

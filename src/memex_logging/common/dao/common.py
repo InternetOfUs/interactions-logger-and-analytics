@@ -20,7 +20,7 @@ from typing import Optional, Tuple, List
 
 from elasticsearch import Elasticsearch
 
-from memex_logging.utils.utils import Utils
+from memex_logging.common.utils import Utils
 
 
 logger = logging.getLogger("logger.common.dao.common")

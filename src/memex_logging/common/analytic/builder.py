@@ -14,22 +14,17 @@
 
 from __future__ import absolute_import, annotations
 
-from typing import Union
-
-from memex_logging.common.model.aggregation import Aggregation
-from memex_logging.common.model.analytic import CommonAnalytic
+from memex_logging.common.model.aggregation import AggregationAnalytic
+from memex_logging.common.model.analytic import DimensionAnalytic, CommonAnalytic
 
 
 class AnalyticBuilder:
 
     @staticmethod
-    def from_repr(raw_data: dict) -> Union[CommonAnalytic, Aggregation]:
-        if 'type' in raw_data:
-            if str(raw_data['type']).lower() == CommonAnalytic.ANALYTIC_TYPE:
-                return CommonAnalytic.from_repr(raw_data)
-            elif str(raw_data['type']).lower() == Aggregation.AGGREGATION_TYPE:
-                return Aggregation.from_repr(raw_data)
-            else:
-                raise ValueError("Unrecognized dimension for Analytic")
+    def from_repr(raw_data: dict) -> CommonAnalytic:
+        if str(raw_data['type']).lower() == DimensionAnalytic.ANALYTIC_TYPE:
+            return DimensionAnalytic.from_repr(raw_data)
+        elif str(raw_data['type']).lower() == AggregationAnalytic.AGGREGATION_TYPE:
+            return AggregationAnalytic.from_repr(raw_data)
         else:
-            raise ValueError("An Analytic must contain a dimension")
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for Analytic")

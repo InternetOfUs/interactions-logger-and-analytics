@@ -24,11 +24,11 @@ from wenet.interface.task_manager import TaskManagerInterface
 from memex_logging.common.analytic.aggregation import AggregationComputation
 from memex_logging.common.analytic.analytic import AnalyticComputation
 from memex_logging.common.analytic.builder import AnalyticBuilder
-from memex_logging.common.model.aggregation import Aggregation
+from memex_logging.common.model.aggregation import AggregationAnalytic
 from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, TaskAnalytic, ConversationAnalytic, \
-    DialogueAnalytic, BotAnalytic, CommonAnalytic, TransactionAnalytic
+    DialogueAnalytic, BotAnalytic, DimensionAnalytic, TransactionAnalytic
 from memex_logging.common.model.response import AnalyticResponse, AggregationResponse
-from memex_logging.ws import celery
+from memex_logging.celery import celery
 
 
 logger = logging.getLogger("logger.task.analytic")
@@ -46,7 +46,7 @@ def compute_analytic(analytic: dict, static_id: str):
     except ValueError as e:
         logger.info(f"Analytic not valid. {e.args[0]}")
 
-    if isinstance(analytic, CommonAnalytic):
+    if isinstance(analytic, DimensionAnalytic):
         if isinstance(analytic, UserAnalytic):
             if analytic.metric.lower() == "u:total":
                 result = AnalyticComputation.compute_u_total(analytic, es)
@@ -141,25 +141,25 @@ def compute_analytic(analytic: dict, static_id: str):
         es.index(index=index_name, doc_type='_doc', body=AnalyticResponse(analytic, result, static_id).to_repr())
         logger.info("Result stored in " + str(index_name))
 
-    elif isinstance(analytic, Aggregation):
+    elif isinstance(analytic, AggregationAnalytic):
         if analytic.aggregation.lower() == "max":
-            result = AggregationComputation.max_aggr(analytic, es)
+            result = AggregationComputation.max(analytic, es)
         elif analytic.aggregation.lower() == "min":
-            result = AggregationComputation.min_aggr(analytic, es)
+            result = AggregationComputation.min(analytic, es)
         elif analytic.aggregation.lower() == "avg":
-            result = AggregationComputation.avg_aggr(analytic, es)
+            result = AggregationComputation.avg(analytic, es)
         elif analytic.aggregation.lower() == "stats":
-            result = AggregationComputation.stats_aggr(analytic, es)
+            result = AggregationComputation.stats(analytic, es)
         elif analytic.aggregation.lower() == "sum":
-            result = AggregationComputation.sum_aggr(analytic, es)
+            result = AggregationComputation.sum(analytic, es)
         elif analytic.aggregation.lower() == "value_count":
-            result = AggregationComputation.value_count_aggr(analytic, es)
+            result = AggregationComputation.value_count(analytic, es)
         elif analytic.aggregation.lower() == "cardinality":
-            result = AggregationComputation.cardinality_aggr(analytic, es)
+            result = AggregationComputation.cardinality(analytic, es)
         elif analytic.aggregation.lower() == "extended_stats":
-            result = AggregationComputation.extended_stats_aggr(analytic, es)
+            result = AggregationComputation.extended_stats(analytic, es)
         elif analytic.aggregation.lower() == "percentiles":
-            result = AggregationComputation.percentiles_aggr(analytic, es)
+            result = AggregationComputation.percentiles(analytic, es)
         else:
             logger.info("Aggregation value not valid")
             return

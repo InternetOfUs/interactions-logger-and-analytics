@@ -23,8 +23,8 @@ from flask import request, Response
 from flask_restful import Resource, abort
 
 from memex_logging.common.analytic.builder import AnalyticBuilder
-from memex_logging.task.analytic import compute_analytic
-from memex_logging.utils.utils import Utils
+from memex_logging.celery.analytic import compute_analytic
+from memex_logging.common.utils import Utils
 
 
 logger = logging.getLogger("logger.resource.analytic")

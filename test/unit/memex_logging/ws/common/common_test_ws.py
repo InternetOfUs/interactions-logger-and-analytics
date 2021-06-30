@@ -16,6 +16,8 @@ from __future__ import absolute_import, annotations
 
 from unittest import TestCase
 
+from elasticsearch import Elasticsearch
+
 from memex_logging.ws.ws import WsInterface
 from test.unit.memex_logging.ws.common.mock.daos import MockDaoCollectorBuilder
 
@@ -28,6 +30,6 @@ class CommonWsTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.dao_collector = MockDaoCollectorBuilder.build_mock_daos()
-        api = WsInterface(self.dao_collector, None)
+        api = WsInterface(self.dao_collector, Elasticsearch())
         api.get_application().testing = True
         self.client = api.get_application().test_client()

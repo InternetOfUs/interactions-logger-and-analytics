@@ -22,7 +22,7 @@ from flask import request, Response
 from flask_restful import Resource
 
 from memex_logging.common.model.log import Log
-from memex_logging.utils.utils import Utils
+from memex_logging.common.utils import Utils
 
 
 class LoggingResourceBuilder(object):
