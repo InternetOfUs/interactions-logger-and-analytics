@@ -1,7 +1,6 @@
 from memex_logging.ws import celery
-from memex_logging.ws.main import build_production_app
-from memex_logging.ws.ws import WsInterface
+from memex_logging.ws.main import build_interface_from_env
 
 
-app = build_production_app()
-WsInterface.init_celery(celery, app)
+ws_interface = build_interface_from_env()
+ws_interface.init_celery(celery)

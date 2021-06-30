@@ -66,8 +66,8 @@ class WsInterface(object):
     def get_application(self):
         return self._app
 
-    @staticmethod
-    def init_celery(celery, app):
+    def init_celery(self, celery):
+        app = self.get_application()
         celery.conf.update(app.config)
         TaskBase = celery.Task
 

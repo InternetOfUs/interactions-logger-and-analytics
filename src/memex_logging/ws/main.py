@@ -55,11 +55,11 @@ def init_ws(
 
     es = Elasticsearch([{'host': elasticsearch_host, 'port': elasticsearch_port}], http_auth=(elasticsearch_user, elasticsearch_password))
     dao_collector = DaoCollector.build_dao_collector(es)
-    ws = WsInterface(dao_collector, es)
-    return ws
+    ws_interface = WsInterface(dao_collector, es)
+    return ws_interface
 
 
-def build_production_app():
+def build_interface_from_env():
     ws_interface = init_ws(
         elasticsearch_host=os.getenv("EL_HOST", "localhost"),
         elasticsearch_port=int(os.getenv("EL_PORT", 9200)),
@@ -67,6 +67,11 @@ def build_production_app():
         elasticsearch_password=os.getenv("EL_PASSWORD", None),
     )
 
+    return ws_interface
+
+
+def build_production_app():
+    ws_interface = build_interface_from_env()
     return ws_interface.get_application()
 
 
