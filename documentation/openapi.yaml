@@ -1299,7 +1299,7 @@ components:
             type: string
         type:
           type: string
-          example: "messageId"
+          example: "userId"
 
     SegmentationResult:
       type: object
