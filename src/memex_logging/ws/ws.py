@@ -41,8 +41,8 @@ class WsInterface(object):
 
         self._app = Flask("logger-ws")
         self._app.config.update(
-            CELERY_RESULT_BACKEND=os.getenv("CELERY_RESULT_BACKEND", None),
-            CELERY_BROKER_URL=os.getenv("CELERY_BROKER_URL", None)
+            CELERY_RESULT_BACKEND=os.getenv("CELERY_RESULT_BACKEND"),
+            CELERY_BROKER_URL=os.getenv("CELERY_BROKER_URL")
         )
         self._api = Api(app=self._app)
         self._init_modules(self._dao_collector, self._es)

@@ -60,14 +60,14 @@ LABEL_REPORT_ANSWER_TRANSACTION = "reportAnswerTransaction"
 if __name__ == '__main__':
 
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-af", "--afile", type=str, default=os.getenv("ANALYTICS_FILE"), help="The path of csv/tsv file where to store analytics")
-    arg_parser.add_argument("-qf", "--qfile", type=str, default=os.getenv("QUESTIONS_FILE"), help="The path of csv/tsv file where to store questions")
-    arg_parser.add_argument("-uf", "--ufile", type=str, default=os.getenv("USERS_FILE"), help="The path of csv/tsv file where to store users")
-    arg_parser.add_argument("-tf", "--tfile", type=str, default=os.getenv("TASK_FILE"), help="The path of json file where to store the tasks")
-    arg_parser.add_argument("-df", "--dfile", type=str, default=os.getenv("DUMP_FILE"), help="The path of json file where to store the dump of messages")
+    arg_parser.add_argument("-af", "--analytic_file", type=str, default=os.getenv("ANALYTIC_FILE"), help="The path of csv/tsv file where to store analytics")
+    arg_parser.add_argument("-qf", "--question_file", type=str, default=os.getenv("QUESTION_FILE"), help="The path of csv/tsv file where to store questions")
+    arg_parser.add_argument("-uf", "--user_file", type=str, default=os.getenv("USER_FILE"), help="The path of csv/tsv file where to store users")
+    arg_parser.add_argument("-tf", "--task_file", type=str, default=os.getenv("TASK_FILE"), help="The path of json file where to store the tasks")
+    arg_parser.add_argument("-mf", "--message_file", type=str, default=os.getenv("MESSAGE_FILE"), help="The path of json file where to store the dump of messages")
     arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
-    arg_parser.add_argument("-ai", "--appid", type=str, default=os.getenv("APP_ID"), help="The id of the application in which compute the analytics")
+    arg_parser.add_argument("-ai", "--app_id", type=str, default=os.getenv("APP_ID"), help="The id of the application in which compute the analytics")
     arg_parser.add_argument("-il", "--ilog", type=str, default=os.getenv("ILOG"), help="The id of the ilog application to check if the user has enabled it or not")
     arg_parser.add_argument("-p", "--project", type=str, default=os.getenv("PROJECT"), help="The project for which to compute the analytics")
     arg_parser.add_argument("-r", "--range", type=str, default=os.getenv("TIME_RANGE", "30D"), help="The temporal range in which compute the analytics")
@@ -90,8 +90,8 @@ if __name__ == '__main__':
     creation_from, creation_to = Utils.extract_range_timestamps(time_range)
 
     # get analytics
-    name, extension = os.path.splitext(args.afile)
-    analytics_file = open(args.afile, "w")
+    name, extension = os.path.splitext(args.analytic_file)
+    analytics_file = open(args.analytic_file, "w")
     if extension == ".csv":
         analytics_file_writer = csv.writer(analytics_file)
     elif extension == ".tsv":
@@ -100,7 +100,7 @@ if __name__ == '__main__':
         logger.warning(f"For the analytics, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
         raise ValueError(f"For the analytics, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
-    analytics_file_writer.writerow(["app id", args.appid])
+    analytics_file_writer.writerow(["app id", args.app_id])
     analytics_file_writer.writerow(["project", args.project])
     analytics_file_writer.writerow(["from", creation_from])
     analytics_file_writer.writerow(["to", creation_to])
@@ -157,13 +157,13 @@ if __name__ == '__main__':
     analytics_file_writer.writerow(["messages from bot", response_messages, "The number of messages sent by the application"])
     analytics_file_writer.writerow(["messages from wenet", notification_messages, "The number of messages sent by the WeNet platform"])
 
-    tasks = task_manager_interface.get_all_tasks(app_id=args.appid, creation_from=creation_from, creation_to=creation_to)
-    task_file = open(args.tfile, "w")
-    json.dump([task.to_repr() for task in tasks], task_file, ensure_ascii=False, indent=2)
-    task_file.close()
+    tasks = task_manager_interface.get_all_tasks(app_id=args.app_id, creation_from=creation_from, creation_to=creation_to)
+    tasks_file = open(args.task_file, "w")
+    json.dump([task.to_repr() for task in tasks], tasks_file, ensure_ascii=False, indent=2)
+    tasks_file.close()
     analytics_file_writer.writerow(["questions", len(tasks), "The number of questions asked by the users"])
 
-    transactions = task_manager_interface.get_all_transactions(app_id=args.appid, creation_from=creation_from, creation_to=creation_to)
+    transactions = task_manager_interface.get_all_transactions(app_id=args.app_id, creation_from=creation_from, creation_to=creation_to)
     transaction_labels = [transaction.label for transaction in transactions]
 
     report_question_transactions = transaction_labels.count(LABEL_REPORT_QUESTION_TRANSACTION)
@@ -187,8 +187,8 @@ if __name__ == '__main__':
     analytics_file.close()
 
     # all questions and their chosen answers
-    name, extension = os.path.splitext(args.qfile)
-    questions_file = open(args.qfile, "w")
+    name, extension = os.path.splitext(args.question_file)
+    questions_file = open(args.question_file, "w")
     if extension == ".csv":
         questions_file_writer = csv.writer(questions_file)
     elif extension == ".tsv":
@@ -197,7 +197,7 @@ if __name__ == '__main__':
         logger.warning(f"For the questions, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
         raise ValueError(f"For the questions, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
-    questions_file_writer.writerow(["app id", args.appid])
+    questions_file_writer.writerow(["app id", args.app_id])
     questions_file_writer.writerow(["project", args.project])
     questions_file_writer.writerow(["from", creation_from])
     questions_file_writer.writerow(["to", creation_to])
@@ -218,8 +218,8 @@ if __name__ == '__main__':
     questions_file.close()
 
     # pilot users and associated cohorts
-    name, extension = os.path.splitext(args.ufile)
-    users_file = open(args.ufile, "w")
+    name, extension = os.path.splitext(args.user_file)
+    users_file = open(args.user_file, "w")
     if extension == ".csv":
         users_file_writer = csv.writer(users_file)
     elif extension == ".tsv":
@@ -228,9 +228,9 @@ if __name__ == '__main__':
         logger.warning(f"For the users, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
         raise ValueError(f"For the users, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
-    users_file_writer.writerow(["app id", args.appid])
+    users_file_writer.writerow(["app id", args.app_id])
     users_file_writer.writerow(["project", args.project])
-    user_ids = hub_interface.get_user_ids_for_app(args.appid)
+    user_ids = hub_interface.get_user_ids_for_app(args.app_id)
     users_file_writer.writerow(["total users", len(user_ids)])
     users_file_writer.writerow([])
     users_file_writer.writerow(["name", "surname", "email", "gender", "incentive cohort", "ilog"])
@@ -241,7 +241,7 @@ if __name__ == '__main__':
         user = profile_manager_interface.get_user_profile(user_id)
         user_cohort = None
         for cohort in cohorts:
-            if cohort.get("app_id") == args.appid:
+            if cohort.get("app_id") == args.app_id:
                 if cohort.get("user_id") == user_id:
                     if cohort.get("cohort") == 0:
                         user_cohort = "badges"
@@ -267,6 +267,6 @@ if __name__ == '__main__':
         message = messages.pop(-1)
         messages.extend([Message.from_repr(message) for message in logger_operations.get_messages(message.timestamp, creation_to, max_size=10000)])
 
-    dump_file = open(args.dfile, "w")
-    json.dump([message.to_repr() for message in messages], dump_file, ensure_ascii=False, indent=2)
-    dump_file.close()
+    messages_file = open(args.message_file, "w")
+    json.dump([message.to_repr() for message in messages], messages_file, ensure_ascii=False, indent=2)
+    messages_file.close()

@@ -63,8 +63,8 @@ The web service allows to set the following environment variables:
 * `EL_PASSWORD` (optional for versions of Elasticsearch < `7`): the password of the user to access the Elasticsearch database;
 * `INSTANCE`: the host of target instance;
 * `APIKEY`: the apikey for accessing the services;
-* `CELERY_BROKER_URL` (optional, the default value is `None`): the information about the broker to use the Celery instance, it must be in the following format: `redis://:password@hostname:port/db_number`;
-* `CELERY_RESULT_BACKEND` (optional, the default value is `None`): the information about the result backend to use the Celery instance, it must be in the following format: `redis://:password@hostname:port/db_number`.
+* `CELERY_BROKER_URL`: the information about the broker to use the Celery instance, it must be in the following format: `redis://:password@hostname:port/db_number`;
+* `CELERY_RESULT_BACKEND`: the information about the result backend to use the Celery instance, it must be in the following format: `redis://:password@hostname:port/db_number`.
 
 Optionally is it possible to configure sentry in order to track any problem. Just set the following environment variables:
 
@@ -75,11 +75,11 @@ Optionally is it possible to configure sentry in order to track any problem. Jus
 
 The script for computing the analytics, questions, users and for extracting the tasks and the messages allows to set the following environment variables:
 
-* `ANALYTICS_FILE`: the path of the csv/tsv file where to store the analytics, it can also be set using the argument `-af` or `--afile` when manually running the Python service;
-* `QUESTIONS_FILE`: the path of the csv/tsv file where to store the questions, it can also be set using the argument `-qf` or `--qfile` when manually running the Python service;
-* `USERS_FILE`: the path of the csv/tsv file where to store the users, it can also be set using the argument `-uf` or `--ufile` when manually running the Python service;
-* `TASK_FILE`: the path of the json file where to store the tasks, it can also be set using the argument `-tf` or `--tfile` when manually running the Python service;
-* `DUMP_FILE`: the path of the json file where to store the dump of messages, it can also be set using the argument `-df` or `--dfile` when manually running the Python service;
+* `ANALYTIC_FILE`: the path of the csv/tsv file where to store the analytics, it can also be set using the argument `-af` or `--analytic_file` when manually running the Python service;
+* `QUESTION_FILE`: the path of the csv/tsv file where to store the questions, it can also be set using the argument `-qf` or `--question_file` when manually running the Python service;
+* `USER_FILE`: the path of the csv/tsv file where to store the users, it can also be set using the argument `-uf` or `--user_file` when manually running the Python service;
+* `TASK_FILE`: the path of the json file where to store the tasks, it can also be set using the argument `-tf` or `--task_file` when manually running the Python service;
+* `MESSAGE_FILE`: the path of the json file where to store the dump of messages, it can also be set using the argument `-mf` or `--message_file` when manually running the Python service;
 * `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
 * `APP_ID`: the id of the application in which compute the analytics, it can also be set using the argument `-ai` or `--appid` when manually running the Python service;

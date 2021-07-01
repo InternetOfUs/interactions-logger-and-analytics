@@ -78,17 +78,17 @@ def build_production_app():
 if __name__ == '__main__':
 
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-eh", "--ehost", type=str, dest="ehost", default=os.getenv("EL_HOST", "localhost"), help="The elasticsearch host")
-    arg_parser.add_argument("-ep", "--eport", type=int, dest="eport", default=int(os.getenv("EL_PORT", 9200)), help="The elasticsearch port")
-    arg_parser.add_argument("-eu", "--euser", type=str, dest="euser", default=os.getenv("EL_USERNAME", None), help="The username to access elasticsearch")
-    arg_parser.add_argument("-ew", "--epw", type=str, dest="epw", default=os.getenv("EL_PASSWORD", None), help="The password to access elasticsearch")
-    arg_parser.add_argument("-wh", "--whost", type=str, dest="whost", default=os.getenv("WS_HOST", "0.0.0.0"), help="The web service host")
-    arg_parser.add_argument("-wp", "--wport", type=int, dest="wport", default=int(os.getenv("WS_PORT", 80)), help="The web service port")
+    arg_parser.add_argument("-eh", "--el_host", type=str, default=os.getenv("EL_HOST", "localhost"), help="The elasticsearch host")
+    arg_parser.add_argument("-ep", "--el_port", type=int, default=int(os.getenv("EL_PORT", 9200)), help="The elasticsearch port")
+    arg_parser.add_argument("-eu", "--el_username", type=str,default=os.getenv("EL_USERNAME", None), help="The username to access elasticsearch")
+    arg_parser.add_argument("-epw", "--el_password", type=str, default=os.getenv("EL_PASSWORD", None), help="The password to access elasticsearch")
+    arg_parser.add_argument("-wh", "--ws_host", type=str, default=os.getenv("WS_HOST", "0.0.0.0"), help="The web service host")
+    arg_parser.add_argument("-wp", "--ws_port", type=int, default=int(os.getenv("WS_PORT", 80)), help="The web service port")
     args = arg_parser.parse_args()
 
-    ws = init_ws(args.ehost, args.eport, args.euser, args.epw)
+    ws = init_ws(args.el_host, args.el_port, args.el_username, args.el_password)
 
     try:
-        ws.run_server(args.whost, args.wport)
+        ws.run_server(args.ws_host, args.ws_port)
     except KeyboardInterrupt:
         pass

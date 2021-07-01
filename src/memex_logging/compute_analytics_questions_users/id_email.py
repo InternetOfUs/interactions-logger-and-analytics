@@ -29,7 +29,7 @@ if __name__ == '__main__':
     arg_parser.add_argument("-f", "--file", type=str, default=os.getenv("FILE"), help="The path of csv/tsv file where to store id-email associations")
     arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
-    arg_parser.add_argument("-ai", "--appid", type=str, default=os.getenv("APP_ID"), help="The id of the application from which take the users")
+    arg_parser.add_argument("-ai", "--app_id", type=str, default=os.getenv("APP_ID"), help="The id of the application from which take the users")
     args = arg_parser.parse_args()
 
     client = ApikeyClient(args.apikey)
@@ -45,8 +45,8 @@ if __name__ == '__main__':
     else:
         raise ValueError(f"you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
-    file_writer.writerow(["app id", args.appid])
-    user_ids = hub_interface.get_user_ids_for_app(args.appid)
+    file_writer.writerow(["app id", args.app_id])
+    user_ids = hub_interface.get_user_ids_for_app(args.app_id)
     file_writer.writerow(["total users", len(user_ids)])
     file_writer.writerow([])
     file_writer.writerow(["id", "email"])
