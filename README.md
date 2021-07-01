@@ -26,13 +26,21 @@ CELERY_BROKER_URL='redis://localhost:6379/0'
 CELERY_RESULT_BACKEND='redis://localhost:6379/0'
 ```
 
-You'll need a worker to get things done, run the following command in a separate terminal tab:
+You'll need one `celery beat` scheduler and at least one `celery worker` to get things done. Run the following command in a separate terminal tab to run the celery beat:
+
+```bash
+celery beat -A memex_logging.celery.initialize.celery
+```
+
+You can run the following command as many times you want in order to run several workers:
 
 ```bash
 celery worker -A memex_logging.celery.initialize.celery
 ```
 
-Note that it requires all the environment variables of the web service to work.
+Notes:
+- Celery requires all the environment variables of the web service to work. 
+- If you run the celery beat using the provided docker images, you need to set a volume un the `/celery` directory of the container. Otherwise, the container may fail to start
 
 
 There is also a script for computing the analytics, questions, users. Analytics, questions and users will be stored in dedicated .csv/.tsv files.
