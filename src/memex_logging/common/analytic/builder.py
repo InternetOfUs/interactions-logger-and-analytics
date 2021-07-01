@@ -14,22 +14,17 @@
 
 from __future__ import absolute_import, annotations
 
-from unittest import TestCase
-
-from elasticsearch import Elasticsearch
-
-from memex_logging.ws.ws import WsInterface
-from test.unit.memex_logging.ws.common.mock.daos import MockDaoCollectorBuilder
+from memex_logging.common.model.aggregation import AggregationAnalytic
+from memex_logging.common.model.analytic import DimensionAnalytic, CommonAnalytic
 
 
-class CommonWsTestCase(TestCase):
-    """
-    A common test case for the smart-places web service resources
-    """
+class AnalyticBuilder:
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.dao_collector = MockDaoCollectorBuilder.build_mock_daos()
-        api = WsInterface(self.dao_collector, Elasticsearch())
-        api.get_application().testing = True
-        self.client = api.get_application().test_client()
+    @staticmethod
+    def from_repr(raw_data: dict) -> CommonAnalytic:
+        if str(raw_data['type']).lower() == DimensionAnalytic.ANALYTIC_TYPE:
+            return DimensionAnalytic.from_repr(raw_data)
+        elif str(raw_data['type']).lower() == AggregationAnalytic.AGGREGATION_TYPE:
+            return AggregationAnalytic.from_repr(raw_data)
+        else:
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for Analytic")

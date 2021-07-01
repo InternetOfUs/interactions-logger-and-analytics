@@ -9,6 +9,10 @@
 * Allowing to export the list of both tasks and messages in dedicated json files.
 * Added new script for getting the association between user ids and their emails.
 * Added Sentry integration.
+* Integrated celery worker
+* Updated documentation
+* Refactored analytics models and analytics computations
+* Added task and transaction analytics
 
 ### 1.3.0
 

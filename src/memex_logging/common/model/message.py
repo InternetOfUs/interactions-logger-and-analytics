@@ -65,12 +65,6 @@ class UserInfoRequest:
 
     @staticmethod
     def from_repr(data: dict) -> UserInfoRequest:
-        if 'type' not in data:
-            raise ValueError("A UserInfoRequest must contain a type. 'type' is missing")
-
-        if 'value' not in data:
-            raise ValueError("A UserInfoRequest must contain a value. 'value' is missing")
-
         return UserInfoRequest(data['type'], data['value'])
 
     def __eq__(self, o: UserInfoRequest) -> bool:
@@ -92,12 +86,6 @@ class LocationRequest:
 
     @staticmethod
     def from_repr(data: dict) -> LocationRequest:
-        if 'latitude' not in data:
-            raise ValueError("A LocationRequest object must contain a latitude and a longitude. Latitude is missing")
-
-        if 'longitude' not in data:
-            raise ValueError("A LocationRequest object must contain a latitude and a longitude. Longitude is missing")
-
         return LocationRequest(data['latitude'], data['longitude'])
 
     def __eq__(self, o: LocationRequest) -> bool:
@@ -115,7 +103,7 @@ class LocationResponse:
         buttons = []
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
-                raise ValueError("The elements in the button list should be instances of ActionResponse")
+                raise ValueError("The elements in the button list are not instances of ActionResponse")
             else:
                 buttons.append(button.to_repr())
 
@@ -128,12 +116,6 @@ class LocationResponse:
 
     @staticmethod
     def from_repr(data: dict) -> LocationResponse:
-        if 'latitude' not in data:
-            raise ValueError("A LocationResponse object must contain a latitude and a longitude. Latitude is missing")
-
-        if 'longitude' not in data:
-            raise ValueError("A LocationResponse object must contain a latitude and a longitude. Longitude is missing")
-
         buttons = []
         if 'buttons' in data:
             for action in data['buttons']:
@@ -188,16 +170,11 @@ class ActionResponse:
 
     @staticmethod
     def from_repr(data: dict) -> ActionResponse:
-        if "buttonText" in data:
-            button_text = data['buttonText']
-        else:
-            raise ValueError("An action must have the Text of the button")
-
         button_id = None
         if "buttonId" in data:
             button_id = data['buttonId']
 
-        return ActionResponse(button_text, button_id)
+        return ActionResponse(data['buttonText'], button_id)
 
     def __eq__(self, o: ActionResponse) -> bool:
         return isinstance(o, ActionResponse) and o.button_text == self.button_text and o.button_id == self.button_id
@@ -212,7 +189,7 @@ class MultiActionResponse:
         buttons = []
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
-                raise ValueError("The elements in the button list should be instances of ActionResponse")
+                raise ValueError("The elements in the button list are not instances of ActionResponse")
             else:
                 buttons.append(button.to_repr())
 
@@ -248,10 +225,7 @@ class TextualRequest:
 
     @staticmethod
     def from_repr(data: dict) -> TextualRequest:
-        if 'value' in data:
-            return TextualRequest(data['value'])
-        else:
-            raise ValueError("A TextualRequest object must contain a value")
+        return TextualRequest(data['value'])
 
     def __eq__(self, o: TextualRequest) -> bool:
         return isinstance(o, TextualRequest) and o.value == self.value
@@ -267,7 +241,7 @@ class TextualResponse:
         buttons = []
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
-                raise ValueError("The elements in the button list should be instances of ActionResponse")
+                raise ValueError("The elements in the button list are not instances of ActionResponse")
             else:
                 buttons.append(button.to_repr())
 
@@ -310,9 +284,6 @@ class AttachmentRequest:
         if 'alternativeText' in data:
             alt = data['alternativeText']
 
-        if 'uri' not in data:
-            raise ValueError("An AttachmentRequest object must contain an uri")
-
         return AttachmentRequest(data['uri'], alt)
 
     def __eq__(self, o: AttachmentRequest) -> bool:
@@ -336,7 +307,7 @@ class AttachmentResponse:
         buttons = []
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
-                raise ValueError("The elements in the button list should be instances of ActionResponse")
+                raise ValueError("The elements in the button list are not instances of ActionResponse")
             else:
                 buttons.append(button.to_repr())
 
@@ -358,9 +329,6 @@ class AttachmentResponse:
         alt = None
         if 'alternativeText' in data:
             alt = data['alternativeText']
-
-        if 'uri' not in data:
-            raise ValueError("An AttachmentRequest object must contain an uri")
 
         return AttachmentResponse(data['uri'], alt, buttons)
 
@@ -390,7 +358,7 @@ class CarouselCardResponse:
         buttons = []
         for button in self.buttons:
             if not isinstance(button, ActionResponse):
-                raise ValueError("The elements in the button list should be instances of ActionResponse")
+                raise ValueError("The elements in the button list are not instances of ActionResponse")
             else:
                 buttons.append(button.to_repr())
 
@@ -409,9 +377,6 @@ class CarouselCardResponse:
             for action in data['buttons']:
                 a = ActionResponse.from_repr(action)
                 buttons.append(a)
-
-        if 'title' not in data:
-            raise ValueError("Each card should have a title")
 
         image_url = None
         if 'imageUrl' in data:
@@ -440,7 +405,7 @@ class CarouselResponse:
         cards = []
         for card in self.cards:
             if not isinstance(card, CarouselCardResponse):
-                raise ValueError("Each card should be instances of CarouselCardResponse")
+                raise ValueError("Each card are not instances of CarouselCardResponse")
             else:
                 cards.append(card.to_repr())
 
@@ -485,15 +450,6 @@ class Entity:
 
     @staticmethod
     def from_repr(data: dict) -> Entity:
-        if 'type' not in data:
-            raise ValueError("An Entity must contain a type")
-
-        if 'value' not in data:
-            raise ValueError("An Entity must contain a value")
-
-        if 'confidence' not in data:
-            raise ValueError("An Entity must contain a confidence")
-
         return Entity(data['type'], data['value'], data['confidence'])
 
     def __eq__(self, o: Entity) -> bool:
@@ -540,7 +496,7 @@ class Message(ABC):
 
         if metadata is not None:
             if not isinstance(metadata, dict):
-                raise ValueError("Parameter `metadata` should be a dict")
+                raise ValueError("Parameter `metadata` is not a dict")
 
     @staticmethod
     def from_repr(raw_data: dict) -> Message:
@@ -554,7 +510,7 @@ class Message(ABC):
             return NotificationMessage.from_repr(raw_data)
         else:
             logger.error(f"Not supported message type {message_type}")
-            raise TypeError(f"Unable to build a Message from type [{message_type}]")
+            raise ValueError(f"Unable to build a Message of type [{message_type}]")
 
     @staticmethod
     def timestamp_str_to_datetime(timestamp_str: str) -> datetime:
@@ -588,14 +544,14 @@ class RequestMessage(Message):
 
         if intent is not None:
             if not isinstance(intent, Intent):
-                raise ValueError("Parameter `intent` should be a Intent")
+                raise ValueError("Parameter `intent` is not a Intent")
 
         if content is not None:
             if type(content) not in self.ALLOWED_CONTENT_TYPES:
                 raise ValueError(f"Type for parameter `content` is not allowed - {type(content)}")
 
         if not isinstance(entities, list):
-            raise ValueError("Parameter `entities` should be a list")
+            raise ValueError("Parameter `entities` is not a list")
         else:
             for entity in entities:
                 if not isinstance(entity, Entity):

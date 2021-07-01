@@ -14,528 +14,277 @@
 
 from __future__ import absolute_import, annotations
 
+from abc import ABC, abstractmethod
+from typing import Union
 
-class Analytic:
-    def __init__(self, timespan, metric) -> None:
+from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
+
+
+class CommonAnalytic(ABC):
+
+    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str) -> None:
         self.timespan = timespan
+        self.project = project
+
+    @abstractmethod
+    def to_repr(self) -> dict:
+        pass
+
+
+class DimensionAnalytic(CommonAnalytic):
+
+    ANALYTIC_TYPE = "analytic"
+
+    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, dimension: str, metric: str) -> None:
+        super().__init__(timespan, project)
+        self.dimension = dimension
         self.metric = metric
 
     def to_repr(self) -> dict:
         return {
             'timespan': self.timespan.to_repr(),
-            'metric': self.metric.to_repr()
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> Analytic:
-        if 'timespan' in data:
-            if str(data['timespan']['type']).lower() == "default":
-                timespan = DefaultTime.from_repr(data['timespan'])
-            elif str(data['timespan']['type']).lower() == "custom":
-                timespan = CustomTime.from_repr(data['timespan'])
-            else:
-                raise ValueError("Unrecognized type for timespan")
-        else:
-            raise ValueError("An Analytic must contain a timespan")
-
-        if 'metric' in data:
-            if str(data['metric']['type']).lower() == "avg":
-                metric = Average.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "wavg":
-                metric = WeightedAverage.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "cardinality":
-                metric = Cardinality.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "geobounds":
-                metric = GeoBounds.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "geocentrality":
-                metric = GeoCentrality.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "max":
-                metric = Max.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "min":
-                metric = Min.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "percentiles":
-                metric = Percentiles.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "sum":
-                metric = Sum.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "stats":
-                metric = Stats.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "estats":
-                metric = ExtendedStats.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "vcount":
-                metric = ValueCount.from_repr(data['metric'])
-            elif str(data['metric']['type']).lower() == "mad":
-                metric = MedianAbsoluteDeviation.from_repr(data['metric'])
-            else:
-                raise ValueError("Unrecognized type for metric")
-        else:
-            raise ValueError("An Analytic must contain a metric")
-
-        return Analytic(timespan, metric)
-
-
-class DefaultTime:
-    def __init__(self, value: str):
-        self.value = value
-
-    def to_repr(self) -> dict:
-        return{
-            'type': 'DEFAULT',
-            'value': self.value.upper()
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> DefaultTime:
-        if 'value' not in data:
-            raise ValueError('a Value must be defined in the `DefaultTime` object')
-
-        if str(data['value']).lower() not in ['today', '1d', '7d', '10d', '30d']:
-            raise ValueError('unknown value for `value` in the `DefaultTime`')
-
-        return DefaultTime(data['value'])
-
-
-class CustomTime:
-    def __init__(self, start: str, end: str):
-        self.start = start
-        self.end = end
-
-    def to_repr(self) -> dict:
-        return{
-            'type': 'CUSTOM',
-            'start': self.start,
-            'end': self.end
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> CustomTime:
-        if 'start' not in data or 'end' not in data:
-            raise ValueError('a start and end must be defined in the `CustomTime` object')
-
-        return CustomTime(data['start'], data['end'])
-
-
-class Metric:
-    def __init__(self, dimension: str, metric: str):
-        self.dimension = dimension
-        self.metric = metric
-
-    def to_repr(self) -> dict:
-        return{
+            'project': self.project,
+            'type': self.ANALYTIC_TYPE,
             'dimension': self.dimension,
             'metric': self.metric
         }
 
     @staticmethod
-    def from_repr(data: dict) -> Metric:
-        if 'metric' not in data:
-            raise ValueError('A `metric` must be defined in the `Metric` object')
+    def from_repr(raw_data: dict) -> DimensionAnalytic:
+        if str(raw_data['type']).lower() != DimensionAnalytic.ANALYTIC_TYPE:
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for Analytic")
 
-        if 'dimension' in data:
-            if str(data['dimension']).lower() == UserMetric.USER_DIMENSION:
-                return UserMetric.from_repr(data)
-            elif str(data['dimension']).lower() == MessageMetric.MESSAGE_DIMENSION:
-                return MessageMetric.from_repr(data)
-            elif str(data['dimension']).lower() == ConversationMetric.CONVERSATION_DIMENSION:
-                return ConversationMetric.from_repr(data)
-            elif str(data['dimension']).lower() == DialogueMetric.DIALOGUE_DIMENSION:
-                return DialogueMetric.from_repr(data)
-            elif str(data['dimension']).lower() == BotMetric.BOT_DIMENSION:
-                return DialogueMetric.from_repr(data)
-            else:
-                raise ValueError("Unrecognized dimension for `Metric`")
+        if str(raw_data['timespan']['type']).upper() not in [MovingTimeWindow.DEFAULT_TIME_TYPE, FixedTimeWindow.CUSTOM_TIME_TYPE]:
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
+
+        if str(raw_data['dimension']).lower() == UserAnalytic.USER_DIMENSION:
+            return UserAnalytic.from_repr(raw_data)
+        elif str(raw_data['dimension']).lower() == MessageAnalytic.MESSAGE_DIMENSION:
+            return MessageAnalytic.from_repr(raw_data)
+        elif str(raw_data['dimension']).lower() == TaskAnalytic.TASK_DIMENSION:
+            return TaskAnalytic.from_repr(raw_data)
+        elif str(raw_data['dimension']).lower() == TransactionAnalytic.TRANSACTION_DIMENSION:
+            return TransactionAnalytic.from_repr(raw_data)
+        elif str(raw_data['dimension']).lower() == ConversationAnalytic.CONVERSATION_DIMENSION:
+            return ConversationAnalytic.from_repr(raw_data)
+        elif str(raw_data['dimension']).lower() == DialogueAnalytic.DIALOGUE_DIMENSION:
+            return DialogueAnalytic.from_repr(raw_data)
+        elif str(raw_data['dimension']).lower() == BotAnalytic.BOT_DIMENSION:
+            return BotAnalytic.from_repr(raw_data)
         else:
-            raise ValueError("A `dimension` must be defined in the `Metric` object")
+            raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for Analytic")
+
+    def __eq__(self, o) -> bool:
+        if isinstance(o, DimensionAnalytic):
+            return o.timespan == self.timespan and o.project == self.project and o.dimension == self.dimension and o.metric == self.metric
+        else:
+            return False
 
 
-class UserMetric(Metric):
+class UserAnalytic(DimensionAnalytic):
 
     USER_DIMENSION = "user"
+    ALLOWED_USER_METRIC_VALUES = ["u:total", "u:active", "u:engaged", "u:new"]
 
-    def __init__(self, metric: str):
-        super().__init__(self.USER_DIMENSION, metric)
+    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+        super().__init__(timespan, project, self.USER_DIMENSION, metric)
 
     @staticmethod
-    def from_repr(data: dict) -> UserMetric:
-        if 'metric' not in data:
-            raise ValueError('A `metric` must be defined in the `UserMetric` object')
+    def from_repr(raw_data: dict) -> UserAnalytic:
+        if str(raw_data['type']).lower() != UserAnalytic.ANALYTIC_TYPE:
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for UserAnalytic")
 
-        if 'dimension' in data:
-            if str(data['dimension']).lower() != UserMetric.USER_DIMENSION:
-                raise ValueError("Unrecognized dimension for `UserMetric`")
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
-            raise ValueError("A `dimension` must be defined in the `UserMetric` object")
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
 
-        return UserMetric(data['metric'])
+        if str(raw_data['dimension']).lower() != UserAnalytic.USER_DIMENSION:
+            raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for UserAnalytic")
+
+        if str(raw_data['metric']).lower() not in UserAnalytic.ALLOWED_USER_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for UserAnalytic")
+
+        return UserAnalytic(timespan, raw_data['project'], raw_data['metric'])
 
 
-class MessageMetric(Metric):
+class MessageAnalytic(DimensionAnalytic):
+
     MESSAGE_DIMENSION = "message"
+    ALLOWED_MESSAGE_METRIC_VALUES = ["m:from_users", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
 
-    def __init__(self, metric: str):
-        super().__init__(self.MESSAGE_DIMENSION, metric)
+    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+        super().__init__(timespan, project, self.MESSAGE_DIMENSION, metric)
 
     @staticmethod
-    def from_repr(data: dict) -> MessageMetric:
-        if 'metric' not in data:
-            raise ValueError('A `metric` must be defined in the `MessageMetric` object')
+    def from_repr(raw_data: dict) -> MessageAnalytic:
+        if str(raw_data['type']).lower() != MessageAnalytic.ANALYTIC_TYPE:
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for MessageAnalytic")
 
-        if 'dimension' in data:
-            if str(data['dimension']).lower() != MessageMetric.MESSAGE_DIMENSION:
-                raise ValueError("Unrecognized dimension for `MessageMetric`")
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
-            raise ValueError("A `dimension` must be defined in the `MessageMetric` object")
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
 
-        return MessageMetric(data['metric'])
+        if str(raw_data['dimension']).lower() != MessageAnalytic.MESSAGE_DIMENSION:
+            raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for MessageAnalytic")
+
+        if str(raw_data['metric']).lower() not in MessageAnalytic.ALLOWED_MESSAGE_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for MessageAnalytic")
+
+        return MessageAnalytic(timespan, raw_data['project'], raw_data['metric'])
 
 
-class ConversationMetric(Metric):
+class TaskAnalytic(DimensionAnalytic):
+
+    TASK_DIMENSION = "task"
+    ALLOWED_TASK_METRIC_VALUES = ["t:total", "t:active", "t:closed", "t:new"]
+
+    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+        super().__init__(timespan, project, self.TASK_DIMENSION, metric)
+
+    @staticmethod
+    def from_repr(raw_data: dict) -> TaskAnalytic:
+        if str(raw_data['type']).lower() != TaskAnalytic.ANALYTIC_TYPE:
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for TaskAnalytic")
+
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
+        else:
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
+
+        if str(raw_data['dimension']).lower() != TaskAnalytic.TASK_DIMENSION:
+            raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for TaskAnalytic")
+
+        if str(raw_data['metric']).lower() not in TaskAnalytic.ALLOWED_TASK_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for TaskAnalytic")
+
+        return TaskAnalytic(timespan, raw_data['project'], raw_data['metric'])
+
+
+class TransactionAnalytic(DimensionAnalytic):
+
+    TRANSACTION_DIMENSION = "transaction"
+    ALLOWED_TRANSACTION_METRIC_VALUES = ["t:total", "t:segmentation"]
+
+    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str, task_id: str = None):
+        super().__init__(timespan, project, self.TRANSACTION_DIMENSION, metric)
+        self.task_id = task_id
+
+    def to_repr(self) -> dict:
+        representation = super().to_repr()
+        representation['taskId'] = self.task_id
+        return representation
+
+    @staticmethod
+    def from_repr(raw_data: dict) -> TransactionAnalytic:
+        if str(raw_data['type']).lower() != TransactionAnalytic.ANALYTIC_TYPE:
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for TransactionAnalytic")
+
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
+        else:
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
+
+        if str(raw_data['dimension']).lower() != TransactionAnalytic.TRANSACTION_DIMENSION:
+            raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for TransactionAnalytic")
+
+        if str(raw_data['metric']).lower() not in TransactionAnalytic.ALLOWED_TRANSACTION_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for TransactionAnalytic")
+
+        return TransactionAnalytic(timespan, raw_data['project'], raw_data['metric'], task_id=raw_data.get('taskId'))
+
+
+class ConversationAnalytic(DimensionAnalytic):
+
     CONVERSATION_DIMENSION = "conversation"
+    ALLOWED_CONVERSATION_METRIC_VALUES = ["c:total", "c:new", "c:length", "c:path"]
 
-    def __init__(self, metric: str):
-        super().__init__(self.CONVERSATION_DIMENSION, metric)
+    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+        super().__init__(timespan, project, self.CONVERSATION_DIMENSION, metric)
 
     @staticmethod
-    def from_repr(data: dict) -> ConversationMetric:
-        if 'metric' not in data:
-            raise ValueError('A `metric` must be defined in the `ConversationMetric` object')
+    def from_repr(raw_data: dict) -> ConversationAnalytic:
+        if str(raw_data['type']).lower() != ConversationAnalytic.ANALYTIC_TYPE:
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for ConversationAnalytic")
 
-        if 'dimension' in data:
-            if str(data['dimension']).lower() != ConversationMetric.CONVERSATION_DIMENSION:
-                raise ValueError("Unrecognized dimension for `ConversationMetric`")
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
-            raise ValueError("A `dimension` must be defined in the `ConversationMetric` object")
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
 
-        return ConversationMetric(data['metric'])
+        if str(raw_data['dimension']).lower() != ConversationAnalytic.CONVERSATION_DIMENSION:
+            raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for ConversationAnalytic")
+
+        if str(raw_data['metric']).lower() not in ConversationAnalytic.ALLOWED_CONVERSATION_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for ConversationAnalytic")
+
+        return ConversationAnalytic(timespan, raw_data['project'], raw_data['metric'])
 
 
-class DialogueMetric(Metric):
+class DialogueAnalytic(DimensionAnalytic):
+
     DIALOGUE_DIMENSION = "dialogue"
+    ALLOWED_DIALOGUE_METRIC_VALUES = ["d:fallback", "d:intents", "d:domains"]
 
-    def __init__(self, metric: str):
-        super().__init__(self.DIALOGUE_DIMENSION, metric)
+    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+        super().__init__(timespan, project, self.DIALOGUE_DIMENSION, metric)
 
     @staticmethod
-    def from_repr(data: dict) -> DialogueMetric:
-        if 'metric' not in data:
-            raise ValueError('A `metric` must be defined in the `DialogueMetric` object')
+    def from_repr(raw_data: dict) -> DialogueAnalytic:
+        if str(raw_data['type']).lower() != DialogueAnalytic.ANALYTIC_TYPE:
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for DialogueAnalytic")
 
-        if 'dimension' in data:
-            if str(data['dimension']).lower() != DialogueMetric.DIALOGUE_DIMENSION:
-                raise ValueError("Unrecognized dimension for `DialogueMetric`")
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
-            raise ValueError("A `dimension` must be defined in the `DialogueMetric` object")
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
 
-        return DialogueMetric(data['metric'])
+        if str(raw_data['dimension']).lower() != DialogueAnalytic.DIALOGUE_DIMENSION:
+            raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for DialogueAnalytic")
+
+        if str(raw_data['metric']).lower() not in DialogueAnalytic.ALLOWED_DIALOGUE_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for DialogueAnalytic")
+
+        return DialogueAnalytic(timespan, raw_data['project'], raw_data['metric'])
 
 
-class BotMetric(Metric):
+class BotAnalytic(DimensionAnalytic):
+
     BOT_DIMENSION = "bot"
+    ALLOWED_BOT_METRIC_VALUES = ["b:response"]
 
-    def __init__(self, metric: str):
-        super().__init__(self.BOT_DIMENSION, metric)
+    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+        super().__init__(timespan, project, self.BOT_DIMENSION, metric)
 
     @staticmethod
-    def from_repr(data: dict) -> BotMetric:
-        if 'metric' not in data:
-            raise ValueError('A `metric` must be defined in the `BotMetric` object')
+    def from_repr(raw_data: dict) -> BotAnalytic:
+        if str(raw_data['type']).lower() != BotAnalytic.ANALYTIC_TYPE:
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for BotAnalytic")
 
-        if 'dimension' in data:
-            if str(data['dimension']).lower() != BotMetric.BOT_DIMENSION:
-                raise ValueError("Unrecognized dimension for `BotMetric`")
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
-            raise ValueError("A `dimension` must be defined in the `BotMetric` object")
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
 
-        return BotMetric(data['metric'])
+        if str(raw_data['dimension']).lower() != BotAnalytic.BOT_DIMENSION:
+            raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for BotAnalytic")
 
+        if str(raw_data['metric']).lower() not in BotAnalytic.ALLOWED_BOT_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for BotAnalytic")
 
-class Average:
-    def __init__(self, field: str, missing):
-        self.field = field
-        self.missing = missing
-
-    def to_repr(self) -> dict:
-        return {
-            'type': ' AVG',
-            'field': self.field,
-            'missing': self.missing
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> Average:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an Average object')
-        missing = None
-        if 'missing' in data:
-            missing = data['missing']
-        return Average(data['field'], missing)
-
-
-class WeightedAverage:
-    def __init__(self, field: str, weight: str, missing=None, data_format=None):
-        self.field = field
-        self.weight = weight
-        self.missing = missing
-        self.data_format = data_format
-
-    def to_repr(self) -> dict:
-        return {
-            'type': 'WAVG',
-            'field': self.field,
-            'missing': self.missing,
-            'weight': self.weight,
-            'format': self.data_format
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> WeightedAverage:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an WeightedAverage object')
-        if 'weight' not in data:
-            raise ValueError('a weight must be defined in an WeightedAverage object')
-        data_format = "NUMERIC"
-        if 'format' in data:
-            if str(data['format']).lower() not in ['numeric', 'percentage']:
-                raise ValueError('unknown type for format in a WeightedAverage object')
-            else:
-                data_format = data['format']
-        missing = None
-        if 'missing' in data:
-            missing = data['missing']
-        return WeightedAverage(data['field'], data['weight'], missing=missing, data_format=data_format)
-
-
-class Cardinality:
-    def __init__(self, field: str, precision_threshold: int):
-        self.field = field
-        self.precision_threshold = precision_threshold
-
-    def to_repr(self) -> dict:
-        return {
-            'type': ' CARDINALITY',
-            'field': self.field,
-            'precisionThreshold': self.precision_threshold
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> Cardinality:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an Cardinality object')
-        precision_threshold = None
-        if 'precisionThreshold' in data:
-            precision_threshold = data['precisionThreshold']
-        return Cardinality(data['field'], precision_threshold)
-
-
-class GeoBounds:
-    def __init__(self, field: str, wrap_longitude: bool):
-        self.field = field
-        self.wrap_longitude = wrap_longitude
-
-    def to_repr(self) -> dict:
-        return {
-            'type': ' GEOBOUNDS',
-            'field': self.field,
-            'wrapLongitude': self.wrap_longitude
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> GeoBounds:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an GeoBounds object')
-        wrap_longitude = True
-        if 'wrapLongitude' in data:
-            wrap_longitude = data['wrapLongitude']
-        return GeoBounds(data['field'], wrap_longitude)
-
-
-class GeoCentrality:
-    def __init__(self, field: str):
-        self.field = field
-
-    def to_repr(self) -> dict:
-        return {
-            'type': ' GEOCENTRALITY',
-            'field': self.field
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> GeoCentrality:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an GeoCentrality object')
-        return GeoCentrality(data['field'])
-
-
-class Max:
-    def __init__(self, field: str, missing):
-        self.field = field
-        self.missing = missing
-
-    def to_repr(self) -> dict:
-        return {
-            'type': ' MAX',
-            'field': self.field,
-            'missing': self.missing
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> Max:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an Max object')
-        missing = None
-        if 'missing' in data:
-            missing = data['missing']
-        return Max(data['field'], missing)
-
-
-class Min:
-    def __init__(self, field: str, missing):
-        self.field = field
-        self.missing = missing
-
-    def to_repr(self) -> dict:
-        return {
-            'type': ' MIN',
-            'field': self.field,
-            'missing': self.missing
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> Min:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an Min object')
-        missing = None
-        if 'missing' in data:
-            missing = data['missing']
-        return Min(data['field'], missing)
-
-
-class Percentiles:
-    def __init__(self, field: str, percents: list):
-        self.field = field
-        self.percents = percents
-
-    def to_repr(self) -> dict:
-        return {
-            'type': 'PERCENTILES',
-            'field': self.field,
-            'percents': self.percents
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> Percentiles:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an Percentiles object')
-        percents = []
-        if 'percents' in data:
-            if isinstance(data['percents'], list):
-                percents += data['percents']
-            else:
-                raise ValueError("percents must be a list")
-        else:
-            percents += [1, 5, 25, 50, 75, 95, 99]
-        return Percentiles(data['field'], percents)
-
-
-class Sum:
-    def __init__(self, field: str, missing):
-        self.field = field
-        self.missing = missing
-
-    def to_repr(self) -> dict:
-        return {
-            'type': ' SUM',
-            'field': self.field,
-            'missing': self.missing
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> Sum:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an Sum object')
-        missing = None
-        if 'missing' in data:
-            missing = data['missing']
-        return Sum(data['field'], missing)
-
-
-class Stats:
-    def __init__(self, field: str, missing):
-        self.field = field
-        self.missing = missing
-
-    def to_repr(self) -> dict:
-        return {
-            'type': ' STATS',
-            'field': self.field,
-            'missing': self.missing
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> Stats:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an Stats object')
-        missing = None
-        if 'missing' in data:
-            missing = data['missing']
-        return Stats(data['field'], missing)
-
-
-class ExtendedStats:
-    def __init__(self, field: str, missing):
-        self.field = field
-        self.missing = missing
-
-    def to_repr(self) -> dict:
-        return {
-            'type': ' ESTATS',
-            'field': self.field,
-            'missing': self.missing
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> ExtendedStats:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an ExtendedStats object')
-        missing = None
-        if 'missing' in data:
-            missing = data['missing']
-        return ExtendedStats(data['field'], missing)
-
-
-class ValueCount:
-    def __init__(self, field: str):
-        self.field = field
-
-    def to_repr(self) -> dict:
-        return {
-            'type': ' VALUECOUNT',
-            'field': self.field
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> ValueCount:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an ValueCount object')
-        return ValueCount(data['field'])
-
-
-class MedianAbsoluteDeviation:
-    def __init__(self, field: str, compression):
-        self.field = field
-        self.compression = compression
-
-    def to_repr(self) -> dict:
-        return {
-            'type': ' ESTATS',
-            'field': self.field,
-            'compression': self.compression
-        }
-
-    @staticmethod
-    def from_repr(data: dict) -> MedianAbsoluteDeviation:
-        if 'field' not in data:
-            raise ValueError('a field must be defined in an MedianAbsoluteDeviation object')
-        compression = None
-        if 'compression' in data:
-            compression = data['compression']
-        return MedianAbsoluteDeviation(data['field'], compression)
+        return BotAnalytic(timespan, raw_data['project'], raw_data['metric'])

@@ -24,6 +24,9 @@ WORKDIR /scripts
 
 COPY run.sh .
 
+COPY run_logger.sh .
+COPY run_worker.sh .
+COPY run_beat.sh .
 
 ADD src/ /scripts/
 ADD documentation/ /documentation/
@@ -44,4 +47,4 @@ ENV PYTHONPATH /scripts
 
 ARG GIT_REF
 
-CMD ["./run.sh"]
+# Specific runners for each defined service need to be called explicitly

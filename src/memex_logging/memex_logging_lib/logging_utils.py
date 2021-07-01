@@ -18,11 +18,11 @@ import json
 import logging
 from datetime import datetime
 from time import sleep
-from typing import Optional, List, Union
+from typing import Optional, List
 
 import requests
 
-from memex_logging.common.model.analytic import DefaultTime, CustomTime, Metric
+from memex_logging.common.model.analytic import CommonAnalytic
 from memex_logging.common.model.message import Entity, ActionResponse, CarouselCardResponse
 
 
@@ -1139,15 +1139,9 @@ class LoggingUtility:
         else:
             raise ValueError("The log has not been logged")
 
-    def get_analytic(self, temporal_range: Union[DefaultTime, CustomTime], metric: Metric, sleep_time: int = 1) -> dict:
+    def get_analytic(self, analytic: CommonAnalytic, sleep_time: int = 1, number_of_trials: int = 10) -> dict:
 
-        json_payload = {
-            "project": self._project,
-            "timespan": temporal_range.to_repr(),
-            "type": "analytic"
-        }
-
-        json_payload.update(metric.to_repr())
+        json_payload = analytic.to_repr()
 
         api_point = self._access_point + "/analytic"
 
@@ -1159,9 +1153,9 @@ class LoggingUtility:
 
         static_id = json.loads(response.content)["staticId"]
 
-        for i in range(10):
+        for i in range(number_of_trials):
             sleep(sleep_time)
-            response = requests.get(api_point, headers=self._custom_headers, params={"staticId": static_id, "project": self._project})
+            response = requests.get(api_point, headers=self._custom_headers, params={"staticId": static_id, "project": analytic.project})
             if response.status_code == 200:
                 break
 

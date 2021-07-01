@@ -41,35 +41,18 @@ class WsInterface(object):
 
         self._app = Flask("logger-ws")
         self._app.config.update(
-            CELERY_RESULT_BACKEND=os.getenv("CELERY_RESULT_BACKEND", None),
-            CELERY_BROKER_URL=os.getenv("CELERY_BROKER_URL", None)
+            CELERY_RESULT_BACKEND=os.getenv("CELERY_RESULT_BACKEND"),
+            CELERY_BROKER_URL=os.getenv("CELERY_BROKER_URL")
         )
         self._api = Api(app=self._app)
-        self._celery = self.make_celery(self._app)
-        self._init_modules(self._dao_collector, self._es, self._celery)
+        self._init_modules(self._dao_collector, self._es)
 
-    def make_celery(self, app):
-        celery = Celery(
-            app.import_name,
-            backend=app.config['CELERY_RESULT_BACKEND'],
-            broker=app.config['CELERY_BROKER_URL']
-        )
-        celery.conf.update(app.config)
-
-        class ContextTask(celery.Task):
-            def __call__(self, *args, **kwargs):
-                with app.app_context():
-                    return self.run(*args, **kwargs)
-
-        celery.Task = ContextTask
-        return celery
-
-    def _init_modules(self, dao_collector: DaoCollector, es: Elasticsearch, celery: Celery) -> None:
+    def _init_modules(self, dao_collector: DaoCollector, es: Elasticsearch) -> None:
         active_routes = [
             (MessageResourceBuilder.routes(dao_collector), ""),
             (LoggingResourceBuilder.routes(es), ""),
             (PerformancesResourceBuilder.routes(es), "/performance"),
-            (AnalyticsResourceBuilder.routes(es, celery), ""),
+            (AnalyticsResourceBuilder.routes(es), ""),
             (DocumentationResourceBuilder.routes(), "")
         ]
 
@@ -78,8 +61,20 @@ class WsInterface(object):
                 logger.debug("Installing route %s", prefix + path)
                 self._api.add_resource(resource, prefix + path, resource_class_args=args)
 
-    def run_server(self, host: str = "0.0.0.0", port: int = 80):
+    def run_server(self, host: str = "0.0.0.0", port: int = 80) -> None:
         self._app.run(host=host, port=port, debug=False)
 
-    def get_application(self):
+    def get_application(self) -> Flask:
         return self._app
+
+    def init_celery(self, celery: Celery) -> None:
+        app = self.get_application()
+        celery.conf.update(app.config)
+        TaskBase = celery.Task
+
+        class ContextTask(TaskBase):
+            def __call__(self, *args, **kwargs):
+                with app.app_context():
+                    return self.run(*args, **kwargs)
+
+        celery.Task = ContextTask

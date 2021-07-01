@@ -14,22 +14,21 @@
 
 from __future__ import absolute_import, annotations
 
+from datetime import datetime
 from unittest import TestCase
 
-from elasticsearch import Elasticsearch
-
-from memex_logging.ws.ws import WsInterface
-from test.unit.memex_logging.ws.common.mock.daos import MockDaoCollectorBuilder
+from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
 
 
-class CommonWsTestCase(TestCase):
-    """
-    A common test case for the smart-places web service resources
-    """
+class TestDefaultTime(TestCase):
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.dao_collector = MockDaoCollectorBuilder.build_mock_daos()
-        api = WsInterface(self.dao_collector, Elasticsearch())
-        api.get_application().testing = True
-        self.client = api.get_application().test_client()
+    def test_repr(self):
+        time = MovingTimeWindow("7D")
+        self.assertEqual(time, MovingTimeWindow.from_repr(time.to_repr()))
+
+
+class TestCustomTime(TestCase):
+
+    def test_repr(self):
+        time = FixedTimeWindow(datetime.now(), datetime.now())
+        self.assertEqual(time, FixedTimeWindow.from_repr(time.to_repr()))

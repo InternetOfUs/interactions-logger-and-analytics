@@ -17,7 +17,7 @@ from __future__ import absolute_import, annotations
 from datetime import datetime
 from unittest import TestCase
 
-from memex_logging.utils.utils import Utils
+from memex_logging.common.utils import Utils
 
 
 class TestUtils(TestCase):

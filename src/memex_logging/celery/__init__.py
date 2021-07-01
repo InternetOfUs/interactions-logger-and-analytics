@@ -14,22 +14,17 @@
 
 from __future__ import absolute_import, annotations
 
-from unittest import TestCase
+import os
 
-from elasticsearch import Elasticsearch
-
-from memex_logging.ws.ws import WsInterface
-from test.unit.memex_logging.ws.common.mock.daos import MockDaoCollectorBuilder
+from celery import Celery
 
 
-class CommonWsTestCase(TestCase):
-    """
-    A common test case for the smart-places web service resources
-    """
+def make_celery(app_name=__name__):
+    return Celery(
+            app_name,
+            backend=os.getenv("CELERY_RESULT_BACKEND"),
+            broker=os.getenv("CELERY_BROKER_URL")
+        )
 
-    def setUp(self) -> None:
-        super().setUp()
-        self.dao_collector = MockDaoCollectorBuilder.build_mock_daos()
-        api = WsInterface(self.dao_collector, Elasticsearch())
-        api.get_application().testing = True
-        self.client = api.get_application().test_client()
+
+celery = make_celery()
