@@ -18,7 +18,7 @@ from typing import Union
 
 from memex_logging.common.model.aggregation import AggregationAnalytic
 from memex_logging.common.model.analytic import DimensionAnalytic
-from memex_logging.common.model.result import AnalyticResult, CommonResult
+from memex_logging.common.model.result import CommonResult
 
 
 class AnalyticResponse:
@@ -38,7 +38,7 @@ class AnalyticResponse:
     @staticmethod
     def from_repr(raw_data: dict) -> AnalyticResponse:
         analytic = DimensionAnalytic.from_repr(raw_data['query'])
-        result = AnalyticResult.from_repr(raw_data['result'])
+        result = CommonResult.from_repr(raw_data['result'])
         return AnalyticResponse(analytic, result, raw_data['staticId'])
 
     def __eq__(self, o) -> bool:

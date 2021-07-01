@@ -20,14 +20,14 @@ from unittest import TestCase
 from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
 
 
-class TestDefaultTime(TestCase):
+class TestMovingTimeWindow(TestCase):
 
     def test_repr(self):
         time = MovingTimeWindow("7D")
         self.assertEqual(time, MovingTimeWindow.from_repr(time.to_repr()))
 
 
-class TestCustomTime(TestCase):
+class TestFixedTimeWindow(TestCase):
 
     def test_repr(self):
         time = FixedTimeWindow(datetime.now(), datetime.now())

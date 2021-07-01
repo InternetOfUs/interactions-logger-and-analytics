@@ -14,9 +14,20 @@
 
 from __future__ import absolute_import, annotations
 
+from celery.schedules import crontab
+
 from memex_logging.celery import celery
 from memex_logging.ws.main import build_interface_from_env
 
 
 ws_interface = build_interface_from_env()
 ws_interface.init_celery(celery)
+
+
+celery.conf.beat_schedule = {
+    'update': {
+        'task': 'tasks.update_analytics',
+        'schedule': crontab(minute=0, hour=0),
+    },
+}
+celery.conf.timezone = 'Europe/Rome'
