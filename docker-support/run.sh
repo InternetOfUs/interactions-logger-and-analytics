@@ -1,31 +1,24 @@
 #!/bin/bash
 
-echo "Verifying env variables presence."
-declare -a REQUIRED_ENV_VARS=(
-                                "${EL_HOST}"
-                                "${EL_PORT}"
-                              )
+SCRIPT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-for e in "${REQUIRED_ENV_VARS[@]}"
-do
-  if [[ -z "$e" ]]; then
-    # TODO should print the missing variable
-    echo >&2 "Error: A required env variable is missing."
-    exit 1
-  fi
-done
+echo "Running pre-flight checks..."
 
-echo "Running service..."
-
-#
-# Important note: env variables should not be passed as arguments to the module!
-# This will allow for an easier automatisation of the docker support creation.
-#
+SERVICE=$1
 
 
-DEFAULT_WORKERS=4
-if [[ -z "${GUNICORN_WORKERS}" ]]; then
-    GUNICORN_WORKERS=${DEFAULT_WORKERS}
+if [[ ${SERVICE} == "logger" ]]; then
+    echo "Running logger..."
+    ${SCRIPT_DIR}/run_logger.sh
+
+elif [[ ${SERVICE} == "worker" ]]; then
+    echo "Running worker..."
+    ${SCRIPT_DIR}/run_worker.sh
+
+elif [[ ${SERVICE} == "beat" ]]; then
+    echo "Running beat..."
+    ${SCRIPT_DIR}/run_beat.sh
+
+else
+    echo "Unknown service ${1}"
 fi
-
-exec gunicorn -w "${GUNICORN_WORKERS}" -b 0.0.0.0:80 "memex_logging.ws.main:build_production_app()"
