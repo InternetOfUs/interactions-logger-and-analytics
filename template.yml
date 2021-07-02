@@ -29,7 +29,7 @@
         required_env_variables:
           - ${EL_HOST}
           - ${EL_PORT}
-        custom_start_command: "exec celery beat -A memex_logging.celery.initialize.celery -s /celery"
+        custom_start_command: "exec celery beat -A memex_logging.celery.initialize.celery -s /celery/celerybeat-schedule"
     docker_registry: docker.io
 
     ci_environments:
