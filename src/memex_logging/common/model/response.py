@@ -50,7 +50,7 @@ class AnalyticResponse:
 
 class AggregationResponse:
 
-    def __init__(self, analytic: AggregationAnalytic, result: Union[float, dict], static_id: str) -> None:
+    def __init__(self, analytic: AggregationAnalytic, result: Union[int, float, dict], static_id: str) -> None:
         self.analytic = analytic
         self.result = result
         self.static_id = static_id

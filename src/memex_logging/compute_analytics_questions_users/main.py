@@ -139,7 +139,7 @@ if __name__ == '__main__':
         if TYPE_NOTIFICATION_MESSAGE == segmentation.segmentation_type:
             notification_messages = segmentation.count
 
-    segmentation_requests = MessageAnalytic(time_range, args.project, "r:segmentation")
+    segmentation_requests = MessageAnalytic(time_range, args.project, "u:segmentation")
     segmentation_requests_result = SegmentationAnalyticResult.from_repr(logger_operations.get_analytic(segmentation_requests))
 
     text_requests = 0

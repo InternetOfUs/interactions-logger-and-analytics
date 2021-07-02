@@ -113,7 +113,7 @@ class UserAnalytic(DimensionAnalytic):
 class MessageAnalytic(DimensionAnalytic):
 
     MESSAGE_DIMENSION = "message"
-    ALLOWED_MESSAGE_METRIC_VALUES = ["m:from_users", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
+    ALLOWED_MESSAGE_METRIC_VALUES = ["m:from_users", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "u:segmentation"]
 
     def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
         super().__init__(timespan, project, self.MESSAGE_DIMENSION, metric)
