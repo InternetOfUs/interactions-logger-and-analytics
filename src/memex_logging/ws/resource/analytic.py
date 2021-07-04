@@ -79,7 +79,8 @@ class AnalyticsPerformer(Resource):
 
         try:
             analytic = AnalyticBuilder.from_repr(analytic)
-        except ValueError as e:
+        except (KeyError, ValueError, TypeError, AttributeError) as e:
+            logger.debug("Error while parsing input analytic data", exc_info=e)
             return {
                 "status": f"Malformed request: analytic not valid. {e.args[0]}",
                 "code": 400
