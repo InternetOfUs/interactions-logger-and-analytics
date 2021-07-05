@@ -14,25 +14,17 @@
 
 from __future__ import absolute_import, annotations
 
-from elasticsearch import Elasticsearch
+from memex_logging.common.model.aggregation import AggregationAnalytic
+from memex_logging.common.model.analytic import DimensionAnalytic, CommonAnalytic
 
-from memex_logging.common.dao.message import MessageDao
 
-
-class DaoCollector:
-    """
-    A collector of daos for the management of data
-    """
-
-    def __init__(self, message_dao: MessageDao) -> None:
-        """
-        :param MessageDao message_dao: a dao for the management of messages
-        """
-
-        self.message_dao = message_dao
+class AnalyticBuilder:
 
     @staticmethod
-    def build_dao_collector(es: Elasticsearch) -> DaoCollector:
-        return DaoCollector(
-            MessageDao(es)
-        )
+    def from_repr(raw_data: dict) -> CommonAnalytic:
+        if str(raw_data['type']).lower() == DimensionAnalytic.ANALYTIC_TYPE:
+            return DimensionAnalytic.from_repr(raw_data)
+        elif str(raw_data['type']).lower() == AggregationAnalytic.AGGREGATION_TYPE:
+            return AggregationAnalytic.from_repr(raw_data)
+        else:
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for Analytic")

@@ -14,25 +14,17 @@
 
 from __future__ import absolute_import, annotations
 
-from elasticsearch import Elasticsearch
+import os
 
-from memex_logging.common.dao.message import MessageDao
+from celery import Celery
 
 
-class DaoCollector:
-    """
-    A collector of daos for the management of data
-    """
-
-    def __init__(self, message_dao: MessageDao) -> None:
-        """
-        :param MessageDao message_dao: a dao for the management of messages
-        """
-
-        self.message_dao = message_dao
-
-    @staticmethod
-    def build_dao_collector(es: Elasticsearch) -> DaoCollector:
-        return DaoCollector(
-            MessageDao(es)
+def make_celery(app_name=__name__):
+    return Celery(
+            app_name,
+            backend=os.getenv("CELERY_RESULT_BACKEND"),
+            broker=os.getenv("CELERY_BROKER_URL")
         )
+
+
+celery = make_celery()

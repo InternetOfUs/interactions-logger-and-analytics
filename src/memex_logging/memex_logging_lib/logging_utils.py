@@ -1,4 +1,4 @@
-# Copyright 2020 U-Hopper srl
+# Copyright 2021 U-Hopper srl
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@ from __future__ import absolute_import, annotations
 
 import json
 import logging
+from datetime import datetime
 from time import sleep
-from typing import Optional, List, Union
+from typing import Optional, List
 
 import requests
 
-from memex_logging.common.model.analytic import DefaultTime, CustomTime, Metric
+from memex_logging.common.model.analytic import CommonAnalytic
 from memex_logging.common.model.message import Entity, ActionResponse, CarouselCardResponse
 
 
@@ -549,7 +550,7 @@ class LoggingUtility:
 
     def add_quick_reply_response(self, buttons: list, message_id: str, channel: str, user_id: str,
                                  response_to: str, timestamp: str, conversation_id=None,
-                                 metadata=Optional[dict]) -> tuple:
+                                 metadata=Optional[dict]) -> str:
         """
         This method should be used to store a response message. A response message is a message from the bot to the user that represents an answer to a request message
         :param buttons: the list of the buttons
@@ -860,7 +861,7 @@ class LoggingUtility:
 
     def add_quick_reply_notification(self, buttons: list, message_id: str, channel: str, user_id: str,
                                      timestamp: str, conversation_id=None,
-                                     metadata=Optional[dict]) -> tuple:
+                                     metadata=Optional[dict]) -> str:
         """
         This method should be used to store a notification message.
         :param buttons: the list of the buttons
@@ -1000,7 +1001,7 @@ class LoggingUtility:
         else:
             raise ValueError("The message has not been logged")
 
-    def get_message_from_message_id_and_user_id(self, message_id: str, user_id: str) -> tuple:
+    def get_message_from_message_id_and_user_id(self, message_id: str, user_id: str) -> dict:
         """
         Utils to retrieve a message from the database
         :param message_id: the if of the message to retrieve
@@ -1011,9 +1012,12 @@ class LoggingUtility:
 
         response = requests.get(api_point, headers=self._custom_headers)
 
-        return response.status_code, response.json()
+        if response.status_code == 200:
+            return json.loads(response.content)
+        else:
+            raise ValueError("Cannot retrieve the message")
 
-    def get_message_from_trace_id(self, trace_id: str) -> tuple:
+    def get_message_from_trace_id(self, trace_id: str) -> dict:
         """
         Utils to retrieve a message from the database
         :param trace_id: the traceId of the message to retrieve
@@ -1023,9 +1027,41 @@ class LoggingUtility:
 
         response = requests.get(api_point, headers=self._custom_headers)
 
-        return response.status_code, response.json()
+        if response.status_code == 200:
+            return json.loads(response.content)
+        else:
+            raise ValueError("Cannot retrieve the message")
 
-    def delete_message_from_message_id_and_user_id(self, message_id: str, user_id: str) -> tuple:
+    def get_messages(self, from_time: datetime, to_time: datetime, user_id: str = None, channel: str = None, message_type: str = None, max_size: int = 1000) -> list:
+        """
+        Utils to retrieve a message from the database
+        :param from_time: the time from which retrieve the messages
+        :param to_time:  the time up to which retrieve the messages
+        :param user_id: the id of the user related to the messages to retrieve
+        :param channel: the channel of the messages to retrieve
+        :param message_type: the type of the messages to retrieve
+        :param max_size: the maximum number of messages to retrieve (up to 10000)
+        :return: the status and the content of the response
+        """
+        api_point = self._access_point + "/messages?project=" + self._project + "&fromTime=" + from_time.isoformat() + "&toTime=" + to_time.isoformat() + "&maxSize=" + str(max_size)
+
+        if user_id:
+            api_point = api_point + "&userId=" + user_id
+
+        if channel:
+            api_point = api_point + "&channel=" + channel
+
+        if message_type:
+            api_point = api_point + "&type=" + message_type
+
+        response = requests.get(api_point, headers=self._custom_headers)
+
+        if response.status_code == 200:
+            return json.loads(response.content)
+        else:
+            raise ValueError("Cannot retrieve the messages")
+
+    def delete_message_from_message_id_and_user_id(self, message_id: str, user_id: str) -> dict:
         """
         Utils to delete a message from the database
         :param message_id: the if of the message to delete
@@ -1036,9 +1072,12 @@ class LoggingUtility:
 
         response = requests.delete(api_point, headers=self._custom_headers)
 
-        return response.status_code, response.json()
+        if response.status_code == 200:
+            return json.loads(response.content)
+        else:
+            raise ValueError("Cannot delete the message")
 
-    def delete_message_from_trace_id(self, trace_id: str) -> tuple:
+    def delete_message_from_trace_id(self, trace_id: str) -> dict:
         """
         Utils to delete a message from the database
         :param trace_id: the traceId of the message to delete
@@ -1048,7 +1087,10 @@ class LoggingUtility:
 
         response = requests.delete(api_point, headers=self._custom_headers)
 
-        return response.status_code, response.json()
+        if response.status_code == 200:
+            return json.loads(response.content)
+        else:
+            raise ValueError("Cannot delete the message")
 
     def add_log(self, log_id: str, component: str, severity: str, log_content: str, timestamp: str, authority: str = None,  bot_version: str = None, metadata: dict = None) -> str:
 
@@ -1093,19 +1135,13 @@ class LoggingUtility:
 
         if response.status_code == 200:
             dict_response = json.loads(response.text)
-            return dict_response['logId']
+            return dict_response['logId'][0]
         else:
-            raise ValueError("The message has not been logged")
+            raise ValueError("The log has not been logged")
 
-    def get_analytic(self, temporal_range: Union[DefaultTime, CustomTime], metric: Metric, sleep_time: int = 1) -> dict:
+    def get_analytic(self, analytic: CommonAnalytic, sleep_time: int = 1, number_of_trials: int = 10) -> dict:
 
-        json_payload = {
-            "project": self._project,
-            "timespan": temporal_range.to_repr(),
-            "type": "analytic"
-        }
-
-        json_payload.update(metric.to_repr())
+        json_payload = analytic.to_repr()
 
         api_point = self._access_point + "/analytic"
 
@@ -1117,9 +1153,9 @@ class LoggingUtility:
 
         static_id = json.loads(response.content)["staticId"]
 
-        for i in range(10):
+        for i in range(number_of_trials):
             sleep(sleep_time)
-            response = requests.get(api_point, headers=self._custom_headers, params={"staticId": static_id, "project": self._project})
+            response = requests.get(api_point, headers=self._custom_headers, params={"staticId": static_id, "project": analytic.project})
             if response.status_code == 200:
                 break
 

@@ -1,4 +1,4 @@
-# Copyright 2020 U-Hopper srl
+# Copyright 2021 U-Hopper srl
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
 # limitations under the License.
 
 from __future__ import absolute_import, annotations
-
-import logging
 
 
 class Log:
@@ -46,41 +44,15 @@ class Log:
 
     @staticmethod
     def from_repr(data: dict) -> Log:
-
-        if 'logId' not in data:
-            logging.error("MODEL.LOG logId must be defined")
-            raise ValueError("logId must be defined")
-
-        if 'project' not in data:
-            logging.error("MODEL.LOG project must be defined")
-            raise ValueError("project must be defined")
-
-        if 'component' not in data:
-            logging.error("MODEL.LOG component must be defined")
-            raise ValueError("component must be defined")
-
-        if 'severity' not in data:
-            logging.error("MODEL.LOG severity must be defined")
-            raise ValueError("severity must be defined")
-
-        if 'logContent' not in data:
-            logging.error("MODEL.LOG logContent must be defined")
-            raise ValueError("logContent must be defined")
-
-        if 'timestamp' not in data:
-            logging.error("MODEL.LOG timestamp must be defined")
-            raise ValueError("timestamp must be defined")
-
-        bot_version = None
-        metadata = None
         authority = None
-
         if 'authority' in data:
             authority = data['authority']
 
+        bot_version = None
         if 'botVersion' in data:
             bot_version = data['botVersion']
 
+        metadata = None
         if 'metadata' in data:
             metadata = data['metadata']
 

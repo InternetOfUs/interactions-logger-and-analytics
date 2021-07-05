@@ -14,25 +14,21 @@
 
 from __future__ import absolute_import, annotations
 
-from elasticsearch import Elasticsearch
+from datetime import datetime
+from unittest import TestCase
 
-from memex_logging.common.dao.message import MessageDao
+from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
 
 
-class DaoCollector:
-    """
-    A collector of daos for the management of data
-    """
+class TestDefaultTime(TestCase):
 
-    def __init__(self, message_dao: MessageDao) -> None:
-        """
-        :param MessageDao message_dao: a dao for the management of messages
-        """
+    def test_repr(self):
+        time = MovingTimeWindow("7D")
+        self.assertEqual(time, MovingTimeWindow.from_repr(time.to_repr()))
 
-        self.message_dao = message_dao
 
-    @staticmethod
-    def build_dao_collector(es: Elasticsearch) -> DaoCollector:
-        return DaoCollector(
-            MessageDao(es)
-        )
+class TestCustomTime(TestCase):
+
+    def test_repr(self):
+        time = FixedTimeWindow(datetime.now(), datetime.now())
+        self.assertEqual(time, FixedTimeWindow.from_repr(time.to_repr()))

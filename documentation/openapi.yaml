@@ -6,32 +6,12 @@ openapi: 3.0.0
 #######################
 info:
 
-  title: Memorable Experience
-  description: "
+  title: WeNet - Interactions Logger and Analytics APIs
+  description: This component is responsible for collecting and analyzing the messages produced by the WeNet applications together with lower level component logs that allow to monitor the functioning of the applications built on top of the platform and of the platform itself.
 
-    This document details the APIs exposed by the MemEx big data platform, realise by U-Hopper srl within the context of the FESR-funded Memorable Experiences (MemEx) project. The platform logs all interactions among tourists and a purposefully designed chatbot.
-
-    There are three kind of implemented APIs:
-
-    1. messages: to store, retrieve and delete messages;
-
-    2. logs: to store, retrieve and delete logs;
-
-    3. analytics/performances: to retrieve some performances of the system.
-
-
-    A part from the entities and models representing the responses, there are three main entities involved in the system: `Message`, `Log` and `Performance`.
-
-    A message can be a `ResponseMessage`, a `RequestMessage` or a `Notification`. A response message represents a response to a request message while the latter represent a message from the user. A notification is a special kind of message sent, for example, by the local administration or the hotel.
-
-
-    Concerning `Log`, it represents a metric to track the status of the system and what drove to a particular choice.
-
-    "
-
-  version: "0.0.5"
+  version: "1.3.0"
   contact:
-    email: "massimiliano.luca@unitn.it"
+    email: "carlo.caprini@u-hopper.com"
 
 servers:
 
@@ -43,11 +23,11 @@ servers:
 tags:
 
   - name: message
-    description: APIs to log the conversation into the database
+    description: APIs allowing to register incoming and outgoing messages of a conversation
   - name: logging
-    description: APIs to log additional information of the modules
+    description: APIs allowing to log events
   - name: analytic
-    description: APIs to retrieve useful information from the database. What follows can be used to analyze the performances of the bot
+    description: APIs to retrieve analytics based on messages
 
 paths:
 
@@ -93,7 +73,7 @@ paths:
           name: project
           schema:
             type: string
-          example: "MeMex"
+          example: "wenet-ask-for-help"
           description: the name of the project related to the messages you want to retrieve
           required: true
         - in: query
@@ -168,7 +148,7 @@ paths:
           name: project
           schema:
             type: string
-          example: "MeMex"
+          example: "wenet-ask-for-help"
           description: the name of the project related to the message you want to retrieve
         - in: query
           name: messageId
@@ -224,7 +204,7 @@ paths:
           name: project
           schema:
             type: string
-          example: "MeMex"
+          example: "wenet-ask-for-help"
           description: the name of the project related to the message you want to delete
         - in: query
           name: messageId
@@ -297,7 +277,7 @@ paths:
       summary: Retrieve a single log by specifying the trace id
       description: This end-point can be used to retrieve all the information of a single log
       parameters:
-        - in: path
+        - in: query
           name: id
           schema:
             type: string
@@ -324,7 +304,7 @@ paths:
       summary: Update an already existing log
       description: This method should be used to update existing logs
       parameters:
-        - in: path
+        - in: query
           name: id
           schema:
             type: string
@@ -350,7 +330,7 @@ paths:
       summary: Delete a log
       description: This method should be used to delete a log from the database
       parameters:
-        - in: path
+        - in: query
           name: id
           schema:
             type: string
@@ -375,9 +355,10 @@ paths:
     post:
       tags:
         - analytic
-      summary: Post an analytic
+      summary: Create an analytic
       description: "
-      This end-point allows to post an analytic based on the messages in the database, it returns a `staticId` that you have to use to retrieve the analytics.
+      This end-point allows to create an analytic based on the messages in the database, it returns a `staticId` that you have to use to retrieve the analytic.
+
 
       The allowed analytics are:
 
@@ -389,13 +370,23 @@ paths:
 
       * MessageMetrics with `dimension` set to `message`, you can set `metric` to:
       `m:from_users`: the number of messages from the users in a certain time range;
-      `m:conversation`: the number of conversation in a certain time range;
       `m:from_bot`: the number of messages from the bot in a certain time range;
       `m:responses`: the number of response messages in a certain time range;
       `m:notifications`: the number of notification messages in a certain time range;
       `m:unhandled`: the number of unhandled messages in a certain time range;
       `m:segmentation`: the segmentation of the messages based on the type in a certain time range;
       `r:segmentation`: the segmentation of the request messages based on the type in a certain time range;
+
+      * TaskMetrics with `dimension` set to `task`, you can set `metric` to:
+      `t:total`: the number of total tasks in a certain time range;
+      `t:active`: the number of active/open tasks in a certain time range;
+      `t:closed`: the number of closed tasks in a certain time range;
+      `t:new`: the number of new tasks in a certain time range;
+
+      * TransactionMetrics with `dimension` set to `transaction`, you can set `metric` to:
+      `t:total`: the number of total transactions in a certain time range;
+      `t:segmentation`: the segmentation of the transactions based on the type in a certain time range.
+      For this metric you can also specify the task id of interest using the field `taskId`;
 
       * ConversationMetrics with `dimension` set to `conversation`, you can set `metric` to:
       `c:total`: the number of conversation in a certain time range;
@@ -411,6 +402,7 @@ paths:
       * BotMetrics with `dimension` set to `bot`, you can set `metric` to:
       `b:response`: the number of users and messages in a certain time range.
 
+
       It could be possible to post also aggregations.
       "
       requestBody:
@@ -418,7 +410,13 @@ paths:
           application/json:
             schema:
               oneOf:
-                - $ref: '#/components/schemas/Analytic'
+                - $ref: '#/components/schemas/UserAnalytic'
+                - $ref: '#/components/schemas/MessageAnalytic'
+                - $ref: '#/components/schemas/TaskAnalytic'
+                - $ref: '#/components/schemas/TransactionAnalytic'
+                - $ref: '#/components/schemas/ConversationAnalytic'
+                - $ref: '#/components/schemas/DialogueAnalytic'
+                - $ref: '#/components/schemas/BotAnalytic'
                 - $ref: '#/components/schemas/Aggregation'
       responses:
         '200':
@@ -444,11 +442,19 @@ paths:
       description: "
       This end-point allows to retrieve an analytic based on a `staticId`.
 
-      If the analytic requested is a `MessageMetrics` with metric `m:segmentation` or `r:segmentation` it will return a `HTTP_200_ANALYTIC_SEGMENTATION` object.
 
-      If the analytic requested is a `ConversationMetrics` it will return a `HTTP_200_ANALYTIC_CONVERSATION` object.
+      For the analytics will return a `HTTP_200_ANALYTIC` object. The object contained in the `result` field is a:
 
-      In all the other analytic cases will return a `HTTP_200_ANALYTIC` object.
+      * `SegmentationResult` object if the analytic requested is a segmentation metric;
+
+      * `ConversationLengthResult` object if the analytic requested is a `ConversationMetrics` with metric `c:length`;
+
+      * `ConversationPathResult` object if the analytic requested is a `ConversationMetrics` with metric `c:path`;
+
+      * `TransactionResult` object if the analytic requested is a `TransactionMetrics`;
+
+      * `AnalyticResult` in all the other cases.
+
 
       For the aggreagtions will return a `HTTP_200_AGGREGATION` object.
       "
@@ -463,8 +469,8 @@ paths:
           name: project
           schema:
             type: string
-          example: "MeMex"
-          description: the name of the project related to the analytic you want to retrieve
+          example: "wenet-ask-for-help"
+          description: "The name of the project related to the analytic you want to retrieve. Note that: for the task and transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
           required: true
       responses:
         '200':
@@ -474,8 +480,6 @@ paths:
               schema:
                 oneOf:
                   - $ref: '#/components/schemas/HTTP_200_ANALYTIC'
-                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC_SEGMENTATION'
-                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC_CONVERSATION'
                   - $ref: '#/components/schemas/HTTP_200_AGGREGATION'
         '400':
           description: malformed request
@@ -568,7 +572,7 @@ components:
         traceId:
           type: string
           example: "bcpg8XYBHD_pmQ1jA7b8"
-      example: { "messageId": "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8", "channel": "FACEBOOK", "userId": "USR-JDKHEIU2-31NJDTE94", "conversationId": "CONV-DAJKWPENVOA-314CAD", "timestamp": "2021-01-25T14:18:36.141378", "content": { "type": "text", "value": "devo fare un bonifico di 40 euro" }, "domain": "pagamenti", "intent": { "name": "bonifico", "confidence": 0.87 }, "entities": [ { "type": "@city", "value": "Boston", "confidence": 0.94 } ], "project": "MeMex", "language": "IT", "metadata": { }, "type": "REQUEST", "traceId": "bcpg8XYBHD_pmQ1jA7b8" }
+      example: { "messageId": "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A8", "channel": "FACEBOOK", "userId": "USR-JDKHEIU2-31NJDTE94", "conversationId": "CONV-DAJKWPENVOA-314CAD", "timestamp": "2021-01-25T14:18:36.141378", "content": { "type": "text", "value": "devo fare un bonifico di 40 euro" }, "domain": "pagamenti", "intent": { "name": "bonifico", "confidence": 0.87 }, "entities": [ { "type": "@city", "value": "Boston", "confidence": 0.94 } ], "project": "wenet-ask-for-help", "language": "IT", "metadata": { }, "type": "REQUEST", "traceId": "bcpg8XYBHD_pmQ1jA7b8" }
 
     RequestMessage:
       type: object
@@ -631,7 +635,7 @@ components:
           nullable: true
         project:
           type: string
-          example: "MeMex"
+          example: "wenet-ask-for-help"
         type:
           type: string
           enum: [ "request" ]
@@ -683,7 +687,7 @@ components:
           nullable: true
         project:
           type: string
-          example: "MemEx"
+          example: "wenet-ask-for-help"
         type:
           type: string
           enum: [ "response" ]
@@ -733,7 +737,7 @@ components:
           nullable: true
         project:
           type: string
-          example: "MemEx"
+          example: "wenet-ask-for-help"
         type:
           type: string
           enum: [ "notification" ]
@@ -976,7 +980,7 @@ components:
           example: "LOG31235141"
         project:
           type: string
-          example: "memex"
+          example: "wenet-ask-for-help"
         component:
           type: string
           example: "dimension"
@@ -1007,18 +1011,12 @@ components:
       items:
         $ref: '#/components/schemas/Log'
 
-    Analytic:
-      oneOf:
-        - $ref: '#/components/schemas/UserMetrics'
-        - $ref: '#/components/schemas/MessageMetrics'
-        - $ref: '#/components/schemas/ConversationMetrics'
-        - $ref: '#/components/schemas/DialogueMetrics'
-        - $ref: '#/components/schemas/BotMetrics'
+    CommonAnalytic:
       type: object
       properties:
         project:
           type: string
-          example: "memex"
+          example: "wenet-ask-for-help"
         timespan:
           type: object
           oneOf:
@@ -1038,7 +1036,7 @@ components:
       properties:
         project:
           type: string
-          example: "memex"
+          example: "wenet-ask-for-help"
         timespan:
           type: object
           oneOf:
@@ -1049,7 +1047,8 @@ components:
           enum: ["aggregation"]
         field:
           type: string
-          example: "messageId"
+          description: The field has to be a numeric field
+          example: "intent.confidence"
         aggregation:
           type: string
           enum: ["avg", "min", "max", "sum", "stats", "extended_stats", "value_count", "cardinality", "percentiles"]
@@ -1083,7 +1082,9 @@ components:
         - operation
         - value
 
-    UserMetrics:
+    UserAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
       properties:
         dimension:
           type: string
@@ -1097,7 +1098,9 @@ components:
         - dimension
         - metric
 
-    MessageMetrics:
+    MessageAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
       properties:
         dimension:
           type: string
@@ -1105,13 +1108,58 @@ components:
           example: "message"
         metric:
           type: string
-          enum: ["m:from_users", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
+          enum: ["m:from_users", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
           example: "m:from_users"
       required:
         - dimension
         - metric
 
-    ConversationMetrics:
+    TaskAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
+      properties:
+        project:
+          type: string
+          description: "For the task analytics the project is not related to the name used in the db. It is requested the id of the application"
+          example: "I2BIO3UXx6"
+        dimension:
+          type: string
+          enum: ["task"]
+          example: "task"
+        metric:
+          type: string
+          enum: ["t:total", "t:active", "t:closed", "t:new"]
+          example: "t:active"
+      required:
+        - dimension
+        - metric
+
+    TransactionAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
+      properties:
+        project:
+          type: string
+          description: "For the transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
+          example: "I2BIO3UXx6"
+        dimension:
+          type: string
+          enum: ["transaction"]
+          example: "transaction"
+        metric:
+          type: string
+          enum: ["t:total", "t:segmentation"]
+          example: "t:new"
+        taskId:
+          type: string
+          example: "704ad78d6d52bf159d1d7a97"
+      required:
+        - dimension
+        - metric
+
+    ConversationAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
       properties:
         dimension:
           type: string
@@ -1125,7 +1173,9 @@ components:
         - dimension
         - metric
 
-    DialogueMetrics:
+    DialogueAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
       properties:
         dimension:
           type: string
@@ -1139,7 +1189,9 @@ components:
         - dimension
         - metric
 
-    BotMetrics:
+    BotAnalytic:
+      allOf:
+        - $ref: '#/components/schemas/CommonAnalytic'
       properties:
         dimension:
           type: string
@@ -1218,79 +1270,142 @@ components:
       properties:
         query:
           oneOf:
-            - $ref: '#/components/schemas/Analytic'
+            - $ref: '#/components/schemas/UserAnalytic'
+            - $ref: '#/components/schemas/MessageAnalytic'
+            - $ref: '#/components/schemas/TaskAnalytic'
+            - $ref: '#/components/schemas/TransactionAnalytic'
+            - $ref: '#/components/schemas/DialogueAnalytic'
+            - $ref: '#/components/schemas/BotAnalytic'
         result:
-          type: object
-          properties:
-            count:
-              type: number
-              format: int32
-            items:
-              type: array
-              items:
-                type: string
-            type:
-              type: string
-              example: "messageId"
-        static_id:
+          oneOf:
+            - $ref: '#/components/schemas/AnalyticResult'
+            - $ref: '#/components/schemas/SegmentationResult'
+            - $ref: '#/components/schemas/TransactionResult'
+            - $ref: '#/components/schemas/ConversationLengthResult'
+            - $ref: '#/components/schemas/ConversationPathResult'
+        staticId:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"
 
-    HTTP_200_ANALYTIC_SEGMENTATION:
+    AnalyticResult:
       type: object
       properties:
-        query:
-          oneOf:
-            - $ref: '#/components/schemas/Analytic'
-        result:
-          type: object
-          properties:
-            counts:
-              type: object
-              example: { "text": 26 }
-            type:
-              type: string
-              example: "type"
-        static_id:
+        count:
+          type: number
+          format: int32
+        items:
+          type: array
+          items:
+            type: string
+        type:
           type: string
-          example: "wAu4EW4BFurD9NUGZY3z"
+          example: "userId"
 
-    HTTP_200_ANALYTIC_CONVERSATION:
+    SegmentationResult:
       type: object
       properties:
-        query:
-          oneOf:
-            - $ref: '#/components/schemas/Analytic'
-        conversations:
-          type: object
-          properties:
-            count:
-              type: number
-              format: int32
-            items:
-              type: array
-              items:
+        counts:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
                 type: string
-            type:
-              type: string
-              example: "messageId"
-        static_id:
+                example: "response"
+              count:
+                type: number
+                format: int32
+                example: 26
+        type:
           type: string
-          example: "wAu4EW4BFurD9NUGZY3z"
+          enum: [ "segmentation" ]
+          example: "segmentation"
+
+    TransactionResult:
+      type: object
+      properties:
+        count:
+          type: number
+          format: int32
+        transactions:
+          type: array
+          items:
+            type: object
+            properties:
+              taskId:
+                type: string
+                example: "604ad78d6d61bf149d1d7a97"
+              trnsactionIds:
+                type: array
+                items:
+                  type: string
+                  example: "1"
+        type:
+          type: string
+          enum: [ "transaction" ]
+          example: "transaction"
+
+    ConversationLengthResult:
+      type: object
+      properties:
+        count:
+          type: number
+          format: int32
+        lengths:
+          type: array
+          items:
+            type: object
+            properties:
+              conversationId:
+                type: string
+                example: "CONV-DOWI41-DAJPRTI3"
+              length:
+                type: number
+                format: int32
+                example: 3
+        type:
+          type: string
+          enum: [ "length" ]
+          example: "length"
+
+    ConversationPathResult:
+      type: object
+      properties:
+        count:
+          type: number
+          format: int32
+        paths:
+          type: array
+          items:
+            type: object
+            properties:
+              conversationId:
+                type: string
+                example: "CONV-DOWI41-DAJPRTI3"
+              messages:
+                type: array
+                items:
+                  type: string
+                  example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A9"
+        type:
+          type: string
+          enum: [ "path" ]
+          example: "path"
 
     HTTP_200_AGGREGATION:
       type: object
       properties:
         query:
-          oneOf:
+          allOf:
             - $ref: '#/components/schemas/Aggregation'
         result:
           type: object
           properties:
-            metric:
-              type: string
-              example: "answer"
-        static_id:
+            <aggregation>:
+              type: number
+              description: "It is a number in the case of the simple stats. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
+              example: 3
+        staticId:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"
 

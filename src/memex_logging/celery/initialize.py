@@ -14,25 +14,9 @@
 
 from __future__ import absolute_import, annotations
 
-from elasticsearch import Elasticsearch
+from memex_logging.celery import celery
+from memex_logging.ws.main import build_interface_from_env
 
-from memex_logging.common.dao.message import MessageDao
 
-
-class DaoCollector:
-    """
-    A collector of daos for the management of data
-    """
-
-    def __init__(self, message_dao: MessageDao) -> None:
-        """
-        :param MessageDao message_dao: a dao for the management of messages
-        """
-
-        self.message_dao = message_dao
-
-    @staticmethod
-    def build_dao_collector(es: Elasticsearch) -> DaoCollector:
-        return DaoCollector(
-            MessageDao(es)
-        )
+ws_interface = build_interface_from_env()
+ws_interface.init_celery(celery)

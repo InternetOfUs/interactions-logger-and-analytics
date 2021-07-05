@@ -1,4 +1,4 @@
-# Copyright 2020 U-Hopper srl
+# Copyright 2021 U-Hopper srl
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ from flask import request, Response
 from flask_restful import Resource
 
 from memex_logging.common.model.log import Log
-from memex_logging.utils.utils import Utils
+from memex_logging.common.utils import Utils
 
 
 class LoggingResourceBuilder(object):

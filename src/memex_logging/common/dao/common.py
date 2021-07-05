@@ -1,4 +1,4 @@
-# Copyright 2020 U-Hopper srl
+# Copyright 2021 U-Hopper srl
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ from typing import Optional, Tuple, List
 
 from elasticsearch import Elasticsearch
 
-from memex_logging.utils.utils import Utils
+from memex_logging.common.utils import Utils
 
 
 logger = logging.getLogger("logger.common.dao.common")

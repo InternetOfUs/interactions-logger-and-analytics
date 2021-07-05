@@ -1,4 +1,4 @@
-# Copyright 2020 U-Hopper srl
+# Copyright 2021 U-Hopper srl
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,10 +16,15 @@ from __future__ import absolute_import, annotations
 
 import logging
 
-import datetime
 from elasticsearch import Elasticsearch
+from wenet.interface.task_manager import TaskManagerInterface
 
-from memex_logging.utils.utils import Utils
+from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, TaskAnalytic, TransactionAnalytic, \
+    ConversationAnalytic, DialogueAnalytic, BotAnalytic
+from memex_logging.common.model.result import AnalyticResult, SegmentationAnalyticResult, \
+    ConversationLengthAnalyticResult, ConversationPathAnalyticResult, Segmentation, ConversationLength, \
+    ConversationPath, TransactionAnalyticResult, TransactionReturn
+from memex_logging.common.utils import Utils
 
 
 logger = logging.getLogger("logger.common.analytic.analytic")
@@ -28,101 +33,15 @@ logger = logging.getLogger("logger.common.analytic.analytic")
 class AnalyticComputation:
 
     @staticmethod
-    def analytic_validity_check(analytic: dict):
-        logger.info("ANALYTIC.DISPLACEMENT: " + str(analytic))
-
-        # check if timespan is in the dict
-        if 'timespan' not in analytic:
-            logger.debug("timespan failed")
-            return False
-
-        # check if project is in the dict
-        if 'project' not in analytic:
-            logger.debug("project failed")
-            return False
-
-        # check if dimension is in the dict
-        if 'dimension' not in analytic:
-            logger.debug("dimension failed")
-            return False
-
-        # check if metric is in the dict
-        if 'metric' not in analytic:
-            logger.debug("metric failed")
-            return False
-
-        # check timespan details
-        if 'type' not in (analytic["timespan"]):
-            logger.debug("timespan.type.key failed")
-            return False
-
-        if str(analytic['timespan']['type']).lower() not in ["default", "custom"]:
-            logger.debug("timespan.type.value failed")
-            return False
-
-        allowed_time_defaults = ["30D", "10D", "7D", "1D", "TODAY"]
-        if str(analytic['timespan']['type']).lower() == "default":
-            if 'value' not in analytic['timespan']:
-                logger.debug("timespan.value.key failed")
-                return False
-            else:
-                if str(analytic['timespan']['value']).upper() not in allowed_time_defaults:
-                    logger.debug("timespan.value.value failed")
-                    return False
-        else:
-            try:
-                datetime.datetime.fromisoformat(analytic['timespan']['start']).isoformat()
-                datetime.datetime.fromisoformat(analytic['timespan']['end']).isoformat()
-            except Exception as e:
-                logger.debug("timespan.start or timespan.end failed", exc_info=e)
-                return False
-
-        # list the allowed dimensions and the allowed metrics split per sub_type
-        allowed_dimensions = ["user", "message", "conversation", "dialogue", "bot"]
-        if str(analytic['dimension']).lower() not in allowed_dimensions:
-            logger.debug("dimension.value failed")
-            return False
-
-        allowed_metrics_user = ["u:total", "u:active", "u:engaged", "u:new"]
-        allowed_metrics_message = ["m:from_users", "m:conversation", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
-        allowed_metrics_conversation = ["c:total", "c:new", "c:length", "c:path"]
-        allowed_metrics_dialogue = ["d:fallback", "d:intents", "d:domains"]
-        allowed_metrics_bot = ["b:response"]
-
-        if str(analytic['dimension']).lower() == "user":
-            if str(analytic['metric']).lower() not in allowed_metrics_user:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == "message":
-            if str(analytic['metric']).lower() not in allowed_metrics_message:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == "conversation":
-            if str(analytic['metric']).lower() not in allowed_metrics_conversation:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == "dialogue":
-            if str(analytic['metric']).lower() not in allowed_metrics_dialogue:
-                logger.debug("metric.value failed")
-                return False
-        elif str(analytic['dimension']).lower() == "bot":
-            if str(analytic['metric']).lower() not in allowed_metrics_bot:
-                logger.debug("metric.value failed")
-                return False
-
-        return True
-
-    def compute_u_total(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    def compute_u_total(analytic: UserAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -130,8 +49,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -153,22 +72,26 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         user_list = []
+        number_of_users = 0
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                user_list.append(item['key'])
 
-        for item in response['aggregations']['terms_count']['buckets']:
-            user_list.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            number_of_users = response['aggregations']['type_count']['value']
 
-        return response['aggregations']['type_count']['value'], user_list
+        return AnalyticResult(number_of_users, user_list, "userId")
 
-    def compute_u_active(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_u_active(analytic: UserAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -180,7 +103,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -188,8 +111,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -211,22 +134,26 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         user_list = []
+        number_of_users = 0
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                user_list.append(item['key'])
 
-        for item in response['aggregations']['terms_count']['buckets']:
-            user_list.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            number_of_users = response['aggregations']['type_count']['value']
 
-        return response['aggregations']['type_count']['value'], user_list
+        return AnalyticResult(number_of_users, user_list, "userId")
 
-    def compute_u_engaged(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_u_engaged(analytic: UserAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -238,7 +165,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -246,8 +173,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -269,29 +196,33 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         user_list = []
+        number_of_users = 0
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                user_list.append(item['key'])
 
-        for item in response['aggregations']['terms_count']['buckets']:
-            user_list.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            number_of_users = response['aggregations']['type_count']['value']
 
-        return response['aggregations']['type_count']['value'], user_list
+        return AnalyticResult(number_of_users, user_list, "userId")
 
-    def compute_u_new(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_u_new(analytic: UserAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -299,8 +230,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -317,14 +248,16 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         users_in_period = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            users_in_period.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                users_in_period.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         users_in_period = set(users_in_period)
 
@@ -334,7 +267,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -342,7 +275,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "lt": min_bound
+                                    "lt": min_bound.isoformat()
                                 }
                             }
                         }
@@ -359,25 +292,26 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         users_out_period = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            users_out_period.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                users_out_period.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         users_out_period = set(users_out_period)
 
         final_users = users_in_period - users_out_period
 
-        return len(final_users), list(final_users)
+        return AnalyticResult(len(final_users), list(final_users), "userId")
 
-    def compute_m_from_users(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_m_from_users(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -389,7 +323,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -397,8 +331,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -408,37 +342,38 @@ class AnalyticComputation:
             "aggs": {
                 "terms_count": {
                     "terms": {
-                        "field": "userId.keyword",
+                        "field": "messageId.keyword",
                         "size": 65535
                     }
                 }
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
-        user_list = []
+        messages = []
         total_counter = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            user_list.append(item['key'])
-            total_counter = total_counter + int(item['doc_count'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                messages.append(item['key'])
+                total_counter = total_counter + int(item['doc_count'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        return total_counter, user_list
+        return AnalyticResult(total_counter, messages, "messageId")
 
-    def compute_m_segmentation(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_m_segmentation(analytic: MessageAnalytic, es: Elasticsearch) -> SegmentationAnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -446,8 +381,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -464,21 +399,22 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
-        type_counter = {}
-        for item in response['aggregations']['terms_count']['buckets']:
-            type_counter[item['key']] = item['doc_count']
+        type_counter = []
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                type_counter.append(Segmentation(item['key'], item['doc_count']))
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `5` but the number of types is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `5` but the number of types is higher")
 
-        return type_counter
+        return SegmentationAnalyticResult(type_counter)
 
-    def compute_r_segmentation(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_r_segmentation(analytic: MessageAnalytic, es: Elasticsearch) -> SegmentationAnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -490,7 +426,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -498,8 +434,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -516,70 +452,22 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
-        type_counter = {}
-        for item in response['aggregations']['terms_count']['buckets']:
-            type_counter[item['key']] = item['doc_count']
+        type_counter = []
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                type_counter.append(Segmentation(item['key'], item['doc_count']))
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `10` but the number of content types is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `10` but the number of content types is higher")
 
-        return type_counter
+        return SegmentationAnalyticResult(type_counter)
 
-    def compute_m_conversation(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
-        body = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "match": {
-                                "project.keyword": project
-                            }
-                        }
-                    ],
-                    "filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
-                                }
-                            }
-                        }
-                    ]
-                }
-            },
-            "aggs": {
-                "terms_count": {
-                    "terms": {
-                        "field": "conversationId.keyword",
-                        "size": 65535
-                    }
-                }
-            }
-        }
-
-        index = Utils.generate_index(data_type="message", project=project)
-        response = es.search(index=index, body=body, size=0)
-        conversation_list = []
-        total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            conversation_list.append(item['key'])
-            total_len = total_len + 1
-
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
-
-        return total_len, conversation_list
-
-    def compute_m_from_bot(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_m_from_bot(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -591,7 +479,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -599,8 +487,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -617,16 +505,18 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            messages.append(item['key'])
-            total_len = total_len + item['doc_count']
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                messages.append(item['key'])
+                total_len = total_len + item['doc_count']
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of response messages is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of response messages is higher")
 
         body = {
             "query": {
@@ -639,7 +529,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -647,8 +537,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -665,21 +555,22 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
-        for item in response['aggregations']['terms_count']['buckets']:
-            messages.append(item['key'])
-            total_len = total_len + item['doc_count']
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                messages.append(item['key'])
+                total_len = total_len + item['doc_count']
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
 
-        return total_len, messages
+        return AnalyticResult(total_len, messages, "messageId")
 
-    def compute_m_responses(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_m_responses(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -691,7 +582,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -699,8 +590,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -717,23 +608,24 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            messages.append(item['key'])
-            total_len = total_len + item['doc_count']
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                messages.append(item['key'])
+                total_len = total_len + item['doc_count']
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        return total_len, messages
+        return AnalyticResult(total_len, messages, "messageId")
 
-    def compute_m_notifications(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_m_notifications(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -745,7 +637,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -753,8 +645,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -771,23 +663,24 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            messages.append(item['key'])
-            total_len = total_len + item['doc_count']
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                messages.append(item['key'])
+                total_len = total_len + item['doc_count']
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
 
-        return total_len, messages
+        return AnalyticResult(total_len, messages, "messageId")
 
-    def compute_m_unhandled(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_m_unhandled(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -799,7 +692,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -807,8 +700,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -825,7 +718,7 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
@@ -834,22 +727,68 @@ class AnalyticComputation:
                 messages.append(item['key'])
                 total_len = total_len + item['doc_count']
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of unhandled messages is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of unhandled messages is higher")
 
-        return total_len, messages
+        return AnalyticResult(total_len, messages, "messageId")
 
-    def compute_c_total(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_task_t_total(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        tasks = []
+        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
+        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
+        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound))
+        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
+
+    @staticmethod
+    def compute_task_t_active(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        tasks = []
+        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
+        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
+        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
+
+    @staticmethod
+    def compute_task_t_closed(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        tasks = task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound)
+        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
+
+    @staticmethod
+    def compute_task_t_new(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        tasks = task_manager_interface.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound)
+        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
+
+    @staticmethod
+    def compute_transaction_t_total(analytic: TransactionAnalytic, task_manager_interface: TaskManagerInterface) -> TransactionAnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        transactions = task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
+        task_ids = set([transaction.task_id for transaction in transactions])
+        transaction_returns = [TransactionReturn(task_id, [transaction.id for transaction in transactions if transaction.task_id == task_id]) for task_id in task_ids]
+        return TransactionAnalyticResult(len(transactions), transaction_returns)
+
+    @staticmethod
+    def compute_transaction_t_segmentation(analytic: TransactionAnalytic, task_manager_interface: TaskManagerInterface) -> SegmentationAnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        transactions = task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
+        transaction_labels = [transaction.label for transaction in transactions]
+        unique_labels = set(transaction_labels)
+        type_counter = [Segmentation(label, transaction_labels.count(label)) for label in unique_labels]
+        return SegmentationAnalyticResult(type_counter)
+
+    @staticmethod
+    def compute_c_total(analytic: ConversationAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -857,8 +796,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -875,30 +814,31 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            conversation_list.append(item['key'])
-            total_len = total_len + 1
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                conversation_list.append(item['key'])
+                total_len = total_len + 1
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
-        return total_len, conversation_list
+        return AnalyticResult(total_len, conversation_list, "conversationId")
 
-    def compute_c_new(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_c_new(analytic: ConversationAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -906,8 +846,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -924,14 +864,16 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conv_in_period = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            conv_in_period.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                conv_in_period.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         conv_in_period = set(conv_in_period)
 
@@ -941,7 +883,7 @@ class AnalyticComputation:
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -949,7 +891,7 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "lt": min_bound
+                                    "lt": min_bound.isoformat()
                                 }
                             }
                         }
@@ -966,32 +908,33 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conv_out_period = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            conv_out_period.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                conv_out_period.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         conv_out_period = set(conv_out_period)
 
         final_conv = conv_in_period - conv_out_period
 
-        return len(final_conv), list(final_conv)
+        return AnalyticResult(len(final_conv), list(final_conv), "conversationId")
 
-    def compute_c_length(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_c_length(analytic: ConversationAnalytic, es: Elasticsearch) -> ConversationLengthAnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -999,8 +942,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1017,30 +960,31 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
-        for item in response['aggregations']['terms_count']['buckets']:
-            conversation_list.append({"conversation": item['key'], "length": item['doc_count']})
-            total_len = total_len + 1
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                conversation_list.append(ConversationLength(item['key'], item['doc_count']))
+                total_len = total_len + 1
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
-        return total_len, conversation_list
+        return ConversationLengthAnalyticResult(total_len, conversation_list)
 
-    def compute_c_path(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_c_path(analytic: ConversationAnalytic, es: Elasticsearch) -> ConversationPathAnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1048,8 +992,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1066,22 +1010,21 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         conversation_list = []
-        for item in response['aggregations']['terms_count']['buckets']:
-            conversation_list.append(item['key'])
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                conversation_list.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         conversation_list = list(set(conversation_list))
         paths = []
 
         for item in conversation_list:
-            time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-            min_bound = time_bound[0]
-            max_bound = time_bound[1]
             body = {
                 "query": {
                     "bool": {
@@ -1093,7 +1036,7 @@ class AnalyticComputation:
                             },
                             {
                                 "match": {
-                                    "project.keyword": project
+                                    "project.keyword": analytic.project
                                 }
                             }
                         ],
@@ -1101,8 +1044,8 @@ class AnalyticComputation:
                             {
                                 "range": {
                                     "timestamp": {
-                                        "gte": min_bound,
-                                        "lte": max_bound
+                                        "gte": min_bound.isoformat(),
+                                        "lte": max_bound.isoformat()
                                     }
                                 }
                             }
@@ -1119,23 +1062,24 @@ class AnalyticComputation:
                 }
             }
 
-            index = Utils.generate_index(data_type="message", project=project)
+            index = Utils.generate_index(data_type="message", project=analytic.project)
             response = es.search(index=index, body=body, size=0)
             message_list = []
-            for obj in response['aggregations']['terms_count']['buckets']:
-                message_list.append(obj['key'])
+            if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+                for obj in response['aggregations']['terms_count']['buckets']:
+                    message_list.append(obj['key'])
 
-            paths.append({item: message_list})
+                paths.append(ConversationPath(item, message_list))
 
-            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-                logger.warning("The number of buckets is limited at `65535` but the number of messages is higher")
+            if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+                if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                    logger.warning("The number of buckets is limited at `65535` but the number of messages is higher")
 
-        return len(paths), paths
+        return ConversationPathAnalyticResult(len(paths), paths)
 
-    def compute_d_fallback(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_d_fallback(analytic: DialogueAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
@@ -1147,7 +1091,7 @@ class AnalyticComputation:
                         },
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1155,8 +1099,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1172,22 +1116,19 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         total_missed = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_missed = response['aggregations']['type_count']['value']
 
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1195,8 +1136,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1212,26 +1153,24 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         total_messages = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_messages = response['aggregations']['type_count']['value']
 
-        return total_missed, total_messages
+        return AnalyticResult(total_missed, total_messages, "score")
 
-    def compute_d_intents(self, analytic: dict, es: Elasticsearch, project: str):
-
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_d_intents(analytic: DialogueAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1239,8 +1178,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1262,33 +1201,33 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         intent_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
                 intent_list.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of intents is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of intents is higher")
 
         value = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return value, intent_list
+        return AnalyticResult(value, intent_list, "intent")
 
-    def compute_d_domains(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_d_domains(analytic: DialogueAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1296,8 +1235,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1319,35 +1258,33 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         domain_list = []
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
-                response['aggregations']['terms_count']:
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
                 domain_list.append(item['key'])
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of domains is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of domains is higher")
 
         value = 0
-        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in \
-                response['aggregations']['type_count']:
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return value, domain_list
+        return AnalyticResult(value, domain_list, "domain")
 
-    def compute_b_response(self, analytic: dict, es: Elasticsearch, project: str):
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
+    @staticmethod
+    def compute_b_response(analytic: BotAnalytic, es: Elasticsearch) -> AnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1355,8 +1292,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1372,23 +1309,19 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         total_messages = 0
-        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in \
-                response['aggregations']['type_count']:
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_messages = response['aggregations']['type_count']['value']
 
-        time_bound = Utils.extract_range_timestamps(analytic['timespan'])
-        min_bound = time_bound[0]
-        max_bound = time_bound[1]
         body = {
             "query": {
                 "bool": {
                     "must": [
                         {
                             "match": {
-                                "project.keyword": project
+                                "project.keyword": analytic.project
                             }
                         }
                     ],
@@ -1396,8 +1329,8 @@ class AnalyticComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound,
-                                    "lte": max_bound
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
                                 }
                             }
                         }
@@ -1414,16 +1347,16 @@ class AnalyticComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=project)
+        index = Utils.generate_index(data_type="message", project=analytic.project)
         response = es.search(index=index, body=body, size=0)
         total_not_working = 0
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in \
-                response['aggregations']['terms_count']:
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
                 if item['doc_count'] == 1:
                     total_not_working = total_not_working + 1
 
-        if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-            logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        return total_not_working, total_messages
+        return AnalyticResult(total_not_working, total_messages, "score")
