@@ -2,9 +2,9 @@
 
 ## Version 1.*
 
-### NEXT
+### 1.4.0
 
-* Imported wenet common models `2.0.0-alpha`.
+* Imported wenet common models `2.0.0`.
 * Improved script for computing analytics.
 * Allowing to export the list of both tasks and messages in dedicated json files.
 * Added new script for getting the association between user ids and their emails.

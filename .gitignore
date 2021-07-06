@@ -17,8 +17,6 @@ venv.bak/
 *.tsv
 *.json
 
-docker-compose.yml
-
 .idea
 
 roles
