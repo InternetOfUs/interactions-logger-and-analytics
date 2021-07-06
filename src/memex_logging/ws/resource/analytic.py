@@ -47,7 +47,6 @@ class AnalyticsPerformer(Resource):
 
     def get(self):
         static_id = request.args.get('staticId')
-        project = request.args.get('project')
         if static_id == "" or static_id is None:
             logger.debug("Missing required parameters")
             return {
@@ -55,7 +54,7 @@ class AnalyticsPerformer(Resource):
                 "code": 400
             }, 400
 
-        index_name = Utils.generate_index("analytic", project=project)
+        index_name = Utils.generate_index("analytic")
         response = self._es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
 
         if response['hits']['total']['value'] == 0:
