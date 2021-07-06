@@ -47,7 +47,6 @@ class AnalyticsPerformer(Resource):
 
     def get(self):
         static_id = request.args.get('staticId')
-        project = request.args.get('project')
         if static_id == "" or static_id is None:
             logger.debug("Missing required parameters")
             return {
@@ -55,6 +54,7 @@ class AnalyticsPerformer(Resource):
                 "code": 400
             }, 400
 
+        project = request.args.get('project', None)
         index_name = Utils.generate_index("analytic", project=project)
         response = self._es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
 
@@ -69,7 +69,6 @@ class AnalyticsPerformer(Resource):
 
     def post(self):
         analytic = request.json
-
         if analytic is None:
             logger.debug("Analytic failed to be computed due to missing data")
             return {
