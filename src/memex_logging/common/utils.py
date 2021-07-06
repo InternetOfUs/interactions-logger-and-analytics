@@ -61,36 +61,36 @@ class Utils:
     @staticmethod
     def extract_range_timestamps(time_object: Union[MovingTimeWindow, FixedTimeWindow]) -> Tuple[datetime, datetime]:
         if isinstance(time_object, MovingTimeWindow):
+            now = datetime.now()
+            now = now.replace(hour=0, minute=0, second=0, microsecond=0)
             if str(time_object.value).upper() == "30D":
-                now = datetime.now()
                 delta = timedelta(days=30)
                 temp_old = now - delta
                 return temp_old, now
             elif str(time_object.value).upper() == "10D":
-                now = datetime.now()
                 delta = timedelta(days=10)
                 temp_old = now - delta
                 return temp_old, now
             elif str(time_object.value).upper() == "7D":
-                now = datetime.now()
                 delta = timedelta(days=7)
                 temp_old = now - delta
                 return temp_old, now
             elif str(time_object.value).upper() == "1D":
-                now = datetime.now()
                 delta = timedelta(days=1)
                 temp_old = now - delta
                 return temp_old, now
             elif str(time_object.value).upper() == "TODAY":
-                now = datetime.now()
-                temp_old = datetime(now.year, now.month, now.day)
-                return temp_old, now
+                delta = timedelta(days=1)
+                temp_new = now + delta
+                return now, temp_new
             else:
+                logger.info(f"Unable to handle the interval [{time_object.value}]")
                 raise ValueError(f"Unable to handle the interval [{time_object.value}]")
         elif isinstance(time_object, FixedTimeWindow):
             return time_object.start, time_object.end
         else:
-            raise ValueError("Unrecognized type for timespan")
+            logger.info(f"Unrecognized type [{type(time_object)}] for timespan")
+            raise ValueError(f"Unrecognized type [{type(time_object)}] for timespan")
 
     # TODO stop using this and remove!!!!!
     @staticmethod

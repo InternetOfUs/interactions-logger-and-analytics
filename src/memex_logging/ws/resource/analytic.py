@@ -87,7 +87,7 @@ class AnalyticsPerformer(Resource):
             }, 400
 
         static_id = str(uuid.uuid4())
-        compute_analytic.delay(analytic=analytic.to_repr(), static_id=static_id)
+        compute_analytic.delay(raw_analytic=analytic.to_repr(), static_id=static_id)
         return {"staticId": static_id}, 200
 
 

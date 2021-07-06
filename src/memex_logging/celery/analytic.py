@@ -37,9 +37,9 @@ logger = logging.getLogger("logger.celery.analytic")
 
 
 @celery.task(name='tasks.compute_analytic')
-def compute_analytic(analytic: dict, static_id: str):
-    logger.info("Computing analytic: " + str(analytic))
-    analytic = AnalyticBuilder.from_repr(analytic)
+def compute_analytic(raw_analytic: dict, static_id: str):
+    logger.info("Computing analytic: " + str(raw_analytic))
+    analytic = AnalyticBuilder.from_repr(raw_analytic)
 
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     client = ApikeyClient(os.getenv("APIKEY"))
@@ -67,16 +67,25 @@ def compute_analytic(analytic: dict, static_id: str):
 
 
 @celery.task(name='tasks.update_analytic')
-def update_analytic(response: dict, trace_id: str):
-    logger.info(f"update [{response['query']}]")
-    analytic = AnalyticBuilder.from_repr(response["query"])
+def update_analytic(static_id: str):
+    logger.info(f"Updating analytic with static id [{static_id}]")
 
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     client = ApikeyClient(os.getenv("APIKEY"))
     task_manager_interface = TaskManagerInterface(client, os.getenv("INSTANCE"))
 
+    index_name = Utils.generate_index("analytic")
+    raw_response = es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
+
+    if raw_response['hits']['total']['value'] == 0:
+        logger.info(f"Analytic with static id [{static_id}] not found")
+        raise ValueError(f"Analytic with static id [{static_id}] not found")
+
+    trace_id = raw_response['hits']['hits'][0]['_id']
+    analytic = AnalyticBuilder.from_repr(raw_response['hits']['hits'][0]['_source']["query"])
+
     if isinstance(analytic, DimensionAnalytic):
-        response = AnalyticResponse.from_repr(response)
+        response = AnalyticResponse.from_repr(raw_response['hits']['hits'][0]['_source'])
         analytic_computation = AnalyticComputation(es, task_manager_interface)
         response.result = analytic_computation.get_analytic_result(analytic)
         project = analytic.project
@@ -85,7 +94,7 @@ def update_analytic(response: dict, trace_id: str):
         logger.info("Result updated")
 
     elif isinstance(analytic, AggregationAnalytic):
-        response = AggregationResponse.from_repr(response)
+        response = AggregationResponse.from_repr(raw_response['hits']['hits'][0]['_source'])
         aggregation_computation = AggregationComputation(es)
         response.result = aggregation_computation.get_aggregation_result(analytic)
         project = analytic.project
@@ -100,10 +109,10 @@ def update_analytic(response: dict, trace_id: str):
 
 @celery.task(name='tasks.update_analytics')
 def update_analytics():
-    logger.info("Updating analytics")
+    logger.info("Updating moving time window analytics")
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     index_name = Utils.generate_index("analytic")
     results = scan(es, index=index_name, query={"query": {"match": {"query.timespan.type.keyword": MovingTimeWindow.MOVING_TIME_WINDOW_TYPE}}})
 
     for result in results:
-        update_analytic.delay(result['_source'], result['_id'])
+        update_analytic.delay(result['_source']["staticId"])

@@ -471,7 +471,6 @@ paths:
             type: string
           example: "wenet-ask-for-help"
           description: "The name of the project related to the analytic you want to retrieve. Note that: for the task and transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
-          required: true
       responses:
         '200':
           description: success
