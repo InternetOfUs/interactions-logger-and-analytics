@@ -465,6 +465,13 @@ paths:
             type: string
           required: true
           description: the identifier of the analytic
+        - in: query
+          name: project
+          schema:
+           type: string
+          example: "wenet-ask-for-help"
+          description: "Optionally you can also specify the name of the project related to the analytic you want to retrieve. Note that: for the task and transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
+
       responses:
         '200':
           description: success
