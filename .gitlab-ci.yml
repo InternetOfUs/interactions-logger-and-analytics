@@ -149,6 +149,8 @@ build:staging:
     paths:
       - docker_image.tar.gz
     expire_in: 1 day
+  when: manual
+  allow_failure: false
   only:
     - develop
 
@@ -192,6 +194,7 @@ trigger:staging:
     - test:staging
     - push:staging
   allow_failure: false
+  when: manual
   only:
     - develop
 

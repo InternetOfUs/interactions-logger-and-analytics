@@ -41,9 +41,11 @@
       staging:
         stages:
           - name: build
+            manual: true
           - name: test
           - name: push
           - name: trigger
+            manual: true
             git_ref: develop
       production:
         stages:
