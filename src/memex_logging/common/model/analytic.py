@@ -54,7 +54,7 @@ class DimensionAnalytic(CommonAnalytic):
         if str(raw_data['type']).lower() != DimensionAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for Analytic")
 
-        if str(raw_data['timespan']['type']).upper() not in [MovingTimeWindow.DEFAULT_TIME_TYPE, FixedTimeWindow.CUSTOM_TIME_TYPE]:
+        if str(raw_data['timespan']['type']).upper() not in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE, FixedTimeWindow.FIXED_TIME_WINDOW_TYPE]:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
 
         if str(raw_data['dimension']).lower() == UserAnalytic.USER_DIMENSION:
@@ -94,9 +94,9 @@ class UserAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != UserAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for UserAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.MOVING_TIME_WINDOW_TYPE:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.FIXED_TIME_WINDOW_TYPE:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -113,7 +113,7 @@ class UserAnalytic(DimensionAnalytic):
 class MessageAnalytic(DimensionAnalytic):
 
     MESSAGE_DIMENSION = "message"
-    ALLOWED_MESSAGE_METRIC_VALUES = ["m:from_users", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
+    ALLOWED_MESSAGE_METRIC_VALUES = ["m:from_users", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "u:segmentation"]
 
     def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
         super().__init__(timespan, project, self.MESSAGE_DIMENSION, metric)
@@ -123,9 +123,9 @@ class MessageAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != MessageAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for MessageAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.MOVING_TIME_WINDOW_TYPE:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.FIXED_TIME_WINDOW_TYPE:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -152,9 +152,9 @@ class TaskAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != TaskAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for TaskAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.MOVING_TIME_WINDOW_TYPE:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.FIXED_TIME_WINDOW_TYPE:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -187,9 +187,9 @@ class TransactionAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != TransactionAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for TransactionAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.MOVING_TIME_WINDOW_TYPE:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.FIXED_TIME_WINDOW_TYPE:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -216,9 +216,9 @@ class ConversationAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != ConversationAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for ConversationAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.MOVING_TIME_WINDOW_TYPE:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.FIXED_TIME_WINDOW_TYPE:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -245,9 +245,9 @@ class DialogueAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != DialogueAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for DialogueAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.MOVING_TIME_WINDOW_TYPE:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.FIXED_TIME_WINDOW_TYPE:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -274,9 +274,9 @@ class BotAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != BotAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for BotAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.DEFAULT_TIME_TYPE:
+        if str(raw_data['timespan']['type']).upper() == MovingTimeWindow.MOVING_TIME_WINDOW_TYPE:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.CUSTOM_TIME_TYPE:
+        elif str(raw_data['timespan']['type']).upper() == FixedTimeWindow.FIXED_TIME_WINDOW_TYPE:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")

@@ -375,7 +375,7 @@ paths:
       `m:notifications`: the number of notification messages in a certain time range;
       `m:unhandled`: the number of unhandled messages in a certain time range;
       `m:segmentation`: the segmentation of the messages based on the type in a certain time range;
-      `r:segmentation`: the segmentation of the request messages based on the type in a certain time range;
+      `u:segmentation`: the segmentation of the user messages based on the type in a certain time range;
 
       * TaskMetrics with `dimension` set to `task`, you can set `metric` to:
       `t:total`: the number of total tasks in a certain time range;
@@ -471,7 +471,6 @@ paths:
             type: string
           example: "wenet-ask-for-help"
           description: "The name of the project related to the analytic you want to retrieve. Note that: for the task and transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
-          required: true
       responses:
         '200':
           description: success
@@ -1020,8 +1019,8 @@ components:
         timespan:
           type: object
           oneOf:
-            - $ref: '#/components/schemas/DefaultTime'
-            - $ref: '#/components/schemas/CustomTime'
+            - $ref: '#/components/schemas/MovingTimeWindow'
+            - $ref: '#/components/schemas/FixedTimeWindow'
         type:
           type: string
           enum: ["analytic"]
@@ -1040,8 +1039,8 @@ components:
         timespan:
           type: object
           oneOf:
-            - $ref: '#/components/schemas/DefaultTime'
-            - $ref: '#/components/schemas/CustomTime'
+            - $ref: '#/components/schemas/MovingTimeWindow'
+            - $ref: '#/components/schemas/FixedTimeWindow'
         type:
           type: string
           enum: ["aggregation"]
@@ -1108,7 +1107,7 @@ components:
           example: "message"
         metric:
           type: string
-          enum: ["m:from_users", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "r:segmentation"]
+          enum: ["m:from_users", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "u:segmentation"]
           example: "m:from_users"
       required:
         - dimension
@@ -1205,13 +1204,13 @@ components:
         - dimension
         - metric
 
-    DefaultTime:
+    MovingTimeWindow:
       type: object
       properties:
         type:
           type: string
-          enum: ["DEFAULT"]
-          example: "DEFAULT"
+          enum: ["MOVING"]
+          example: "MOVING"
         value:
           type: string
           enum: ["TODAY","1D","7D","10D","30D"]
@@ -1220,13 +1219,13 @@ components:
         - type
         - value
 
-    CustomTime:
+    FixedTimeWindow:
       type: object
       properties:
         type:
           type: string
-          enum: ["CUSTOM"]
-          example: "CUSTOM"
+          enum: ["FIXED"]
+          example: "FIXED"
         start:
           type: string
           format: date-time

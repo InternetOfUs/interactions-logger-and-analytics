@@ -15,6 +15,7 @@
 from __future__ import absolute_import, annotations
 
 import logging
+from typing import Union
 
 from elasticsearch import Elasticsearch
 
@@ -27,8 +28,35 @@ logger = logging.getLogger("logger.common.analytic.aggregation")
 
 class AggregationComputation:
 
-    @staticmethod
-    def max(analytic: AggregationAnalytic, es: Elasticsearch):
+    def __init__(self, es: Elasticsearch) -> None:
+        self.es = es
+
+    def get_aggregation_result(self, analytic: AggregationAnalytic) -> Union[int, float, dict]:
+        if analytic.aggregation.lower() == "max":
+            result = self._max(analytic)
+        elif analytic.aggregation.lower() == "min":
+            result = self._min(analytic)
+        elif analytic.aggregation.lower() == "avg":
+            result = self._avg(analytic)
+        elif analytic.aggregation.lower() == "stats":
+            result = self._stats(analytic)
+        elif analytic.aggregation.lower() == "sum":
+            result = self._sum(analytic)
+        elif analytic.aggregation.lower() == "value_count":
+            result = self._value_count(analytic)
+        elif analytic.aggregation.lower() == "cardinality":
+            result = self._cardinality(analytic)
+        elif analytic.aggregation.lower() == "extended_stats":
+            result = self._extended_stats(analytic)
+        elif analytic.aggregation.lower() == "percentiles":
+            result = self._percentiles(analytic)
+        else:
+            logger.info(f"Unrecognized type [{analytic.aggregation}] of aggregation")
+            raise ValueError(f"Unrecognized type [{analytic.aggregation}] of aggregation")
+
+        return result
+
+    def _max(self, analytic: AggregationAnalytic) -> float:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -62,11 +90,10 @@ class AggregationComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    @staticmethod
-    def min(analytic: AggregationAnalytic, es: Elasticsearch):
+    def _min(self, analytic: AggregationAnalytic) -> float:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -100,11 +127,10 @@ class AggregationComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    @staticmethod
-    def avg(analytic: AggregationAnalytic, es: Elasticsearch):
+    def _avg(self, analytic: AggregationAnalytic) -> float:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -138,11 +164,10 @@ class AggregationComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    @staticmethod
-    def cardinality(analytic: AggregationAnalytic, es: Elasticsearch):
+    def _cardinality(self, analytic: AggregationAnalytic) -> int:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -176,11 +201,10 @@ class AggregationComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    @staticmethod
-    def extended_stats(analytic: AggregationAnalytic, es: Elasticsearch):
+    def _extended_stats(self, analytic: AggregationAnalytic) -> dict:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -214,11 +238,10 @@ class AggregationComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']
 
-    @staticmethod
-    def percentiles(analytic: AggregationAnalytic, es: Elasticsearch):
+    def _percentiles(self, analytic: AggregationAnalytic) -> dict:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -252,11 +275,10 @@ class AggregationComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['values']
 
-    @staticmethod
-    def stats(analytic: AggregationAnalytic, es: Elasticsearch):
+    def _stats(self, analytic: AggregationAnalytic) -> dict:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -290,11 +312,10 @@ class AggregationComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']
 
-    @staticmethod
-    def sum(analytic: AggregationAnalytic, es: Elasticsearch):
+    def _sum(self, analytic: AggregationAnalytic) -> float:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -328,11 +349,10 @@ class AggregationComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']
 
-    @staticmethod
-    def value_count(analytic: AggregationAnalytic, es: Elasticsearch):
+    def _value_count(self, analytic: AggregationAnalytic) -> float:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -366,5 +386,5 @@ class AggregationComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         return response['aggregations']['type_count']['value']

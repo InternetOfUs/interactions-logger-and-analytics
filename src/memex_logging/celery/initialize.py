@@ -14,9 +14,22 @@
 
 from __future__ import absolute_import, annotations
 
+from celery import Celery
+from celery.schedules import crontab
+
 from memex_logging.celery import celery
+from memex_logging.celery.analytic import update_analytics
 from memex_logging.ws.main import build_interface_from_env
 
 
 ws_interface = build_interface_from_env()
 ws_interface.init_celery(celery)
+celery.conf.timezone = 'Europe/Rome'
+
+
+@celery.on_after_configure.connect
+def setup_periodic_tasks(sender: Celery, **kwargs):
+    sender.add_periodic_task(crontab(minute=0, hour=0), update_analytics.s())
+
+
+setup_periodic_tasks(celery)

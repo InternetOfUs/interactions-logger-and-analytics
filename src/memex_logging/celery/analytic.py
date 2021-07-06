@@ -18,157 +18,101 @@ import logging
 import os
 
 from elasticsearch import Elasticsearch
+from elasticsearch.helpers import scan
 from wenet.interface.client import ApikeyClient
 from wenet.interface.task_manager import TaskManagerInterface
 
+from memex_logging.celery import celery
 from memex_logging.common.analytic.aggregation import AggregationComputation
 from memex_logging.common.analytic.analytic import AnalyticComputation
 from memex_logging.common.analytic.builder import AnalyticBuilder
 from memex_logging.common.model.aggregation import AggregationAnalytic
-from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, TaskAnalytic, ConversationAnalytic, \
-    DialogueAnalytic, BotAnalytic, DimensionAnalytic, TransactionAnalytic
+from memex_logging.common.model.analytic import DimensionAnalytic
 from memex_logging.common.model.response import AnalyticResponse, AggregationResponse
-from memex_logging.celery import celery
+from memex_logging.common.model.time import MovingTimeWindow
+from memex_logging.common.utils import Utils
 
 
-logger = logging.getLogger("logger.task.analytic")
+logger = logging.getLogger("logger.celery.analytic")
 
 
-@celery.task()
-def compute_analytic(analytic: dict, static_id: str):
+@celery.task(name='tasks.compute_analytic')
+def compute_analytic(raw_analytic: dict, static_id: str):
+    logger.info("Computing analytic: " + str(raw_analytic))
+    analytic = AnalyticBuilder.from_repr(raw_analytic)
+
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     client = ApikeyClient(os.getenv("APIKEY"))
     task_manager_interface = TaskManagerInterface(client, os.getenv("INSTANCE"))
-    logger.info("Computing analytic: " + str(analytic))
-
-    try:
-        analytic = AnalyticBuilder.from_repr(analytic)
-    except ValueError as e:
-        logger.info(f"Analytic not valid. {e.args[0]}")
 
     if isinstance(analytic, DimensionAnalytic):
-        if isinstance(analytic, UserAnalytic):
-            if analytic.metric.lower() == "u:total":
-                result = AnalyticComputation.compute_u_total(analytic, es)
-            elif analytic.metric.lower() == "u:active":
-                result = AnalyticComputation.compute_u_active(analytic, es)
-            elif analytic.metric.lower() == "u:engaged":
-                result = AnalyticComputation.compute_u_engaged(analytic, es)
-            elif analytic.metric.lower() == "u:new":
-                result = AnalyticComputation.compute_u_new(analytic, es)
-            else:
-                logger.info("User metric value not valid")
-                return
-
-        elif isinstance(analytic, MessageAnalytic):
-            if analytic.metric.lower() == "m:from_users":
-                result = AnalyticComputation.compute_m_from_users(analytic, es)
-            elif analytic.metric.lower() == "m:segmentation":
-                result = AnalyticComputation.compute_m_segmentation(analytic, es)
-            elif analytic.metric.lower() == "r:segmentation":
-                result = AnalyticComputation.compute_r_segmentation(analytic, es)
-            elif analytic.metric.lower() == "m:from_bot":
-                result = AnalyticComputation.compute_m_from_bot(analytic, es)
-            elif analytic.metric.lower() == "m:responses":
-                result = AnalyticComputation.compute_m_responses(analytic, es)
-            elif analytic.metric.lower() == "m:notifications":
-                result = AnalyticComputation.compute_m_notifications(analytic, es)
-            elif analytic.metric.lower() == "m:unhandled":
-                result = AnalyticComputation.compute_m_unhandled(analytic, es)
-            else:
-                logger.info("Message metric value not valid")
-                return
-
-        elif isinstance(analytic, TaskAnalytic):
-            if analytic.metric.lower() == "t:total":
-                result = AnalyticComputation.compute_task_t_total(analytic, task_manager_interface)
-            elif analytic.metric.lower() == "t:active":
-                result = AnalyticComputation.compute_task_t_active(analytic, task_manager_interface)
-            elif analytic.metric.lower() == "t:closed":
-                result = AnalyticComputation.compute_task_t_closed(analytic, task_manager_interface)
-            elif analytic.metric.lower() == "t:new":
-                result = AnalyticComputation.compute_task_t_new(analytic, task_manager_interface)
-            else:
-                logger.info("Task metric value not valid")
-                return
-
-        elif isinstance(analytic, TransactionAnalytic):
-            if analytic.metric.lower() == "t:total":
-                result = AnalyticComputation.compute_transaction_t_total(analytic, task_manager_interface)
-            elif analytic.metric.lower() == "t:segmentation":
-                result = AnalyticComputation.compute_transaction_t_segmentation(analytic, task_manager_interface)
-            else:
-                logger.info("Transaction metric value not valid")
-                return
-
-        elif isinstance(analytic, ConversationAnalytic):
-            if analytic.metric.lower() == "c:total":
-                result = AnalyticComputation.compute_c_total(analytic, es)
-            elif analytic.metric.lower() == "c:new":
-                result = AnalyticComputation.compute_c_new(analytic, es)
-            elif analytic.metric.lower() == "c:length":
-                result = AnalyticComputation.compute_c_length(analytic, es)
-            elif analytic.metric.lower() == "c:path":
-                result = AnalyticComputation.compute_c_path(analytic, es)
-            else:
-                logger.info("Conversation metric value not valid")
-                return
-
-        elif isinstance(analytic, DialogueAnalytic):
-            if analytic.metric.lower() == "d:fallback":
-                result = AnalyticComputation.compute_d_fallback(analytic, es)
-            elif analytic.metric.lower() == "d:intents":
-                result = AnalyticComputation.compute_d_intents(analytic, es)
-            elif analytic.metric.lower() == "d:domains":
-                result = AnalyticComputation.compute_d_domains(analytic, es)
-            else:
-                logger.info("Dialogue metric value not valid")
-                return
-
-        elif isinstance(analytic, BotAnalytic):
-            if analytic.metric.lower() == "b:response":
-                result = AnalyticComputation.compute_b_response(analytic, es)
-            else:
-                logger.info("Bot metric value not valid")
-                return
-
-        else:
-            logger.info("Analytic not valid")
-            return
-
+        analytic_computation = AnalyticComputation(es, task_manager_interface)
+        result = analytic_computation.get_analytic_result(analytic)
         project = analytic.project
         index_name = "analytic-" + project.lower() + "-" + analytic.dimension.lower()
         es.index(index=index_name, doc_type='_doc', body=AnalyticResponse(analytic, result, static_id).to_repr())
         logger.info("Result stored in " + str(index_name))
 
     elif isinstance(analytic, AggregationAnalytic):
-        if analytic.aggregation.lower() == "max":
-            result = AggregationComputation.max(analytic, es)
-        elif analytic.aggregation.lower() == "min":
-            result = AggregationComputation.min(analytic, es)
-        elif analytic.aggregation.lower() == "avg":
-            result = AggregationComputation.avg(analytic, es)
-        elif analytic.aggregation.lower() == "stats":
-            result = AggregationComputation.stats(analytic, es)
-        elif analytic.aggregation.lower() == "sum":
-            result = AggregationComputation.sum(analytic, es)
-        elif analytic.aggregation.lower() == "value_count":
-            result = AggregationComputation.value_count(analytic, es)
-        elif analytic.aggregation.lower() == "cardinality":
-            result = AggregationComputation.cardinality(analytic, es)
-        elif analytic.aggregation.lower() == "extended_stats":
-            result = AggregationComputation.extended_stats(analytic, es)
-        elif analytic.aggregation.lower() == "percentiles":
-            result = AggregationComputation.percentiles(analytic, es)
-        else:
-            logger.info("Aggregation value not valid")
-            return
-
+        aggregation_computation = AggregationComputation(es)
+        result = aggregation_computation.get_aggregation_result(analytic)
         project = analytic.project
         index_name = "analytic-" + project.lower() + "-" + analytic.aggregation.lower()
         es.index(index=index_name, doc_type='_doc', body=AggregationResponse(analytic, result, static_id).to_repr())
         logger.info("Result stored in " + str(index_name))
 
     else:
-        logger.info("Type not valid, not an analytic nor an aggregation")
-        return
+        logger.info(f"Unrecognized class of analytic [{type(analytic)}]")
+        raise ValueError(f"Unrecognized class of analytic [{type(analytic)}]")
+
+
+@celery.task(name='tasks.update_analytic')
+def update_analytic(static_id: str):
+    logger.info(f"Updating analytic with static id [{static_id}]")
+
+    es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
+    client = ApikeyClient(os.getenv("APIKEY"))
+    task_manager_interface = TaskManagerInterface(client, os.getenv("INSTANCE"))
+
+    index_name = Utils.generate_index("analytic")
+    raw_response = es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
+
+    if raw_response['hits']['total']['value'] == 0:
+        logger.info(f"Analytic with static id [{static_id}] not found")
+        raise ValueError(f"Analytic with static id [{static_id}] not found")
+
+    trace_id = raw_response['hits']['hits'][0]['_id']
+    analytic = AnalyticBuilder.from_repr(raw_response['hits']['hits'][0]['_source']["query"])
+
+    if isinstance(analytic, DimensionAnalytic):
+        response = AnalyticResponse.from_repr(raw_response['hits']['hits'][0]['_source'])
+        analytic_computation = AnalyticComputation(es, task_manager_interface)
+        response.result = analytic_computation.get_analytic_result(analytic)
+        project = analytic.project
+        index_name = "analytic-" + project.lower() + "-" + analytic.dimension.lower()
+        es.index(index=index_name, id=trace_id, doc_type='_doc', body=response.to_repr())
+        logger.info("Result updated")
+
+    elif isinstance(analytic, AggregationAnalytic):
+        response = AggregationResponse.from_repr(raw_response['hits']['hits'][0]['_source'])
+        aggregation_computation = AggregationComputation(es)
+        response.result = aggregation_computation.get_aggregation_result(analytic)
+        project = analytic.project
+        index_name = "analytic-" + project.lower() + "-" + analytic.aggregation.lower()
+        es.index(index=index_name, id=trace_id, doc_type='_doc', body=response.to_repr())
+        logger.info("Result updated")
+
+    else:
+        logger.info(f"Unrecognized class of analytic [{type(analytic)}]")
+        raise ValueError(f"Unrecognized class of analytic [{type(analytic)}]")
+
+
+@celery.task(name='tasks.update_analytics')
+def update_analytics():
+    logger.info("Updating moving time window analytics")
+    es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
+    index_name = Utils.generate_index("analytic")
+    results = scan(es, index=index_name, query={"query": {"match": {"query.timespan.type.keyword": MovingTimeWindow.MOVING_TIME_WINDOW_TYPE}}})
+
+    for result in results:
+        update_analytic.delay(result['_source']["staticId"])

@@ -79,14 +79,15 @@ class AnalyticsPerformer(Resource):
 
         try:
             analytic = AnalyticBuilder.from_repr(analytic)
-        except ValueError as e:
+        except (KeyError, ValueError, TypeError, AttributeError) as e:
+            logger.debug("Error while parsing input analytic data", exc_info=e)
             return {
-                "status": f"Malformed request: analytic not valid. {e.args[0]}",
+                "status": f"Malformed request: analytic not valid. Cause: {e.args[0]}",
                 "code": 400
             }, 400
 
         static_id = str(uuid.uuid4())
-        compute_analytic.delay(analytic=analytic.to_repr(), static_id=static_id)
+        compute_analytic.delay(raw_analytic=analytic.to_repr(), static_id=static_id)
         return {"staticId": static_id}, 200
 
 

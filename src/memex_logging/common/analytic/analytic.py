@@ -20,10 +20,10 @@ from elasticsearch import Elasticsearch
 from wenet.interface.task_manager import TaskManagerInterface
 
 from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, TaskAnalytic, TransactionAnalytic, \
-    ConversationAnalytic, DialogueAnalytic, BotAnalytic
+    ConversationAnalytic, DialogueAnalytic, BotAnalytic, DimensionAnalytic
 from memex_logging.common.model.result import AnalyticResult, SegmentationAnalyticResult, \
     ConversationLengthAnalyticResult, ConversationPathAnalyticResult, Segmentation, ConversationLength, \
-    ConversationPath, TransactionAnalyticResult, TransactionReturn
+    ConversationPath, TransactionAnalyticResult, TransactionReturn, CommonResult
 from memex_logging.common.utils import Utils
 
 
@@ -32,8 +32,103 @@ logger = logging.getLogger("logger.common.analytic.analytic")
 
 class AnalyticComputation:
 
-    @staticmethod
-    def compute_u_total(analytic: UserAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def __init__(self, es: Elasticsearch, task_manager_interface: TaskManagerInterface) -> None:
+        self.es = es
+        self.task_manager_interface = task_manager_interface
+
+    def get_analytic_result(self, analytic: DimensionAnalytic) -> CommonResult:
+        if isinstance(analytic, UserAnalytic):
+            if analytic.metric.lower() == "u:total":
+                result = self._total_users(analytic)
+            elif analytic.metric.lower() == "u:active":
+                result = self._active_users(analytic)
+            elif analytic.metric.lower() == "u:engaged":
+                result = self._engaged_users(analytic)
+            elif analytic.metric.lower() == "u:new":
+                result = self._new_users(analytic)
+            else:
+                logger.info(f"Unknown value for metric [{analytic.metric}] for UserAnalytic")
+                raise ValueError(f"Unknown value for metric [{analytic.metric}] for UserAnalytic")
+
+        elif isinstance(analytic, MessageAnalytic):
+            if analytic.metric.lower() == "m:from_users":
+                result = self._user_messages(analytic)
+            elif analytic.metric.lower() == "m:segmentation":
+                result = self._segmentation_messages(analytic)
+            elif analytic.metric.lower() == "u:segmentation":
+                result = self._segmentation_user_messages(analytic)
+            elif analytic.metric.lower() == "m:from_bot":
+                result = self._bot_messages(analytic)
+            elif analytic.metric.lower() == "m:responses":
+                result = self._response_messages(analytic)
+            elif analytic.metric.lower() == "m:notifications":
+                result = self._notification_messages(analytic)
+            elif analytic.metric.lower() == "m:unhandled":
+                result = self._unhandled_messages(analytic)
+            else:
+                logger.info(f"Unknown value for metric [{analytic.metric}] for MessageAnalytic")
+                raise ValueError(f"Unknown value for metric [{analytic.metric}] for MessageAnalytic")
+
+        elif isinstance(analytic, TaskAnalytic):
+            if analytic.metric.lower() == "t:total":
+                result = self._total_tasks(analytic)
+            elif analytic.metric.lower() == "t:active":
+                result = self._active_tasks(analytic)
+            elif analytic.metric.lower() == "t:closed":
+                result = self._closed_tasks(analytic)
+            elif analytic.metric.lower() == "t:new":
+                result = self._new_tasks(analytic)
+            else:
+                logger.info(f"Unknown value for metric [{analytic.metric}] for TaskAnalytic")
+                raise ValueError(f"Unknown value for metric [{analytic.metric}] for TaskAnalytic")
+
+        elif isinstance(analytic, TransactionAnalytic):
+            if analytic.metric.lower() == "t:total":
+                result = self._total_transactions(analytic)
+            elif analytic.metric.lower() == "t:segmentation":
+                result = self._segmentation_transactions(analytic)
+            else:
+                logger.info(f"Unknown value for metric [{analytic.metric}] for TransactionAnalytic")
+                raise ValueError(f"Unknown value for metric [{analytic.metric}] for TransactionAnalytic")
+
+        elif isinstance(analytic, ConversationAnalytic):
+            if analytic.metric.lower() == "c:total":
+                result = self._total_conversations(analytic)
+            elif analytic.metric.lower() == "c:new":
+                result = self._new_conversations(analytic)
+            elif analytic.metric.lower() == "c:length":
+                result = self._length_conversations(analytic)
+            elif analytic.metric.lower() == "c:path":
+                result = self._path_conversations(analytic)
+            else:
+                logger.info(f"Unknown value for metric [{analytic.metric}] for ConversationAnalytic")
+                raise ValueError(f"Unknown value for metric [{analytic.metric}] for ConversationAnalytic")
+
+        elif isinstance(analytic, DialogueAnalytic):
+            if analytic.metric.lower() == "d:fallback":
+                result = self._fallback(analytic)
+            elif analytic.metric.lower() == "d:intents":
+                result = self._intents(analytic)
+            elif analytic.metric.lower() == "d:domains":
+                result = self._domains(analytic)
+            else:
+                logger.info(f"Unknown value for metric [{analytic.metric}] for DialogueAnalytic")
+                raise ValueError(f"Unknown value for metric [{analytic.metric}] for DialogueAnalytic")
+
+        elif isinstance(analytic, BotAnalytic):
+            if analytic.metric.lower() == "b:response":
+                result = self._bot_response(analytic)
+            else:
+                logger.info(f"Unknown value for metric [{analytic.metric}] for BotAnalytic")
+                raise ValueError(f"Unknown value for metric [{analytic.metric}] for BotAnalytic")
+
+        else:
+            logger.info(f"Unrecognized class of analytic [{type(analytic)}]")
+            raise ValueError(f"Unrecognized class of analytic [{type(analytic)}]")
+
+        return result
+
+    def _total_users(self, analytic: UserAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -73,7 +168,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         user_list = []
         number_of_users = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -89,8 +184,7 @@ class AnalyticComputation:
 
         return AnalyticResult(number_of_users, user_list, "userId")
 
-    @staticmethod
-    def compute_u_active(analytic: UserAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _active_users(self, analytic: UserAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -135,7 +229,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         user_list = []
         number_of_users = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -151,8 +245,7 @@ class AnalyticComputation:
 
         return AnalyticResult(number_of_users, user_list, "userId")
 
-    @staticmethod
-    def compute_u_engaged(analytic: UserAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _engaged_users(self, analytic: UserAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -197,7 +290,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         user_list = []
         number_of_users = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -213,8 +306,7 @@ class AnalyticComputation:
 
         return AnalyticResult(number_of_users, user_list, "userId")
 
-    @staticmethod
-    def compute_u_new(analytic: UserAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _new_users(self, analytic: UserAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -249,7 +341,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         users_in_period = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
@@ -293,7 +385,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         users_out_period = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
@@ -309,8 +401,7 @@ class AnalyticComputation:
 
         return AnalyticResult(len(final_users), list(final_users), "userId")
 
-    @staticmethod
-    def compute_m_from_users(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _user_messages(self, analytic: MessageAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -350,7 +441,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         messages = []
         total_counter = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -364,8 +455,7 @@ class AnalyticComputation:
 
         return AnalyticResult(total_counter, messages, "messageId")
 
-    @staticmethod
-    def compute_m_segmentation(analytic: MessageAnalytic, es: Elasticsearch) -> SegmentationAnalyticResult:
+    def _segmentation_messages(self, analytic: MessageAnalytic) -> SegmentationAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -400,7 +490,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         type_counter = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
@@ -412,8 +502,7 @@ class AnalyticComputation:
 
         return SegmentationAnalyticResult(type_counter)
 
-    @staticmethod
-    def compute_r_segmentation(analytic: MessageAnalytic, es: Elasticsearch) -> SegmentationAnalyticResult:
+    def _segmentation_user_messages(self, analytic: MessageAnalytic) -> SegmentationAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -453,7 +542,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         type_counter = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
@@ -465,8 +554,7 @@ class AnalyticComputation:
 
         return SegmentationAnalyticResult(type_counter)
 
-    @staticmethod
-    def compute_m_from_bot(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _bot_messages(self, analytic: MessageAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -506,7 +594,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -556,7 +644,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
                 messages.append(item['key'])
@@ -568,8 +656,7 @@ class AnalyticComputation:
 
         return AnalyticResult(total_len, messages, "messageId")
 
-    @staticmethod
-    def compute_m_responses(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _response_messages(self, analytic: MessageAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -609,7 +696,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -623,8 +710,7 @@ class AnalyticComputation:
 
         return AnalyticResult(total_len, messages, "messageId")
 
-    @staticmethod
-    def compute_m_notifications(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _notification_messages(self, analytic: MessageAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -664,7 +750,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -678,8 +764,7 @@ class AnalyticComputation:
 
         return AnalyticResult(total_len, messages, "messageId")
 
-    @staticmethod
-    def compute_m_unhandled(analytic: MessageAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _unhandled_messages(self, analytic: MessageAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -719,7 +804,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         messages = []
         total_len = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -733,54 +818,47 @@ class AnalyticComputation:
 
         return AnalyticResult(total_len, messages, "messageId")
 
-    @staticmethod
-    def compute_task_t_total(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
+    def _total_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = []
-        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
-        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
-        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound))
+        tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
+        tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
+        tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound))
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
 
-    @staticmethod
-    def compute_task_t_active(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
+    def _active_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = []
-        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
-        tasks.extend(task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
+        tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
+        tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
 
-    @staticmethod
-    def compute_task_t_closed(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
+    def _closed_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        tasks = task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound)
+        tasks = self.task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound)
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
 
-    @staticmethod
-    def compute_task_t_new(analytic: TaskAnalytic, task_manager_interface: TaskManagerInterface) -> AnalyticResult:
+    def _new_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        tasks = task_manager_interface.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound)
+        tasks = self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound)
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
 
-    @staticmethod
-    def compute_transaction_t_total(analytic: TransactionAnalytic, task_manager_interface: TaskManagerInterface) -> TransactionAnalyticResult:
+    def _total_transactions(self, analytic: TransactionAnalytic) -> TransactionAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        transactions = task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
+        transactions = self.task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
         task_ids = set([transaction.task_id for transaction in transactions])
         transaction_returns = [TransactionReturn(task_id, [transaction.id for transaction in transactions if transaction.task_id == task_id]) for task_id in task_ids]
         return TransactionAnalyticResult(len(transactions), transaction_returns)
 
-    @staticmethod
-    def compute_transaction_t_segmentation(analytic: TransactionAnalytic, task_manager_interface: TaskManagerInterface) -> SegmentationAnalyticResult:
+    def _segmentation_transactions(self, analytic: TransactionAnalytic) -> SegmentationAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        transactions = task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
+        transactions = self.task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
         transaction_labels = [transaction.label for transaction in transactions]
         unique_labels = set(transaction_labels)
         type_counter = [Segmentation(label, transaction_labels.count(label)) for label in unique_labels]
         return SegmentationAnalyticResult(type_counter)
 
-    @staticmethod
-    def compute_c_total(analytic: ConversationAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _total_conversations(self, analytic: ConversationAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -815,7 +893,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -829,8 +907,7 @@ class AnalyticComputation:
 
         return AnalyticResult(total_len, conversation_list, "conversationId")
 
-    @staticmethod
-    def compute_c_new(analytic: ConversationAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _new_conversations(self, analytic: ConversationAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -865,7 +942,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         conv_in_period = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
@@ -909,7 +986,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         conv_out_period = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
@@ -925,8 +1002,7 @@ class AnalyticComputation:
 
         return AnalyticResult(len(final_conv), list(final_conv), "conversationId")
 
-    @staticmethod
-    def compute_c_length(analytic: ConversationAnalytic, es: Elasticsearch) -> ConversationLengthAnalyticResult:
+    def _length_conversations(self, analytic: ConversationAnalytic) -> ConversationLengthAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -961,7 +1037,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         conversation_list = []
         total_len = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -975,8 +1051,7 @@ class AnalyticComputation:
 
         return ConversationLengthAnalyticResult(total_len, conversation_list)
 
-    @staticmethod
-    def compute_c_path(analytic: ConversationAnalytic, es: Elasticsearch) -> ConversationPathAnalyticResult:
+    def _path_conversations(self, analytic: ConversationAnalytic) -> ConversationPathAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -1011,7 +1086,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         conversation_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
@@ -1063,7 +1138,7 @@ class AnalyticComputation:
             }
 
             index = Utils.generate_index(data_type="message", project=analytic.project)
-            response = es.search(index=index, body=body, size=0)
+            response = self.es.search(index=index, body=body, size=0)
             message_list = []
             if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
                 for obj in response['aggregations']['terms_count']['buckets']:
@@ -1077,8 +1152,7 @@ class AnalyticComputation:
 
         return ConversationPathAnalyticResult(len(paths), paths)
 
-    @staticmethod
-    def compute_d_fallback(analytic: DialogueAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _fallback(self, analytic: DialogueAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -1117,7 +1191,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         total_missed = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_missed = response['aggregations']['type_count']['value']
@@ -1154,15 +1228,14 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         total_messages = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_messages = response['aggregations']['type_count']['value']
 
         return AnalyticResult(total_missed, total_messages, "score")
 
-    @staticmethod
-    def compute_d_intents(analytic: DialogueAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _intents(self, analytic: DialogueAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -1202,7 +1275,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         intent_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
@@ -1218,8 +1291,7 @@ class AnalyticComputation:
 
         return AnalyticResult(value, intent_list, "intent")
 
-    @staticmethod
-    def compute_d_domains(analytic: DialogueAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _domains(self, analytic: DialogueAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -1259,7 +1331,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         domain_list = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
@@ -1275,8 +1347,7 @@ class AnalyticComputation:
 
         return AnalyticResult(value, domain_list, "domain")
 
-    @staticmethod
-    def compute_b_response(analytic: BotAnalytic, es: Elasticsearch) -> AnalyticResult:
+    def _bot_response(self, analytic: BotAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -1310,7 +1381,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         total_messages = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_messages = response['aggregations']['type_count']['value']
@@ -1348,7 +1419,7 @@ class AnalyticComputation:
         }
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = es.search(index=index, body=body, size=0)
+        response = self.es.search(index=index, body=body, size=0)
         total_not_working = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
             for item in response['aggregations']['terms_count']['buckets']:
