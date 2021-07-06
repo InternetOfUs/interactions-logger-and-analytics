@@ -43,6 +43,8 @@
           - name: build
           - name: test
           - name: push
+          - name: trigger
+            git_ref: develop
       production:
         stages:
           - name: build

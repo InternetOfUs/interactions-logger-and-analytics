@@ -92,6 +92,7 @@ stages:
   - build
   - test
   - push
+  - deploy
 
 
 #
@@ -174,6 +175,23 @@ push:staging:
   dependencies:
     - build:staging
     - test:staging
+  only:
+    - develop
+
+
+trigger:staging:
+  stage: deploy
+  image: public.registry.u-hopper.com/alpine:3.13
+  script:
+    - *apk-before-script
+    - *ansible-script
+    - export GIT_REF="develop"
+    - ansible-playbook ansible/trigger.yml
+  dependencies:
+    - build:staging
+    - test:staging
+    - push:staging
+  allow_failure: false
   only:
     - develop
 
