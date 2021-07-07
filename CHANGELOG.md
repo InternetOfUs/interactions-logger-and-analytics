@@ -2,6 +2,11 @@
 
 ## Version 1.*
 
+### NEXT
+
+* Renamed time window type values
+* Added periodically re-computations of moving time window analytics
+
 ### 1.4.0
 
 * Imported wenet common models `2.0.0`.

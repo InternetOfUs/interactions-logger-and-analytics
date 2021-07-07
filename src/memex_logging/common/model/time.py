@@ -20,6 +20,7 @@ from datetime import datetime
 class MovingTimeWindow:
 
     MOVING_TIME_WINDOW_TYPE = "MOVING"
+    DEPRECATED_MOVING_TIME_WINDOW_TYPE = "DEFAULT"
     ALLOWED_MOVING_TIME_WINDOW_VALUES = ["30D", "10D", "7D", "1D", "TODAY"]
 
     def __init__(self, value: str):
@@ -33,7 +34,7 @@ class MovingTimeWindow:
 
     @staticmethod
     def from_repr(raw_data: dict) -> MovingTimeWindow:
-        if str(raw_data['type']).upper() != MovingTimeWindow.MOVING_TIME_WINDOW_TYPE:
+        if str(raw_data['type']).upper() not in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE, MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE]:
             raise ValueError("Unrecognized type for MovingTimeWindow")
 
         if str(raw_data['value']).upper() not in MovingTimeWindow.ALLOWED_MOVING_TIME_WINDOW_VALUES:
@@ -51,6 +52,7 @@ class MovingTimeWindow:
 class FixedTimeWindow:
 
     FIXED_TIME_WINDOW_TYPE = "FIXED"
+    DEPRECATED_FIXED_TIME_WINDOW_TYPE = "CUSTOM"
 
     def __init__(self, start: datetime, end: datetime):
         self.start = start
@@ -69,7 +71,7 @@ class FixedTimeWindow:
 
     @staticmethod
     def from_repr(raw_data: dict) -> FixedTimeWindow:
-        if str(raw_data['type']).upper() != FixedTimeWindow.FIXED_TIME_WINDOW_TYPE:
+        if str(raw_data['type']).upper() not in [FixedTimeWindow.FIXED_TIME_WINDOW_TYPE, FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE]:
             raise ValueError("Unrecognized type for FixedTimeWindow")
 
         return FixedTimeWindow.from_isoformat(raw_data['start'], raw_data['end'])
