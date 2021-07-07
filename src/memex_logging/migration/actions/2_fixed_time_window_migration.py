@@ -38,4 +38,4 @@ class FixedTimeWindowMigration(MigrationAction):
 
     @property
     def action_num(self) -> int:
-        return 1
+        return 2
