@@ -4,9 +4,14 @@
 
 ### NEXT
 
-* Renamed time window type values ("DEFAULT" is renamed in "MOVING" and "FIXED" is renamed in "CUSTOM"). Deprecated values are still supported, but only the new ones are returned.
-* Added elasticsearch migrations to update time window type values
-* Added periodically re-computations of moving time window analytics
+* The support for periodical re-computation of _moving time window_ analytic results have been added.
+* _Time window_ type values have been updated. In particular:
+  
+  * `DEFAULT` has bene renamed to `MOVING`
+  * `FIXED` has been renamed to `CUSTOM`
+
+  Deprecated values are still supported in the creation step of analytics, they will be officially removed in the next major release.
+  The new values will be used for describing the requested data.
 
 ### 1.4.0
 
