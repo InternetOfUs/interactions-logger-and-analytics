@@ -75,7 +75,7 @@ class FixedTimeWindow:
 
     def to_repr(self) -> dict:
         return{
-            'type': FixedTimeWindow.fixed_time_window_type(),
+            'type': self.fixed_time_window_type(),
             'start': self.start.isoformat(),
             'end': self.end.isoformat()
         }
