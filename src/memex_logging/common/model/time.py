@@ -31,7 +31,7 @@ class MovingTimeWindow:
         return "MOVING"
 
     @staticmethod
-    @deprecation.deprecated(deprecated_in="1.5.0", details="Use the moving_time_window_type method instead")
+    @deprecation.deprecated(deprecated_in="1.5.0", removed_in="2.0.0", details="Use the moving_time_window_type method instead")
     def default_time_window_type():
         return "DEFAULT"
 
@@ -69,7 +69,7 @@ class FixedTimeWindow:
         return "FIXED"
 
     @staticmethod
-    @deprecation.deprecated(deprecated_in="1.5.0", details="Use the fixed_time_window_type method instead")
+    @deprecation.deprecated(deprecated_in="1.5.0", removed_in="2.0.0", details="Use the fixed_time_window_type method instead")
     def custom_time_window_type():
         return "CUSTOM"
 
