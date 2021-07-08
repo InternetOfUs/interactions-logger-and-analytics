@@ -47,8 +47,9 @@ class AnalyticsPerformer(Resource):
 
     def get(self):
         static_id = request.args.get('staticId')
+        logger.info(f"Retrieving analytic with static_id: {static_id}")
         if static_id == "" or static_id is None:
-            logger.debug("Missing required parameters")
+            logger.info("Missing required staticId parameter")
             return {
                 "status": "Malformed request: missing required parameter `staticId`",
                 "code": 400
@@ -69,8 +70,9 @@ class AnalyticsPerformer(Resource):
 
     def post(self):
         analytic = request.json
+        logger.info(f"Creating analytic: {analytic}")
         if analytic is None:
-            logger.debug("Analytic failed to be computed due to missing data")
+            logger.info("Analytic failed to be computed due to missing data")
             return {
                 "status": "Malformed request: data is missing",
                 "code": 400

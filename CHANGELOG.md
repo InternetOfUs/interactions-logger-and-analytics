@@ -2,6 +2,10 @@
 
 ## Version 1.*
 
+### NEXT
+
+* Included timestamp details in analytic results
+
 ### 1.4.0
 
 * Imported wenet common models `2.0.0`.

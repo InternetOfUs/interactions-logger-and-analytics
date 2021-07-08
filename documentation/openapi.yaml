@@ -1287,7 +1287,28 @@ components:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"
 
+    CommonResult:
+      type: object
+      properties:
+        creationDt:
+          type: string
+          format: date-time
+          example: "2021-02-25T14:18:36.141378"
+        fromDt:
+          type: string
+          format: date-time
+          example: "2021-01-25T14:18:36.141378"
+        toDt:
+          type: string
+          format: date-time
+          example: "2021-02-25T14:18:36.141378"
+        type:
+          type: string
+          example: "userId"
+
     AnalyticResult:
+      allOf:
+        - $ref: '#/components/schemas/CommonResult'
       type: object
       properties:
         count:
@@ -1297,11 +1318,10 @@ components:
           type: array
           items:
             type: string
-        type:
-          type: string
-          example: "userId"
 
     SegmentationResult:
+      allOf:
+        - $ref: '#/components/schemas/CommonResult'
       type: object
       properties:
         counts:
@@ -1322,6 +1342,8 @@ components:
           example: "segmentation"
 
     TransactionResult:
+      allOf:
+        - $ref: '#/components/schemas/CommonResult'
       type: object
       properties:
         count:
@@ -1346,6 +1368,8 @@ components:
           example: "transaction"
 
     ConversationLengthResult:
+      allOf:
+        - $ref: '#/components/schemas/CommonResult'
       type: object
       properties:
         count:
@@ -1369,6 +1393,8 @@ components:
           example: "length"
 
     ConversationPathResult:
+      allOf:
+        - $ref: '#/components/schemas/CommonResult'
       type: object
       properties:
         count:
@@ -1403,8 +1429,20 @@ components:
           properties:
             <aggregation>:
               type: number
-              description: "It is a number in the case of the simple stats. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
+              description: "The key correspond to the name of the aggreagtion. The value is a number in the case of the simple stats. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
               example: 3
+            creationDt:
+              type: string
+              format: date-time
+              example: "2021-02-25T14:18:36.141378"
+            fromDt:
+              type: string
+              format: date-time
+              example: "2021-01-25T14:18:36.141378"
+            toDt:
+              type: string
+              format: date-time
+              example: "2021-02-25T14:18:36.141378"
         staticId:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"
