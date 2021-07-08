@@ -4,7 +4,7 @@
 
 ### NEXT
 
-* The support for periodical re-computation of _moving time window_ analytic results have been added.
+* The support for periodical (once a day, at midnight) re-computation of _moving time window_ analytic results have been added.
 * _Time window_ type values have been updated. In particular:
   
   * `DEFAULT` has bene renamed to `MOVING`
