@@ -17,7 +17,6 @@ from __future__ import absolute_import, annotations
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 
-from memex_logging.common.model.time import FixedTimeWindow
 from memex_logging.common.utils import Utils
 from memex_logging.migration.migration import MigrationAction
 
@@ -26,10 +25,10 @@ class FixedTimeWindowMigration(MigrationAction):
 
     def apply(self, es: Elasticsearch) -> None:
         index_name = Utils.generate_index("analytic")
-        results = scan(es, index=index_name, query={"query": {"match": {"query.timespan.type.keyword": FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE}}})
+        results = scan(es, index=index_name, query={"query": {"match": {"query.timespan.type.keyword": "CUSTOM"}}})
 
         for result in results:
-            result['_source']["query"]["timespan"]["type"] = FixedTimeWindow.FIXED_TIME_WINDOW_TYPE
+            result['_source']["query"]["timespan"]["type"] = "FIXED"
             es.index(index=result['_index'], id=result['_id'], doc_type=result['_type'], body=result['_source'])
 
     @property

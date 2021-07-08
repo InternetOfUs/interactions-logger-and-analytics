@@ -17,7 +17,6 @@ from __future__ import absolute_import, annotations
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 
-from memex_logging.common.model.time import MovingTimeWindow
 from memex_logging.common.utils import Utils
 from memex_logging.migration.migration import MigrationAction
 
@@ -26,10 +25,10 @@ class MovingTimeWindowMigration(MigrationAction):
 
     def apply(self, es: Elasticsearch) -> None:
         index_name = Utils.generate_index("analytic")
-        results = scan(es, index=index_name, query={"query": {"match": {"query.timespan.type.keyword": MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE}}})
+        results = scan(es, index=index_name, query={"query": {"match": {"query.timespan.type.keyword": "DEFAULT"}}})
 
         for result in results:
-            result['_source']["query"]["timespan"]["type"] = MovingTimeWindow.MOVING_TIME_WINDOW_TYPE
+            result['_source']["query"]["timespan"]["type"] = "MOVING"
             es.index(index=result['_index'], id=result['_id'], doc_type=result['_type'], body=result['_source'])
 
     @property
