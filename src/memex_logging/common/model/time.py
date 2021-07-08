@@ -16,25 +16,34 @@ from __future__ import absolute_import, annotations
 
 from datetime import datetime
 
+import deprecation
+
 
 class MovingTimeWindow:
 
-    MOVING_TIME_WINDOW_TYPE = "MOVING"
-    DEPRECATED_MOVING_TIME_WINDOW_TYPE = "DEFAULT"
     ALLOWED_MOVING_TIME_WINDOW_VALUES = ["30D", "10D", "7D", "1D", "TODAY"]
 
     def __init__(self, value: str):
         self.value = value
 
+    @staticmethod
+    def moving_time_window_type():
+        return "MOVING"
+
+    @staticmethod
+    @deprecation.deprecated(deprecated_in="1.5.0", details="Use the moving_time_window_type method instead")
+    def default_time_window_type():
+        return "DEFAULT"
+
     def to_repr(self) -> dict:
         return{
-            'type': self.MOVING_TIME_WINDOW_TYPE,
+            'type': self.moving_time_window_type(),
             'value': self.value.upper()
         }
 
     @staticmethod
     def from_repr(raw_data: dict) -> MovingTimeWindow:
-        if str(raw_data['type']).upper() not in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE, MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE]:
+        if str(raw_data['type']).upper() not in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
             raise ValueError("Unrecognized type for MovingTimeWindow")
 
         if str(raw_data['value']).upper() not in MovingTimeWindow.ALLOWED_MOVING_TIME_WINDOW_VALUES:
@@ -51,16 +60,22 @@ class MovingTimeWindow:
 
 class FixedTimeWindow:
 
-    FIXED_TIME_WINDOW_TYPE = "FIXED"
-    DEPRECATED_FIXED_TIME_WINDOW_TYPE = "CUSTOM"
-
     def __init__(self, start: datetime, end: datetime):
         self.start = start
         self.end = end
 
+    @staticmethod
+    def fixed_time_window_type():
+        return "FIXED"
+
+    @staticmethod
+    @deprecation.deprecated(deprecated_in="1.5.0", details="Use the fixed_time_window_type method instead")
+    def custom_time_window_type():
+        return "CUSTOM"
+
     def to_repr(self) -> dict:
         return{
-            'type': self.FIXED_TIME_WINDOW_TYPE,
+            'type': FixedTimeWindow.fixed_time_window_type(),
             'start': self.start.isoformat(),
             'end': self.end.isoformat()
         }
@@ -71,7 +86,7 @@ class FixedTimeWindow:
 
     @staticmethod
     def from_repr(raw_data: dict) -> FixedTimeWindow:
-        if str(raw_data['type']).upper() not in [FixedTimeWindow.FIXED_TIME_WINDOW_TYPE, FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE]:
+        if str(raw_data['type']).upper() not in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
             raise ValueError("Unrecognized type for FixedTimeWindow")
 
         return FixedTimeWindow.from_isoformat(raw_data['start'], raw_data['end'])

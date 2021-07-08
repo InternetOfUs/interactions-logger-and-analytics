@@ -112,7 +112,7 @@ def update_analytics():
     logger.info("Updating moving time window analytics")
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     index_name = Utils.generate_index("analytic")
-    results = scan(es, index=index_name, query={"query": {"match": {"query.timespan.type.keyword": MovingTimeWindow.MOVING_TIME_WINDOW_TYPE}}})
+    results = scan(es, index=index_name, query={"query": {"match": {"query.timespan.type.keyword": MovingTimeWindow.moving_time_window_type()}}})
 
     for result in results:
         update_analytic.delay(result['_source']["staticId"])

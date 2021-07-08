@@ -49,9 +49,9 @@ class AggregationAnalytic(CommonAnalytic):
         if str(raw_data['type']).lower() != AggregationAnalytic.AGGREGATION_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for Aggregation")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE, MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE]:
+        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.FIXED_TIME_WINDOW_TYPE, FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE]:
+        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")

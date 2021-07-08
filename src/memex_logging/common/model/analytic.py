@@ -54,10 +54,10 @@ class DimensionAnalytic(CommonAnalytic):
         if str(raw_data['type']).lower() != DimensionAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for Analytic")
 
-        if str(raw_data['timespan']['type']).upper() not in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE,
-                                                             MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE,
-                                                             FixedTimeWindow.FIXED_TIME_WINDOW_TYPE,
-                                                             FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE]:
+        if str(raw_data['timespan']['type']).upper() not in [MovingTimeWindow.moving_time_window_type(),
+                                                             MovingTimeWindow.default_time_window_type(),
+                                                             FixedTimeWindow.fixed_time_window_type(),
+                                                             FixedTimeWindow.custom_time_window_type()]:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
 
         if str(raw_data['dimension']).lower() == UserAnalytic.USER_DIMENSION:
@@ -97,9 +97,9 @@ class UserAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != UserAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for UserAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE, MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE]:
+        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.FIXED_TIME_WINDOW_TYPE, FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE]:
+        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -126,9 +126,9 @@ class MessageAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != MessageAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for MessageAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE, MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE]:
+        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.FIXED_TIME_WINDOW_TYPE, FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE]:
+        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -155,9 +155,9 @@ class TaskAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != TaskAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for TaskAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE, MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE]:
+        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.FIXED_TIME_WINDOW_TYPE, FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE]:
+        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -190,9 +190,9 @@ class TransactionAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != TransactionAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for TransactionAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE, MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE]:
+        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.FIXED_TIME_WINDOW_TYPE, FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE]:
+        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -219,9 +219,9 @@ class ConversationAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != ConversationAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for ConversationAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE, MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE]:
+        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.FIXED_TIME_WINDOW_TYPE, FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE]:
+        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -248,9 +248,9 @@ class DialogueAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != DialogueAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for DialogueAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE, MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE]:
+        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.FIXED_TIME_WINDOW_TYPE, FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE]:
+        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
@@ -277,9 +277,9 @@ class BotAnalytic(DimensionAnalytic):
         if str(raw_data['type']).lower() != BotAnalytic.ANALYTIC_TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for BotAnalytic")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.MOVING_TIME_WINDOW_TYPE, MovingTimeWindow.DEPRECATED_MOVING_TIME_WINDOW_TYPE]:
+        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.FIXED_TIME_WINDOW_TYPE, FixedTimeWindow.DEPRECATED_FIXED_TIME_WINDOW_TYPE]:
+        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
             timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
