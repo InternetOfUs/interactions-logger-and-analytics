@@ -15,6 +15,7 @@
 from __future__ import absolute_import, annotations
 
 import logging
+from datetime import datetime
 
 from elasticsearch import Elasticsearch
 from wenet.interface.task_manager import TaskManagerInterface
@@ -182,7 +183,7 @@ class AnalyticComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             number_of_users = response['aggregations']['type_count']['value']
 
-        return AnalyticResult(number_of_users, user_list, "userId")
+        return AnalyticResult(number_of_users, user_list, "userId", datetime.now(), min_bound, max_bound)
 
     def _active_users(self, analytic: UserAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -243,7 +244,7 @@ class AnalyticComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             number_of_users = response['aggregations']['type_count']['value']
 
-        return AnalyticResult(number_of_users, user_list, "userId")
+        return AnalyticResult(number_of_users, user_list, "userId", datetime.now(), min_bound, max_bound)
 
     def _engaged_users(self, analytic: UserAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -304,7 +305,7 @@ class AnalyticComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             number_of_users = response['aggregations']['type_count']['value']
 
-        return AnalyticResult(number_of_users, user_list, "userId")
+        return AnalyticResult(number_of_users, user_list, "userId", datetime.now(), min_bound, max_bound)
 
     def _new_users(self, analytic: UserAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -399,7 +400,7 @@ class AnalyticComputation:
 
         final_users = users_in_period - users_out_period
 
-        return AnalyticResult(len(final_users), list(final_users), "userId")
+        return AnalyticResult(len(final_users), list(final_users), "userId", datetime.now(), min_bound, max_bound)
 
     def _user_messages(self, analytic: MessageAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -453,7 +454,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        return AnalyticResult(total_counter, messages, "messageId")
+        return AnalyticResult(total_counter, messages, "messageId", datetime.now(), min_bound, max_bound)
 
     def _segmentation_messages(self, analytic: MessageAnalytic) -> SegmentationAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -500,7 +501,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `5` but the number of types is higher")
 
-        return SegmentationAnalyticResult(type_counter)
+        return SegmentationAnalyticResult(type_counter, datetime.now(), min_bound, max_bound)
 
     def _segmentation_user_messages(self, analytic: MessageAnalytic) -> SegmentationAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -552,7 +553,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `10` but the number of content types is higher")
 
-        return SegmentationAnalyticResult(type_counter)
+        return SegmentationAnalyticResult(type_counter, datetime.now(), min_bound, max_bound)
 
     def _bot_messages(self, analytic: MessageAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -654,7 +655,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
 
-        return AnalyticResult(total_len, messages, "messageId")
+        return AnalyticResult(total_len, messages, "messageId", datetime.now(), min_bound, max_bound)
 
     def _response_messages(self, analytic: MessageAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -708,7 +709,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        return AnalyticResult(total_len, messages, "messageId")
+        return AnalyticResult(total_len, messages, "messageId", datetime.now(), min_bound, max_bound)
 
     def _notification_messages(self, analytic: MessageAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -762,7 +763,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
 
-        return AnalyticResult(total_len, messages, "messageId")
+        return AnalyticResult(total_len, messages, "messageId", datetime.now(), min_bound, max_bound)
 
     def _unhandled_messages(self, analytic: MessageAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -816,7 +817,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of unhandled messages is higher")
 
-        return AnalyticResult(total_len, messages, "messageId")
+        return AnalyticResult(total_len, messages, "messageId", datetime.now(), min_bound, max_bound)
 
     def _total_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -824,31 +825,31 @@ class AnalyticComputation:
         tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
         tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
         tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound))
-        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
+        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _active_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = []
         tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
         tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
-        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
+        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _closed_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = self.task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound)
-        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
+        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _new_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound)
-        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId")
+        return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _total_transactions(self, analytic: TransactionAnalytic) -> TransactionAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         transactions = self.task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
         task_ids = set([transaction.task_id for transaction in transactions])
         transaction_returns = [TransactionReturn(task_id, [transaction.id for transaction in transactions if transaction.task_id == task_id]) for task_id in task_ids]
-        return TransactionAnalyticResult(len(transactions), transaction_returns)
+        return TransactionAnalyticResult(len(transactions), transaction_returns, datetime.now(), min_bound, max_bound)
 
     def _segmentation_transactions(self, analytic: TransactionAnalytic) -> SegmentationAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -856,7 +857,7 @@ class AnalyticComputation:
         transaction_labels = [transaction.label for transaction in transactions]
         unique_labels = set(transaction_labels)
         type_counter = [Segmentation(label, transaction_labels.count(label)) for label in unique_labels]
-        return SegmentationAnalyticResult(type_counter)
+        return SegmentationAnalyticResult(type_counter, datetime.now(), min_bound, max_bound)
 
     def _total_conversations(self, analytic: ConversationAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -905,7 +906,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
-        return AnalyticResult(total_len, conversation_list, "conversationId")
+        return AnalyticResult(total_len, conversation_list, "conversationId", datetime.now(), min_bound, max_bound)
 
     def _new_conversations(self, analytic: ConversationAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -1000,7 +1001,7 @@ class AnalyticComputation:
 
         final_conv = conv_in_period - conv_out_period
 
-        return AnalyticResult(len(final_conv), list(final_conv), "conversationId")
+        return AnalyticResult(len(final_conv), list(final_conv), "conversationId", datetime.now(), min_bound, max_bound)
 
     def _length_conversations(self, analytic: ConversationAnalytic) -> ConversationLengthAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -1049,7 +1050,7 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
-        return ConversationLengthAnalyticResult(total_len, conversation_list)
+        return ConversationLengthAnalyticResult(total_len, conversation_list, datetime.now(), min_bound, max_bound)
 
     def _path_conversations(self, analytic: ConversationAnalytic) -> ConversationPathAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -1150,7 +1151,7 @@ class AnalyticComputation:
                 if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                     logger.warning("The number of buckets is limited at `65535` but the number of messages is higher")
 
-        return ConversationPathAnalyticResult(len(paths), paths)
+        return ConversationPathAnalyticResult(len(paths), paths, datetime.now(), min_bound, max_bound)
 
     def _fallback(self, analytic: DialogueAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -1233,7 +1234,7 @@ class AnalyticComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             total_messages = response['aggregations']['type_count']['value']
 
-        return AnalyticResult(total_missed, total_messages, "score")
+        return AnalyticResult(total_missed, total_messages, "score", datetime.now(), min_bound, max_bound)
 
     def _intents(self, analytic: DialogueAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -1289,7 +1290,7 @@ class AnalyticComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return AnalyticResult(value, intent_list, "intent")
+        return AnalyticResult(value, intent_list, "intent", datetime.now(), min_bound, max_bound)
 
     def _domains(self, analytic: DialogueAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -1345,7 +1346,7 @@ class AnalyticComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return AnalyticResult(value, domain_list, "domain")
+        return AnalyticResult(value, domain_list, "domain", datetime.now(), min_bound, max_bound)
 
     def _bot_response(self, analytic: BotAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
@@ -1430,4 +1431,4 @@ class AnalyticComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
-        return AnalyticResult(total_not_working, total_messages, "score")
+        return AnalyticResult(total_not_working, total_messages, "score", datetime.now(), min_bound, max_bound)

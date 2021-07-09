@@ -14,17 +14,18 @@
 
 from __future__ import absolute_import, annotations
 
+from datetime import datetime
 from unittest import TestCase
 
 from memex_logging.common.model.result import AnalyticResult, ConversationLengthAnalyticResult, ConversationLength, \
     ConversationPathAnalyticResult, ConversationPath, SegmentationAnalyticResult, Segmentation, \
-    TransactionAnalyticResult, TransactionReturn
+    TransactionAnalyticResult, TransactionReturn, AggregationResult
 
 
 class TestAnalyticResult(TestCase):
 
     def test_repr(self):
-        result = AnalyticResult(1, ["1"], "userId")
+        result = AnalyticResult(1, ["1"], "userId", datetime.now(), datetime.now(), datetime.now())
         self.assertEqual(result, AnalyticResult.from_repr(result.to_repr()))
 
 
@@ -38,7 +39,7 @@ class TestConversationLength(TestCase):
 class TestConversationLengthAnalyticResult(TestCase):
 
     def test_repr(self):
-        response = ConversationLengthAnalyticResult(1, [ConversationLength("1", 2)])
+        response = ConversationLengthAnalyticResult(1, [ConversationLength("1", 2)], datetime.now(), datetime.now(), datetime.now())
         self.assertEqual(response, ConversationLengthAnalyticResult.from_repr(response.to_repr()))
 
 
@@ -52,7 +53,7 @@ class TestConversationPath(TestCase):
 class TestConversationPathAnalyticResult(TestCase):
 
     def test_repr(self):
-        response = ConversationPathAnalyticResult(1, [ConversationPath("1", ["1"])])
+        response = ConversationPathAnalyticResult(1, [ConversationPath("1", ["1"])], datetime.now(), datetime.now(), datetime.now())
         self.assertEqual(response, ConversationPathAnalyticResult.from_repr(response.to_repr()))
 
 
@@ -66,7 +67,7 @@ class TestSegmentation(TestCase):
 class TestSegmentationAnalyticResult(TestCase):
 
     def test_repr(self):
-        response = SegmentationAnalyticResult([Segmentation("type1", 1)])
+        response = SegmentationAnalyticResult([Segmentation("type1", 1)], datetime.now(), datetime.now(), datetime.now())
         self.assertEqual(response, SegmentationAnalyticResult.from_repr(response.to_repr()))
 
 
@@ -80,5 +81,12 @@ class TestTransactionReturn(TestCase):
 class TestTransactionAnalyticResult(TestCase):
 
     def test_repr(self):
-        response = TransactionAnalyticResult(1, [TransactionReturn("task_id", ["1"])])
+        response = TransactionAnalyticResult(1, [TransactionReturn("task_id", ["1"])], datetime.now(), datetime.now(), datetime.now())
         self.assertEqual(response, TransactionAnalyticResult.from_repr(response.to_repr()))
+
+
+class TestAggregationResult(TestCase):
+
+    def test_repr(self):
+        response = AggregationResult("min", 0.1, datetime.now(), datetime.now(), datetime.now())
+        self.assertEqual(response, AggregationResult.from_repr(response.to_repr(), response.aggregation))

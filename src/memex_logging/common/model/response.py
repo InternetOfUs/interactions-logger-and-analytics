@@ -14,11 +14,9 @@
 
 from __future__ import absolute_import, annotations
 
-from typing import Union
-
 from memex_logging.common.model.aggregation import AggregationAnalytic
 from memex_logging.common.model.analytic import DimensionAnalytic
-from memex_logging.common.model.result import CommonResult
+from memex_logging.common.model.result import CommonResult, AggregationResult
 
 
 class AnalyticResponse:
@@ -50,7 +48,7 @@ class AnalyticResponse:
 
 class AggregationResponse:
 
-    def __init__(self, analytic: AggregationAnalytic, result: Union[int, float, dict], static_id: str) -> None:
+    def __init__(self, analytic: AggregationAnalytic, result: AggregationResult, static_id: str) -> None:
         self.analytic = analytic
         self.result = result
         self.static_id = static_id
@@ -58,16 +56,14 @@ class AggregationResponse:
     def to_repr(self) -> dict:
         return {
             'query': self.analytic.to_repr(),
-            'result': {
-                self.analytic.aggregation: self.result
-            },
+            'result': self.result.to_repr(),
             'staticId': self.static_id
         }
 
     @staticmethod
     def from_repr(raw_data: dict) -> AggregationResponse:
         analytic = AggregationAnalytic.from_repr(raw_data['query'])
-        result = raw_data['result'][analytic.aggregation]
+        result = AggregationResult.from_repr(raw_data['result'], analytic.aggregation)
         return AggregationResponse(analytic, result, raw_data['staticId'])
 
     def __eq__(self, o) -> bool:
