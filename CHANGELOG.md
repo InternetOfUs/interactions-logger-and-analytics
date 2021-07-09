@@ -9,7 +9,7 @@
 * _Time window_ type values have been updated. In particular:
   
   * `DEFAULT` has bene renamed to `MOVING`
-  * `FIXED` has been renamed to `CUSTOM`
+  * `CUSTOM` has been renamed to `FIXED`
 
   Deprecated values are still supported in the creation step of analytics, they will be officially removed in the next major release.
   The new values will be used for describing the requested data.
