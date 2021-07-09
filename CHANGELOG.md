@@ -5,6 +5,14 @@
 ### NEXT
 
 * Included timestamp details in analytic results
+* The support for periodical (once a day, at midnight) re-computation of _moving time window_ analytic results have been added.
+* _Time window_ type values have been updated. In particular:
+  
+  * `DEFAULT` has bene renamed to `MOVING`
+  * `CUSTOM` has been renamed to `FIXED`
+
+  Deprecated values are still supported in the creation step of analytics, they will be officially removed in the next major release.
+  The new values will be used for describing the requested data.
 
 ### 1.4.0
 
