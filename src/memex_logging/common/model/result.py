@@ -15,7 +15,8 @@
 from __future__ import absolute_import, annotations
 
 from abc import ABC, abstractmethod
-from typing import List
+from datetime import datetime
+from typing import List, Union, Optional
 
 
 class CommonResult(ABC):
@@ -40,25 +41,39 @@ class CommonResult(ABC):
 
 class AnalyticResult(CommonResult):
 
-    def __init__(self, count: int, items: List[str], item_type: str) -> None:
+    def __init__(self, count: int, items: List[str], item_type: str, creation_datetime: Optional[datetime], from_datetime: Optional[datetime], to_datetime: Optional[datetime]) -> None:
         self.count = count
         self.items = items
         self.item_type = item_type
+        self.creation_datetime = creation_datetime
+        self.from_datetime = from_datetime
+        self.to_datetime = to_datetime
 
     def to_repr(self) -> dict:
         return {
             'count': self.count,
             'items': self.items,
-            'type': self.item_type
+            'type': self.item_type,
+            'creationDt': self.creation_datetime.isoformat() if self.creation_datetime is not None else None,
+            'fromDt': self.from_datetime.isoformat() if self.from_datetime is not None else None,
+            'toDt': self.to_datetime.isoformat() if self.to_datetime is not None else None
         }
 
     @staticmethod
     def from_repr(raw_data: dict) -> AnalyticResult:
-        return AnalyticResult(raw_data['count'], raw_data['items'], raw_data['type'])
+        return AnalyticResult(
+            raw_data['count'],
+            raw_data['items'],
+            raw_data['type'],
+            datetime.fromisoformat(raw_data.get('creationDt')) if raw_data.get('creationDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('fromDt')) if raw_data.get('fromDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('toDt')) if raw_data.get('toDt') is not None else None
+        )
 
     def __eq__(self, o) -> bool:
         if isinstance(o, AnalyticResult):
-            return o.count == self.count and o.items == self.items and o.item_type == self.item_type
+            return o.count == self.count and o.items == self.items and o.item_type == self.item_type and o.creation_datetime == self.creation_datetime \
+                   and o.from_datetime == self.from_datetime and o.to_datetime == self.to_datetime
         else:
             return False
 
@@ -90,15 +105,21 @@ class ConversationLengthAnalyticResult(CommonResult):
 
     TYPE = "length"
 
-    def __init__(self, count: int, lengths: List[ConversationLength]) -> None:
+    def __init__(self, count: int, lengths: List[ConversationLength], creation_datetime: Optional[datetime], from_datetime: Optional[datetime], to_datetime: Optional[datetime]) -> None:
         self.count = count
         self.lengths = lengths
+        self.creation_datetime = creation_datetime
+        self.from_datetime = from_datetime
+        self.to_datetime = to_datetime
 
     def to_repr(self) -> dict:
         return {
             'count': self.count,
             'lengths': [length.to_repr() for length in self.lengths],
-            'type': self.TYPE
+            'type': self.TYPE,
+            'creationDt': self.creation_datetime.isoformat() if self.creation_datetime is not None else None,
+            'fromDt': self.from_datetime.isoformat() if self.from_datetime is not None else None,
+            'toDt': self.to_datetime.isoformat() if self.to_datetime is not None else None
         }
 
     @staticmethod
@@ -107,11 +128,18 @@ class ConversationLengthAnalyticResult(CommonResult):
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for ConversationLengthAnalyticResult")
 
         lengths = [ConversationLength.from_repr(length) for length in raw_data['lengths']]
-        return ConversationLengthAnalyticResult(raw_data['count'], lengths)
+        return ConversationLengthAnalyticResult(
+            raw_data['count'],
+            lengths,
+            datetime.fromisoformat(raw_data.get('creationDt')) if raw_data.get('creationDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('fromDt')) if raw_data.get('fromDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('toDt')) if raw_data.get('toDt') is not None else None
+        )
 
     def __eq__(self, o) -> bool:
         if isinstance(o, ConversationLengthAnalyticResult):
-            return o.count == self.count and o.lengths == self.lengths
+            return o.count == self.count and o.lengths == self.lengths and o.creation_datetime == self.creation_datetime \
+                   and o.from_datetime == self.from_datetime and o.to_datetime == self.to_datetime
         else:
             return False
 
@@ -143,15 +171,21 @@ class ConversationPathAnalyticResult(CommonResult):
 
     TYPE = "path"
 
-    def __init__(self, count: int, paths: List[ConversationPath]) -> None:
+    def __init__(self, count: int, paths: List[ConversationPath], creation_datetime: Optional[datetime], from_datetime: Optional[datetime], to_datetime: Optional[datetime]) -> None:
         self.count = count
         self.paths = paths
+        self.creation_datetime = creation_datetime
+        self.from_datetime = from_datetime
+        self.to_datetime = to_datetime
 
     def to_repr(self) -> dict:
         return {
             'count': self.count,
             'paths': [path.to_repr() for path in self.paths],
-            'type': self.TYPE
+            'type': self.TYPE,
+            'creationDt': self.creation_datetime.isoformat() if self.creation_datetime is not None else None,
+            'fromDt': self.from_datetime.isoformat() if self.from_datetime is not None else None,
+            'toDt': self.to_datetime.isoformat() if self.to_datetime is not None else None
         }
 
     @staticmethod
@@ -160,11 +194,18 @@ class ConversationPathAnalyticResult(CommonResult):
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for ConversationPathAnalyticResult")
 
         paths = [ConversationPath.from_repr(path) for path in raw_data['paths']]
-        return ConversationPathAnalyticResult(raw_data['count'], paths)
+        return ConversationPathAnalyticResult(
+            raw_data['count'],
+            paths,
+            datetime.fromisoformat(raw_data.get('creationDt')) if raw_data.get('creationDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('fromDt')) if raw_data.get('fromDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('toDt')) if raw_data.get('toDt') is not None else None
+        )
 
     def __eq__(self, o) -> bool:
         if isinstance(o, ConversationPathAnalyticResult):
-            return o.count == self.count and o.paths == self.paths
+            return o.count == self.count and o.paths == self.paths and o.creation_datetime == self.creation_datetime \
+                   and o.from_datetime == self.from_datetime and o.to_datetime == self.to_datetime
         else:
             return False
 
@@ -196,13 +237,19 @@ class SegmentationAnalyticResult(CommonResult):
 
     TYPE = "segmentation"
 
-    def __init__(self, counts: List[Segmentation]) -> None:
+    def __init__(self, counts: List[Segmentation], creation_datetime: Optional[datetime], from_datetime: Optional[datetime], to_datetime: Optional[datetime]) -> None:
         self.counts = counts
+        self.creation_datetime = creation_datetime
+        self.from_datetime = from_datetime
+        self.to_datetime = to_datetime
 
     def to_repr(self) -> dict:
         return {
             'counts': [count.to_repr() for count in self.counts],
-            'type': self.TYPE
+            'type': self.TYPE,
+            'creationDt': self.creation_datetime.isoformat() if self.creation_datetime is not None else None,
+            'fromDt': self.from_datetime.isoformat() if self.from_datetime is not None else None,
+            'toDt': self.to_datetime.isoformat() if self.to_datetime is not None else None
         }
 
     @staticmethod
@@ -211,11 +258,17 @@ class SegmentationAnalyticResult(CommonResult):
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for SegmentationAnalyticResult")
 
         counts = [Segmentation.from_repr(count) for count in raw_data['counts']]
-        return SegmentationAnalyticResult(counts)
+        return SegmentationAnalyticResult(
+            counts,
+            datetime.fromisoformat(raw_data.get('creationDt')) if raw_data.get('creationDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('fromDt')) if raw_data.get('fromDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('toDt')) if raw_data.get('toDt') is not None else None
+        )
 
     def __eq__(self, o) -> bool:
         if isinstance(o, SegmentationAnalyticResult):
-            return o.counts == self.counts
+            return o.counts == self.counts and o.creation_datetime == self.creation_datetime \
+                   and o.from_datetime == self.from_datetime and o.to_datetime == self.to_datetime
         else:
             return False
 
@@ -247,15 +300,21 @@ class TransactionAnalyticResult(CommonResult):
 
     TYPE = "transaction"
 
-    def __init__(self, count: int, transactions: List[TransactionReturn]) -> None:
+    def __init__(self, count: int, transactions: List[TransactionReturn], creation_datetime: Optional[datetime], from_datetime: Optional[datetime], to_datetime: Optional[datetime]) -> None:
         self.count = count
         self.transactions = transactions
+        self.creation_datetime = creation_datetime
+        self.from_datetime = from_datetime
+        self.to_datetime = to_datetime
 
     def to_repr(self) -> dict:
         return {
             'count': self.count,
             'transactions': [transaction.to_repr() for transaction in self.transactions],
-            'type': self.TYPE
+            'type': self.TYPE,
+            'creationDt': self.creation_datetime.isoformat() if self.creation_datetime is not None else None,
+            'fromDt': self.from_datetime.isoformat() if self.from_datetime is not None else None,
+            'toDt': self.to_datetime.isoformat() if self.to_datetime is not None else None
         }
 
     @staticmethod
@@ -264,10 +323,53 @@ class TransactionAnalyticResult(CommonResult):
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for TransactionAnalyticResult")
 
         transactions = [TransactionReturn.from_repr(transaction) for transaction in raw_data['transactions']]
-        return TransactionAnalyticResult(raw_data['count'], transactions)
+        return TransactionAnalyticResult(
+            raw_data['count'],
+            transactions,
+            datetime.fromisoformat(raw_data.get('creationDt')) if raw_data.get('creationDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('fromDt')) if raw_data.get('fromDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('toDt')) if raw_data.get('toDt') is not None else None
+        )
 
     def __eq__(self, o) -> bool:
         if isinstance(o, TransactionAnalyticResult):
-            return o.count == self.count and o.transactions == self.transactions
+            return o.count == self.count and o.transactions == self.transactions and o.creation_datetime == self.creation_datetime \
+                   and o.from_datetime == self.from_datetime and o.to_datetime == self.to_datetime
         else:
             return False
+
+
+class AggregationResult:
+
+    def __init__(self, aggregation: str, aggregation_result: Union[int, float, dict], creation_datetime: Optional[datetime], from_datetime: Optional[datetime], to_datetime: Optional[datetime]) -> None:
+        self.aggregation = aggregation
+        self.aggregation_result = aggregation_result
+        self.creation_datetime = creation_datetime
+        self.from_datetime = from_datetime
+        self.to_datetime = to_datetime
+
+    def to_repr(self) -> dict:
+        return {
+            self.aggregation: self.aggregation_result,
+            'creationDt': self.creation_datetime.isoformat() if self.creation_datetime is not None else None,
+            'fromDt': self.from_datetime.isoformat() if self.from_datetime is not None else None,
+            'toDt': self.to_datetime.isoformat() if self.to_datetime is not None else None
+        }
+
+    @staticmethod
+    def from_repr(raw_data: dict, aggregation: str) -> AggregationResult:
+        return AggregationResult(
+            aggregation,
+            raw_data[aggregation.lower()],
+            datetime.fromisoformat(raw_data.get('creationDt')) if raw_data.get('creationDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('fromDt')) if raw_data.get('fromDt') is not None else None,
+            datetime.fromisoformat(raw_data.get('toDt')) if raw_data.get('toDt') is not None else None
+        )
+
+    def __eq__(self, o) -> bool:
+        if isinstance(o, AggregationResult):
+            return o.aggregation == self.aggregation and o.aggregation_result == self.aggregation_result and o.creation_datetime == self.creation_datetime \
+                   and o.from_datetime == self.from_datetime and o.to_datetime == self.to_datetime
+        else:
+            return False
+
