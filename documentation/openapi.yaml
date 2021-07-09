@@ -1429,7 +1429,7 @@ components:
           properties:
             <aggregation>:
               type: number
-              description: "The key correspond to the name of the aggreagtion. The value is a number in the case of the simple stats. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
+              description: "The <aggregation> key correspond to the name of the aggregation. The value is a number in the case of the simple stats. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
               example: 3
             creationDt:
               type: string
