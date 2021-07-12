@@ -1214,7 +1214,7 @@ components:
           example: "MOVING"
         value:
           type: string
-          enum: ["TODAY","1D","7D","10D","30D"]
+          description: "Arbitral time range, it supports any values for days (d), weeks (w), months (m), and years (y) in the format `<value><descriptor>` or in alternative you can also use `today` for an analytic about the current day"
           example: "7D"
       required:
         - type
