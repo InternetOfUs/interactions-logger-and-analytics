@@ -87,7 +87,7 @@ class DimensionAnalytic(CommonAnalytic):
 class UserAnalytic(DimensionAnalytic):
 
     USER_DIMENSION = "user"
-    ALLOWED_USER_METRIC_VALUES = ["u:total", "u:active", "u:engaged", "u:new"]
+    ALLOWED_USER_METRIC_VALUES = ["u:total", "u:active", "u:engaged", "u:new", "a:segmentation"]
 
     def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
         super().__init__(timespan, project, self.USER_DIMENSION, metric)

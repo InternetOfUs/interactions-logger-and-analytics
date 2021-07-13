@@ -9,7 +9,7 @@ info:
   title: WeNet - Interactions Logger and Analytics APIs
   description: This component is responsible for collecting and analyzing the messages produced by the WeNet applications together with lower level component logs that allow to monitor the functioning of the applications built on top of the platform and of the platform itself.
 
-  version: "1.3.0"
+  version: "1.5.0"
   contact:
     email: "carlo.caprini@u-hopper.com"
 
@@ -357,53 +357,83 @@ paths:
         - analytic
       summary: Create an analytic
       description: "
-      This end-point allows to create an analytic based on the messages in the database, it returns a `staticId` that you have to use to retrieve the analytic.
+      This end-point allows to create an analytic based on the messages in the database, it returns a `staticId` that you have to use to retrieve the analytic. There are different kind of supported analytics.
 
 
-      The allowed analytics are:
+      UserMetrics have `dimension` value set to `user`. The following `metric` values are supported:
 
-      * UserMetrics with `dimension` set to `user`, you can set `metric` to:
-      `u:total`: the number of total users in a certain time range;
-      `u:active`: the number of active users in a certain time range (that send at least a request message);
-      `u:engaged`: the number of engaged users in a certain time range (that receive at least a notification message);
-      `u:new`: the number of new users in a certain time range;
+      * `u:total`: the number of total users in a certain time range;
 
-      * MessageMetrics with `dimension` set to `message`, you can set `metric` to:
-      `m:from_users`: the number of messages from the users in a certain time range;
-      `m:from_bot`: the number of messages from the bot in a certain time range;
-      `m:responses`: the number of response messages in a certain time range;
-      `m:notifications`: the number of notification messages in a certain time range;
-      `m:unhandled`: the number of unhandled messages in a certain time range;
-      `m:segmentation`: the segmentation of the messages based on the type in a certain time range;
-      `u:segmentation`: the segmentation of the user messages based on the type in a certain time range;
+      * `u:active`: the number of active users in a certain time range (that send at least a request message);
 
-      * TaskMetrics with `dimension` set to `task`, you can set `metric` to:
-      `t:total`: the number of total tasks in a certain time range;
-      `t:active`: the number of active/open tasks in a certain time range;
-      `t:closed`: the number of closed tasks in a certain time range;
-      `t:new`: the number of new tasks in a certain time range;
+      * `u:engaged`: the number of engaged users in a certain time range (that receive at least a notification message);
 
-      * TransactionMetrics with `dimension` set to `transaction`, you can set `metric` to:
-      `t:total`: the number of total transactions in a certain time range;
-      `t:segmentation`: the segmentation of the transactions based on the type in a certain time range.
-      For this metric you can also specify the task id of interest using the field `taskId`;
+      * `u:new`: the number of new users in a certain time range;
 
-      * ConversationMetrics with `dimension` set to `conversation`, you can set `metric` to:
-      `c:total`: the number of conversation in a certain time range;
-      `c:new`: the number of new conversation in a certain time range;
-      `c:length`: the number of conversation in a certain time range with the length;
-      `c:path`: the number of paths of the conversations in a certain time;
-
-      * DialogueMetrics with `dimension` set to `dialogue`, you can set `metric` to:
-      `d:fallback`: the number of missed intent messages in a certain time range;
-      `d:intents`: the number of intents in a certain time range;
-      `d:domains`: the number of domains in a certain time range;
-
-      * BotMetrics with `dimension` set to `bot`, you can set `metric` to:
-      `b:response`: the number of users and messages in a certain time range.
+      * `a:segmentation`: the segmentation of the app users based on the age. Here the temporal information is not significant and the analytic will be computed on all the app users directly from the profile manager component. Note that the project is not related to the name used in the db. It is requested the id of the application.
 
 
-      It could be possible to post also aggregations.
+      MessageMetrics have `dimension` value set to `message`. The following `metric` values are supported:
+
+      * `m:from_users`: the number of messages from the users in a certain time range;
+
+      * `m:from_bot`: the number of messages from the bot in a certain time range;
+
+      * `m:responses`: the number of response messages in a certain time range;
+
+      * `m:notifications`: the number of notification messages in a certain time range;
+
+      * `m:unhandled`: the number of unhandled messages in a certain time range;
+
+      * `m:segmentation`: the segmentation of the messages based on the type in a certain time range;
+
+      * `u:segmentation`: the segmentation of the user messages based on the type in a certain time range.
+
+
+      TaskMetrics with `dimension` set to `task`. This kind of analytics will be computed directly from the task manager component. Note that the project is not related to the name used in the db. It is requested the id of the application. The following `metric` values are supported:
+
+      * `t:total`: the number of total tasks in a certain time range;
+
+      * `t:active`: the number of active/open tasks in a certain time range;
+
+      * `t:closed`: the number of closed tasks in a certain time range;
+
+      * `t:new`: the number of new tasks in a certain time range.
+
+
+      TransactionMetrics have `dimension` value set to `transaction`. This kind of analytics will be computed directly from the task manager component. Note that the project is not related to the name used in the db. It is requested the id of the application. For this metric you can also specify the task id of interest using the field `taskId`. The following `metric` values are supported:
+
+      * `t:total`: the number of total transactions in a certain time range;
+
+      * `t:segmentation`: the segmentation of the transactions based on the type in a certain time range.
+
+
+      ConversationMetrics have `dimension` value set to `conversation`. The following `metric` values are supported:
+
+      * `c:total`: the number of conversation in a certain time range;
+
+      * `c:new`: the number of new conversation in a certain time range;
+
+      * `c:length`: the number of conversation in a certain time range with the length;
+
+      * `c:path`: the number of paths of the conversations in a certain time.
+
+
+      DialogueMetrics have `dimension` value set to `dialogue`. The following `metric` values are supported:
+
+      * `d:fallback`: the number of missed intent messages in a certain time range;
+
+      * `d:intents`: the number of intents in a certain time range;
+
+      * `d:domains`: the number of domains in a certain time range.
+
+
+      BotMetrics have `dimension` value set to `bot`. The following `metric` values are supported:
+
+      * `b:response`: the number of users and messages in a certain time range.
+
+
+      It is possible to post also aggregations.
       "
       requestBody:
         content:
@@ -440,10 +470,10 @@ paths:
         - analytic
       summary: Retrieve an analytic
       description: "
-      This end-point allows to retrieve an analytic based on a `staticId`.
+      This end-point allows to retrieve an analytic or an aggregation based on a `staticId`.
 
 
-      For the analytics will return a `HTTP_200_ANALYTIC` object. The object contained in the `result` field is a:
+      For the analytics, the endpoint will return a `HTTP_200_ANALYTIC` object. The object contained in the `result` field is a:
 
       * `SegmentationResult` object if the analytic requested is a segmentation metric;
 
@@ -456,7 +486,7 @@ paths:
       * `AnalyticResult` in all the other cases.
 
 
-      For the aggreagtions will return a `HTTP_200_AGGREGATION` object.
+      For the aggreagtions, the endpoint will return a `HTTP_200_AGGREGATION` object.
       "
       parameters:
         - in: query
@@ -1086,6 +1116,9 @@ components:
       allOf:
         - $ref: '#/components/schemas/CommonAnalytic'
       properties:
+        project:
+          type: string
+          description: "Note that for the age analytic, the project is not related to the name used in the db. It is requested the id of the application"
         dimension:
           type: string
           enum: ["user"]
@@ -1120,7 +1153,7 @@ components:
       properties:
         project:
           type: string
-          description: "For the task analytics the project is not related to the name used in the db. It is requested the id of the application"
+          description: "Note that for the task analytics the project is not related to the name used in the db. It is requested the id of the application"
           example: "I2BIO3UXx6"
         dimension:
           type: string

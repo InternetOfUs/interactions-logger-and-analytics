@@ -20,7 +20,7 @@ import os
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 from wenet.interface.client import ApikeyClient
-from wenet.interface.task_manager import TaskManagerInterface
+from wenet.interface.wenet import WeNet
 
 from memex_logging.celery import celery
 from memex_logging.common.analytic.aggregation import AggregationComputation
@@ -43,10 +43,10 @@ def compute_analytic(raw_analytic: dict, static_id: str):
 
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     client = ApikeyClient(os.getenv("APIKEY"))
-    task_manager_interface = TaskManagerInterface(client, os.getenv("INSTANCE"))
+    wenet_interface = WeNet.build(client, platform_url=os.getenv("INSTANCE"))
 
     if isinstance(analytic, DimensionAnalytic):
-        analytic_computation = AnalyticComputation(es, task_manager_interface)
+        analytic_computation = AnalyticComputation(es, wenet_interface)
         result = analytic_computation.get_analytic_result(analytic)
         project = analytic.project
         index_name = "analytic-" + project.lower() + "-" + analytic.dimension.lower()
@@ -72,7 +72,7 @@ def update_analytic(static_id: str):
 
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     client = ApikeyClient(os.getenv("APIKEY"))
-    task_manager_interface = TaskManagerInterface(client, os.getenv("INSTANCE"))
+    wenet_interface = WeNet.build(client, platform_url=os.getenv("INSTANCE"))
 
     index_name = Utils.generate_index("analytic")
     raw_response = es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
@@ -86,7 +86,7 @@ def update_analytic(static_id: str):
 
     if isinstance(analytic, DimensionAnalytic):
         response = AnalyticResponse.from_repr(raw_response['hits']['hits'][0]['_source'])
-        analytic_computation = AnalyticComputation(es, task_manager_interface)
+        analytic_computation = AnalyticComputation(es, wenet_interface)
         response.result = analytic_computation.get_analytic_result(analytic)
         project = analytic.project
         index_name = "analytic-" + project.lower() + "-" + analytic.dimension.lower()

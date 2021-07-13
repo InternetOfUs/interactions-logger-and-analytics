@@ -18,7 +18,7 @@ import logging
 from datetime import datetime
 
 from elasticsearch import Elasticsearch
-from wenet.interface.task_manager import TaskManagerInterface
+from wenet.interface.wenet import WeNet
 
 from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, TaskAnalytic, TransactionAnalytic, \
     ConversationAnalytic, DialogueAnalytic, BotAnalytic, DimensionAnalytic
@@ -33,9 +33,9 @@ logger = logging.getLogger("logger.common.analytic.analytic")
 
 class AnalyticComputation:
 
-    def __init__(self, es: Elasticsearch, task_manager_interface: TaskManagerInterface) -> None:
+    def __init__(self, es: Elasticsearch, wenet_interface: WeNet) -> None:
         self.es = es
-        self.task_manager_interface = task_manager_interface
+        self.wenet_interface = wenet_interface
 
     def get_analytic_result(self, analytic: DimensionAnalytic) -> CommonResult:
         if isinstance(analytic, UserAnalytic):
@@ -47,6 +47,8 @@ class AnalyticComputation:
                 result = self._engaged_users(analytic)
             elif analytic.metric.lower() == "u:new":
                 result = self._new_users(analytic)
+            elif analytic.metric.lower() == "a:segmentation":
+                result = self._user_age_segmentation(analytic)
             else:
                 logger.info(f"Unknown value for metric [{analytic.metric}] for UserAnalytic")
                 raise ValueError(f"Unknown value for metric [{analytic.metric}] for UserAnalytic")
@@ -55,9 +57,9 @@ class AnalyticComputation:
             if analytic.metric.lower() == "m:from_users":
                 result = self._user_messages(analytic)
             elif analytic.metric.lower() == "m:segmentation":
-                result = self._segmentation_messages(analytic)
+                result = self._messages_segmentation(analytic)
             elif analytic.metric.lower() == "u:segmentation":
-                result = self._segmentation_user_messages(analytic)
+                result = self._user_messages_segmentation(analytic)
             elif analytic.metric.lower() == "m:from_bot":
                 result = self._bot_messages(analytic)
             elif analytic.metric.lower() == "m:responses":
@@ -87,7 +89,7 @@ class AnalyticComputation:
             if analytic.metric.lower() == "t:total":
                 result = self._total_transactions(analytic)
             elif analytic.metric.lower() == "t:segmentation":
-                result = self._segmentation_transactions(analytic)
+                result = self._transactions_segmentation(analytic)
             else:
                 logger.info(f"Unknown value for metric [{analytic.metric}] for TransactionAnalytic")
                 raise ValueError(f"Unknown value for metric [{analytic.metric}] for TransactionAnalytic")
@@ -456,7 +458,26 @@ class AnalyticComputation:
 
         return AnalyticResult(total_counter, messages, "messageId", datetime.now(), min_bound, max_bound)
 
-    def _segmentation_messages(self, analytic: MessageAnalytic) -> SegmentationAnalyticResult:
+    def _user_age_segmentation(self, analytic: UserAnalytic) -> SegmentationAnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        user_ids = self.wenet_interface.hub.get_user_ids_for_app(analytic.project)  # TODO add min_bound and max_bound as query params when the endpoint (and the common models) supports them
+        ages = []
+        for user_id in user_ids:
+            user_profile = self.wenet_interface.profile_manager.get_user_profile(user_id)
+            ages.append(Utils.compute_age(user_profile.date_of_birth.date_dt) if user_profile.date_of_birth is not None else None)
+
+        type_counter = [
+            Segmentation("0-18", len([age for age in ages if age is not None and 0 <= age <= 18])),
+            Segmentation("19-25", len([age for age in ages if age is not None and 19 <= age <= 25])),
+            Segmentation("26-35", len([age for age in ages if age is not None and 26 <= age <= 35])),
+            Segmentation("36-45", len([age for age in ages if age is not None and 36 <= age <= 45])),
+            Segmentation("46-55", len([age for age in ages if age is not None and 46 <= age <= 55])),
+            Segmentation("55+", len([age for age in ages if age is not None and 55 < age])),
+            Segmentation("unavailable", len([age for age in ages if age is None]))
+        ]
+        return SegmentationAnalyticResult(type_counter, datetime.now(), min_bound, max_bound)
+
+    def _messages_segmentation(self, analytic: MessageAnalytic) -> SegmentationAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -503,7 +524,7 @@ class AnalyticComputation:
 
         return SegmentationAnalyticResult(type_counter, datetime.now(), min_bound, max_bound)
 
-    def _segmentation_user_messages(self, analytic: MessageAnalytic) -> SegmentationAnalyticResult:
+    def _user_messages_segmentation(self, analytic: MessageAnalytic) -> SegmentationAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         body = {
             "query": {
@@ -822,38 +843,38 @@ class AnalyticComputation:
     def _total_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = []
-        tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
-        tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
-        tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound))
+        tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
+        tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
+        tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound))
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _active_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = []
-        tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
-        tasks.extend(self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
+        tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
+        tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _closed_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        tasks = self.task_manager_interface.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound)
+        tasks = self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound)
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _new_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        tasks = self.task_manager_interface.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound)
+        tasks = self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound)
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _total_transactions(self, analytic: TransactionAnalytic) -> TransactionAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        transactions = self.task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
+        transactions = self.wenet_interface.task_manager.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
         task_ids = set([transaction.task_id for transaction in transactions])
         transaction_returns = [TransactionReturn(task_id, [transaction.id for transaction in transactions if transaction.task_id == task_id]) for task_id in task_ids]
         return TransactionAnalyticResult(len(transactions), transaction_returns, datetime.now(), min_bound, max_bound)
 
-    def _segmentation_transactions(self, analytic: TransactionAnalytic) -> SegmentationAnalyticResult:
+    def _transactions_segmentation(self, analytic: TransactionAnalytic) -> SegmentationAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        transactions = self.task_manager_interface.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
+        transactions = self.wenet_interface.task_manager.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
         transaction_labels = [transaction.label for transaction in transactions]
         unique_labels = set(transaction_labels)
         type_counter = [Segmentation(label, transaction_labels.count(label)) for label in unique_labels]

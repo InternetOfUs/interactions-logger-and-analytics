@@ -17,6 +17,8 @@ from __future__ import absolute_import, annotations
 from datetime import datetime
 from unittest import TestCase
 
+from freezegun import freeze_time
+
 from memex_logging.common.utils import Utils
 
 
@@ -34,3 +36,10 @@ class TestUtils(TestCase):
 
         index = Utils.generate_index("data_type", project="project", dt=datetime(2021, 2, 5))
         self.assertEqual("data_type-project-2021-02-05", index)
+
+    def test_compute_age(self):
+        with freeze_time("2021-07-31"):
+            self.assertEqual(0, Utils.compute_age(datetime(2021, 7, 31)))
+            self.assertEqual(1, Utils.compute_age(datetime(2020, 7, 31)))
+            self.assertEqual(40, Utils.compute_age(datetime(1981, 3, 10)))
+            self.assertEqual(39, Utils.compute_age(datetime(1981, 8, 30)))
