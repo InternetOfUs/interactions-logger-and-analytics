@@ -370,7 +370,9 @@ paths:
 
       * `u:new`: the number of new users in a certain time range;
 
-      * `a:segmentation`: the segmentation of the app users based on the age. Here the temporal information is not significant and the analytic will be computed on all the app users directly from the profile manager component. Note that the project is not related to the name used in the db. It is requested the id of the application.
+      * `a:segmentation`: the segmentation of the app users based on the age. Here the temporal information is not significant and the analytic will be computed on all the app users directly from the profile manager component. Note that the project is not related to the name used in the db. It is requested the id of the application;
+
+      * `g:segmentation`: the segmentation of the app users based on the gender. Here the temporal information is not significant and the analytic will be computed on all the app users directly from the profile manager component. Note that the project is not related to the name used in the db. It is requested the id of the application.
 
 
       MessageMetrics have `dimension` value set to `message`. The following `metric` values are supported:
@@ -1118,7 +1120,7 @@ components:
       properties:
         project:
           type: string
-          description: "Note that for the age analytic, the project is not related to the name used in the db. It is requested the id of the application"
+          description: "Note that for the age and gender analytics, the project is not related to the name used in the db. It is requested the id of the application"
         dimension:
           type: string
           enum: ["user"]

@@ -14,6 +14,7 @@
   Deprecated values are still supported in the creation step of analytics, they will be officially removed in the next major release.
   The new values will be used for describing the requested data.
 * Added user age segmentation analytic
+* Added user gender segmentation analytic
 
 ### 1.4.0
 

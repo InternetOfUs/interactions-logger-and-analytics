@@ -24,7 +24,7 @@ from wenet.interface.client import ApikeyClient
 from wenet.interface.wenet import WeNet
 from wenet.model.task.task import Task, TaskGoal
 from wenet.model.task.transaction import TaskTransaction
-from wenet.model.user.common import Date
+from wenet.model.user.common import Date, Gender
 from wenet.model.user.profile import WeNetUserProfile
 
 from memex_logging.common.analytic.analytic import AnalyticComputation
@@ -140,6 +140,39 @@ class TestAnalyticComputation(TestCase):
                 Segmentation("55+", 1),
                 Segmentation("unavailable", 1)
             ], age_segmentation.counts)
+
+    def test_compute_user_gender_segmentation(self):
+        self.wenet_interface.hub.get_user_ids_for_app = Mock(return_value=[])
+        gender_segmentation = self.analytic_computation.get_analytic_result(UserAnalytic(self.time_range, "project", "g:segmentation"))
+        self.assertIsInstance(gender_segmentation, SegmentationAnalyticResult)
+        self.assertEqual([
+            Segmentation("male", 0),
+            Segmentation("female", 0),
+            Segmentation("non-binary", 0),
+            Segmentation("in-another-way", 0),
+            Segmentation("prefer-not-to-say", 0),
+            Segmentation("unavailable", 0)
+        ], gender_segmentation.counts)
+
+        self.wenet_interface.hub.get_user_ids_for_app = Mock(return_value=["1", "2", "3", "4", "5", "6"])
+        self.wenet_interface.profile_manager.get_user_profile = Mock(side_effect=[
+            WeNetUserProfile(None, None, Gender.MALE, None, None, None, None, None, None, None, None, "1", None, None, None, None, None, None, None, None),
+            WeNetUserProfile(None, None, Gender.FEMALE, None, None, None, None, None, None, None, None, "2", None, None, None, None, None, None, None, None),
+            WeNetUserProfile(None, None, Gender.NOT_SAY, None, None, None, None, None, None, None, None, "3", None, None, None, None, None, None, None, None),
+            WeNetUserProfile(None, None, Gender.OTHER, None, None, None, None, None, None, None, None, "4", None, None, None, None, None, None, None, None),
+            WeNetUserProfile(None, None, Gender.NON_BINARY, None, None, None, None, None, None, None, None, "5", None, None, None, None, None, None, None, None),
+            WeNetUserProfile(None, None, None, None, None, None, None, None, None, None, None, "6", None, None, None, None, None, None, None, None),
+        ])
+        gender_segmentation = self.analytic_computation.get_analytic_result(UserAnalytic(self.time_range, "project", "g:segmentation"))
+        self.assertIsInstance(gender_segmentation, SegmentationAnalyticResult)
+        self.assertEqual([
+            Segmentation("male", 1),
+            Segmentation("female", 1),
+            Segmentation("non-binary", 1),
+            Segmentation("in-another-way", 1),
+            Segmentation("prefer-not-to-say", 1),
+            Segmentation("unavailable", 1)
+        ], gender_segmentation.counts)
 
     def test_compute_user_messages(self):
         self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}}})
