@@ -473,7 +473,7 @@ class AnalyticComputation:
             Segmentation("36-45", len([age for age in ages if age is not None and 36 <= age <= 45])),
             Segmentation("46-55", len([age for age in ages if age is not None and 46 <= age <= 55])),
             Segmentation("55+", len([age for age in ages if age is not None and 55 < age])),
-            Segmentation("unavailable", len([age for age in ages if age is None]))
+            Segmentation("unavailable", ages.count(None))
         ]
         return SegmentationAnalyticResult(type_counter, datetime.now(), min_bound, max_bound)
 
