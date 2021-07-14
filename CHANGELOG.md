@@ -13,6 +13,7 @@
 
   Deprecated values are still supported in the creation step of analytics, they will be officially removed in the next major release.
   The new values will be used for describing the requested data.
+* When updating the analytics, stored the updated version in the index it belongs to (to avoid duplication of data by using a curator).
 
 ### 1.4.0
 
