@@ -14,11 +14,10 @@
 
 from __future__ import absolute_import, annotations
 
-import json
 import logging
 
 from elasticsearch import Elasticsearch
-from flask import request, Response
+from flask import request
 from flask_restful import Resource
 
 from memex_logging.common.model.log import Log
@@ -52,7 +51,7 @@ class LogGeneralLog(Resource):
         """
         self._es = es
 
-    # TODO get log
+    # TODO get, update and delete log
 
 
 class LogGeneralLogs(Resource):
@@ -79,13 +78,11 @@ class LogGeneralLogs(Resource):
         log_ids = []
 
         for log in logs_received:
-            # push the message in the database
-            utils = Utils()
-
+            # store the message in the database
             try:
                 temp_log = Log.from_repr(log)
-                project_name = utils.extract_project_name(log)
-                date = utils.extract_date(log)
+                project_name = Utils.extract_project_name(log)
+                date = Utils.extract_date(log)
                 index_name = "logging-" + project_name + "-" + date
                 query = self._es.index(index=index_name, doc_type='_doc', body=temp_log.to_repr())
                 log_ids.append(query['_id'])
