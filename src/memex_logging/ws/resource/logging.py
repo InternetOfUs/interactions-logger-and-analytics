@@ -25,6 +25,9 @@ from memex_logging.common.model.log import Log
 from memex_logging.common.utils import Utils
 
 
+logger = logging.getLogger("logger.resource.logging")
+
+
 class LoggingResourceBuilder(object):
     """
     Logic class used to create enable the endpoints. This class is used in ws.py
@@ -64,13 +67,13 @@ class LogGeneralLogs(Resource):
         """
         self._es = es
 
-    def post(self) -> Response:
+    def post(self):
         """
         Add a batch of log messages to the database. The logs must be passed in the request body.
         This method log the messages with index <project-name>-logging-<yyyy>-<mm>-<dd>
         :return: the HTTP response
         """
-        logging.warning("LOGGING.API Starting to log a new set of messages")
+        logger.info("Starting to log a new set of messages")
 
         logs_received = request.json
         log_ids = []
@@ -87,16 +90,10 @@ class LogGeneralLogs(Resource):
                 query = self._es.index(index=index_name, doc_type='_doc', body=temp_log.to_repr())
                 log_ids.append(query['_id'])
             except:
-                logging.error("LOGGING.API Failed to log")
-                logging.error(log)
+                logger.error(f"Failed to log: {log}")
 
-        json_response = {
-            "logId": log_ids,
-            "status": "ok",
-            "code": 200
-        }
-
-        resp = Response(json.dumps(json_response), mimetype='application/json')
-        resp.status_code = 200
-
-        return resp
+        return {
+            "traceIds": log_ids,
+            "status": "Created: logs stored",
+            "code": 201
+        }, 201
