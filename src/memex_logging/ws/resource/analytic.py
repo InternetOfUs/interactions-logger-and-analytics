@@ -99,12 +99,12 @@ class AnalyticsPerformer(Resource):
         static_id = str(uuid.uuid4())
         if isinstance(analytic, DimensionAnalytic):
             index_name = "analytic-" + analytic.project.lower() + "-" + analytic.dimension.lower()
-            self.es.index(index=index_name, doc_type='_doc', body=AnalyticResponse(analytic, None, static_id).to_repr())
+            self._es.index(index=index_name, doc_type='_doc', body=AnalyticResponse(analytic, None, static_id).to_repr())
             logger.info("Response stored in " + str(index_name))
 
         elif isinstance(analytic, AggregationAnalytic):
             index_name = "analytic-" + analytic.project.lower() + "-" + analytic.aggregation.lower()
-            self.es.index(index=index_name, doc_type='_doc', body=AggregationResponse(analytic, None, static_id).to_repr())
+            self._es.index(index=index_name, doc_type='_doc', body=AggregationResponse(analytic, None, static_id).to_repr())
             logger.info("Response stored in " + str(index_name))
 
         else:
