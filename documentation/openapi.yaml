@@ -26,6 +26,7 @@ tags:
     description: APIs allowing to register incoming and outgoing messages of a conversation
   - name: logging
     description: APIs allowing to log events
+  - name: logging [not implemented]
   - name: analytic
     description: APIs to retrieve analytics based on messages
 
@@ -273,7 +274,7 @@ paths:
   /log:
     get:
       tags:
-        - logging
+        - logging [not implemented]
       summary: Retrieve a single log by specifying the trace id
       description: This end-point can be used to retrieve all the information of a single log
       parameters:
@@ -300,7 +301,7 @@ paths:
 
     put:
       tags:
-        - logging
+        - logging [not implemented]
       summary: Update an already existing log
       description: This method should be used to update existing logs
       parameters:
@@ -326,7 +327,7 @@ paths:
 
     delete:
       tags:
-        - logging
+        - logging [not implemented]
       summary: Delete a log
       description: This method should be used to delete a log from the database
       parameters:
