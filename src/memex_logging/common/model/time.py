@@ -14,6 +14,7 @@
 
 from __future__ import absolute_import, annotations
 
+import re
 from datetime import datetime
 
 import deprecation
@@ -21,10 +22,17 @@ import deprecation
 
 class MovingTimeWindow:
 
-    ALLOWED_MOVING_TIME_WINDOW_VALUES = ["30D", "10D", "7D", "1D", "TODAY"]
-
     def __init__(self, value: str):
-        self.value = value
+        match = re.match(r"^([0-9]+)([dDwWmMyY])$", value)
+        if match is not None:
+            self.value = int(match.group(1))
+            self.descriptor = match.group(2)
+        else:
+            if value.upper() == "TODAY":
+                self.value = None
+                self.descriptor = "TODAY"
+            else:
+                raise ValueError("Incorrect format for MovingTimeWindow value")
 
     @staticmethod
     def moving_time_window_type():
@@ -36,9 +44,9 @@ class MovingTimeWindow:
         return "DEFAULT"
 
     def to_repr(self) -> dict:
-        return{
+        return {
             'type': self.moving_time_window_type(),
-            'value': self.value.upper()
+            'value': f"{self.value}{self.descriptor}" if self.value is not None else self.descriptor
         }
 
     @staticmethod
@@ -46,14 +54,11 @@ class MovingTimeWindow:
         if str(raw_data['type']).upper() not in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
             raise ValueError("Unrecognized type for MovingTimeWindow")
 
-        if str(raw_data['value']).upper() not in MovingTimeWindow.ALLOWED_MOVING_TIME_WINDOW_VALUES:
-            raise ValueError('Unknown value for value in the MovingTimeWindow')
-
         return MovingTimeWindow(raw_data['value'])
 
     def __eq__(self, o) -> bool:
         if isinstance(o, MovingTimeWindow):
-            return o.value == self.value
+            return o.value == self.value and o.descriptor == self.descriptor
         else:
             return False
 
@@ -74,7 +79,7 @@ class FixedTimeWindow:
         return "CUSTOM"
 
     def to_repr(self) -> dict:
-        return{
+        return {
             'type': self.fixed_time_window_type(),
             'start': self.start.isoformat(),
             'end': self.end.isoformat()
