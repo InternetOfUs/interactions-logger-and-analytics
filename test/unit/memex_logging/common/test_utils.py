@@ -17,6 +17,9 @@ from __future__ import absolute_import, annotations
 from datetime import datetime
 from unittest import TestCase
 
+from freezegun import freeze_time
+
+from memex_logging.common.model.time import FixedTimeWindow, MovingTimeWindow
 from memex_logging.common.utils import Utils
 
 
@@ -34,3 +37,14 @@ class TestUtils(TestCase):
 
         index = Utils.generate_index("data_type", project="project", dt=datetime(2021, 2, 5))
         self.assertEqual("data_type-project-2021-02-05", index)
+
+    def test_extract_range_timestamps(self):
+        start = datetime(2021, 7, 24)
+        end = datetime(2021, 7, 28)
+        self.assertEqual((start, end), Utils.extract_range_timestamps(FixedTimeWindow(start, end)))
+
+        with freeze_time("2021-07-31"):
+            self.assertEqual((datetime(2021, 7, 28), datetime(2021, 7, 31)), Utils.extract_range_timestamps(MovingTimeWindow("3D")))
+            self.assertEqual((datetime(2021, 7, 24), datetime(2021, 7, 31)), Utils.extract_range_timestamps(MovingTimeWindow("1W")))
+            self.assertEqual((datetime(2020, 9, 30), datetime(2021, 7, 31)), Utils.extract_range_timestamps(MovingTimeWindow("10M")))
+            self.assertEqual((datetime(2019, 7, 31), datetime(2021, 7, 31)), Utils.extract_range_timestamps(MovingTimeWindow("2Y")))
