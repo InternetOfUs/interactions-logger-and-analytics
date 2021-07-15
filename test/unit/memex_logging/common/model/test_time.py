@@ -26,9 +26,28 @@ class TestMovingTimeWindow(TestCase):
         time = MovingTimeWindow("7D")
         self.assertEqual(time, MovingTimeWindow.from_repr(time.to_repr()))
 
+    def test_from_deprecated_repr(self):
+        raw_time = {
+            'type': "DEFAULT",
+            'value': "30D"
+        }
+        self.assertIsInstance(MovingTimeWindow.from_repr(raw_time), MovingTimeWindow)
+
+    def test_incorrect_repr(self):
+        with self.assertRaises(ValueError):
+            MovingTimeWindow("30GG")
+
 
 class TestFixedTimeWindow(TestCase):
 
     def test_repr(self):
         time = FixedTimeWindow(datetime.now(), datetime.now())
         self.assertEqual(time, FixedTimeWindow.from_repr(time.to_repr()))
+
+    def test_from_deprecated_repr(self):
+        raw_time = {
+            'type': "CUSTOM",
+            'start': datetime.now().isoformat(),
+            'end': datetime.now().isoformat()
+        }
+        self.assertIsInstance(FixedTimeWindow.from_repr(raw_time), FixedTimeWindow)

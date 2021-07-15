@@ -20,6 +20,7 @@ import uuid
 from typing import Optional, Tuple, Union
 
 import dateutil.parser
+from dateutil.relativedelta import relativedelta
 from elasticsearch import Elasticsearch
 from flask_restful import abort
 
@@ -61,31 +62,20 @@ class Utils:
     @staticmethod
     def extract_range_timestamps(time_object: Union[MovingTimeWindow, FixedTimeWindow]) -> Tuple[datetime, datetime]:
         if isinstance(time_object, MovingTimeWindow):
-            now = datetime.now()
-            now = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            if str(time_object.value).upper() == "30D":
-                delta = timedelta(days=30)
-                temp_old = now - delta
-                return temp_old, now
-            elif str(time_object.value).upper() == "10D":
-                delta = timedelta(days=10)
-                temp_old = now - delta
-                return temp_old, now
-            elif str(time_object.value).upper() == "7D":
-                delta = timedelta(days=7)
-                temp_old = now - delta
-                return temp_old, now
-            elif str(time_object.value).upper() == "1D":
-                delta = timedelta(days=1)
-                temp_old = now - delta
-                return temp_old, now
-            elif str(time_object.value).upper() == "TODAY":
-                delta = timedelta(days=1)
-                temp_new = now + delta
-                return now, temp_new
+            now = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            if str(time_object.descriptor).upper() == "D":
+                return now - relativedelta(days=time_object.value), now
+            elif str(time_object.descriptor).upper() == "W":
+                return now - relativedelta(weeks=time_object.value), now
+            elif str(time_object.descriptor).upper() == "M":
+                return now - relativedelta(months=time_object.value), now
+            elif str(time_object.descriptor).upper() == "Y":
+                return now - relativedelta(years=time_object.value), now
+            elif str(time_object.descriptor).upper() == "TODAY":
+                return now, now + relativedelta(days=1)
             else:
-                logger.info(f"Unable to handle the interval [{time_object.value}]")
-                raise ValueError(f"Unable to handle the interval [{time_object.value}]")
+                logger.info(f"Unable to handle the value [{time_object.value}{time_object.descriptor}]")
+                raise ValueError(f"Unable to handle the value [{time_object.value}{time_object.descriptor}]")
         elif isinstance(time_object, FixedTimeWindow):
             return time_object.start, time_object.end
         else:
