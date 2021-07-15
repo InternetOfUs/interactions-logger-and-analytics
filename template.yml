@@ -30,6 +30,11 @@
           - ${EL_HOST}
           - ${EL_PORT}
         custom_start_command: "exec celery beat -A memex_logging.celery.initialize.celery -s /celery/celerybeat-schedule"
+      - name: migrator
+        required_env_variables:
+          - ${EL_HOST}
+          - ${EL_PORT}
+        custom_start_command: "exec python -m uhopper.utils.elasticsearch.el_migrator"
     docker_registry: docker.io
 
     ci_environments:
