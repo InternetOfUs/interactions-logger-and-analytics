@@ -24,5 +24,5 @@ echo "Running migrator..."
 
 
 
-exec python -m uhopper.utils.elasticsearch.el_migrator
+exec python -m memex_logging.migration.migration
 

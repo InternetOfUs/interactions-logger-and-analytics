@@ -34,7 +34,7 @@
         required_env_variables:
           - ${EL_HOST}
           - ${EL_PORT}
-        custom_start_command: "exec python -m uhopper.utils.elasticsearch.el_migrator"
+        custom_start_command: "exec python -m memex_logging.migration.migration"
     docker_registry: docker.io
 
     ci_environments:
