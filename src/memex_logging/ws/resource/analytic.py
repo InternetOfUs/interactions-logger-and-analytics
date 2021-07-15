@@ -23,7 +23,10 @@ from flask import request, Response
 from flask_restful import Resource, abort
 
 from memex_logging.common.analytic.builder import AnalyticBuilder
-from memex_logging.celery.analytic import compute_analytic
+from memex_logging.celery.analytic import update_analytic
+from memex_logging.common.model.aggregation import AggregationAnalytic
+from memex_logging.common.model.analytic import DimensionAnalytic
+from memex_logging.common.model.response import AnalyticResponse, AggregationResponse
 from memex_logging.common.utils import Utils
 
 
@@ -60,7 +63,7 @@ class AnalyticsPerformer(Resource):
         response = self._es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
 
         if response['hits']['total']['value'] == 0:
-            logger.debug("Resource not found")
+            logger.info("Resource not found")
             return {
                 "status": "Not found: resource not found",
                 "code": 404
@@ -81,14 +84,37 @@ class AnalyticsPerformer(Resource):
         try:
             analytic = AnalyticBuilder.from_repr(analytic)
         except (KeyError, ValueError, TypeError, AttributeError) as e:
-            logger.debug("Error while parsing input analytic data", exc_info=e)
+            logger.info("Error while parsing input analytic data", exc_info=e)
             return {
                 "status": f"Malformed request: analytic not valid. Cause: {e.args[0]}",
                 "code": 400
             }, 400
+        except Exception as e:
+            logger.exception("Something went wrong in parsing the analytic", exc_info=e)
+            return {
+                "status": "Internal server error: something went wrong in parsing the analytic",
+                "code": 500
+            }, 500
 
         static_id = str(uuid.uuid4())
-        compute_analytic.delay(raw_analytic=analytic.to_repr(), static_id=static_id)
+        if isinstance(analytic, DimensionAnalytic):
+            index_name = "analytic-" + analytic.project.lower() + "-" + analytic.dimension.lower()
+            self.es.index(index=index_name, doc_type='_doc', body=AnalyticResponse(analytic, None, static_id).to_repr())
+            logger.info("Response stored in " + str(index_name))
+
+        elif isinstance(analytic, AggregationAnalytic):
+            index_name = "analytic-" + analytic.project.lower() + "-" + analytic.aggregation.lower()
+            self.es.index(index=index_name, doc_type='_doc', body=AggregationResponse(analytic, None, static_id).to_repr())
+            logger.info("Response stored in " + str(index_name))
+
+        else:
+            logger.error(f"Unrecognized class of analytic [{type(analytic)}]")
+            return {
+                "status": "Internal server error: something went wrong in handling the analytic",
+                "code": 500
+            }, 500
+
+        update_analytic.delay(static_id=static_id)
         return {"staticId": static_id}, 200
 
 
