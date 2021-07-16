@@ -19,6 +19,10 @@ elif [[ ${SERVICE} == "beat" ]]; then
     echo "Running beat..."
     ${SCRIPT_DIR}/run_beat.sh
 
+elif [[ ${SERVICE} == "migrator" ]]; then
+    echo "Running migrator..."
+    ${SCRIPT_DIR}/run_migrator.sh
+
 else
     echo "Unknown service ${1}"
 fi
