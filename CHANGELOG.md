@@ -16,6 +16,7 @@
 * Supported an open range of values for days, weeks, months, and years in moving time window.
 * Making sure that analytic documents are stored in the same index they were read from, when they are updated in ElasticSearch.
 * Allowed nullable result values for analytics.
+* Supported the deletion of an analytic and its associated result.
 
 ### 1.4.0
 

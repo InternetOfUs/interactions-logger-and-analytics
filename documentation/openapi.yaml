@@ -187,7 +187,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTP_404_basic'
+                $ref: '#/components/schemas/HTTP_404'
         '500':
           description: internal server error
           content:
@@ -494,6 +494,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTP_404'
+
+    delete:
+      tags:
+        - analytic
+      summary: Delete an analytic
+      description: This end-point allows to delete an analytic based on a `staticId`.
+      parameters:
+        - in: query
+          name: staticId
+          schema:
+            type: string
+          required: true
+          description: the identifier of the analytic
+        - in: query
+          name: project
+          schema:
+            type: string
+          example: "wenet-ask-for-help"
+          description: "Optionally you can also specify the name of the project related to the analytic you want to retrieve. Note that: for the task and transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
+
+      responses:
+        '200':
+          description: analytic deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_200_basic'
+        '400':
+          description: malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_400'
 
   /analytic/usercount:
     get:
@@ -1522,25 +1555,12 @@ components:
           enum: [ '400' ]
           example: 400
 
-    HTTP_404_basic:
+    HTTP_404:
       type: object
       properties:
         status:
           type: string
           example: "Not found"
-        code:
-          enum: [ '404' ]
-          example: 404
-
-    HTTP_404:
-      type: object
-      properties:
-        traceId:
-          type: string
-          example: "bcpg8XYBHD_pmQ1jA7b8"
-        status:
-          type: string
-          example: "Cannot find message {traceId} in the database"
         code:
           enum: [ '404' ]
           example: 404
