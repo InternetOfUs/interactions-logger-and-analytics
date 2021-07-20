@@ -358,7 +358,9 @@ paths:
         - analytic
       summary: Create an analytic
       description: "
-      This end-point allows to create an analytic based on the messages in the database, it returns a `staticId` that you have to use to retrieve the analytic. There are different kind of supported analytics.
+      This end-point allows to create an analytic based on the messages in the database (for this kind of analitics the project should be the one used to store the messages) or on external WeNet servicies (for this kind of analitics the project should be the id of the application).
+      It returns a `staticId` that you have to use to retrieve the analytic.
+      There are different kind of supported analytics.
 
 
       UserMetrics have `dimension` value set to `user`. The following `metric` values are supported:
@@ -371,9 +373,9 @@ paths:
 
       * `u:new`: the number of new users in a certain time range (that have sent/received at least a message for the first time);
 
-      * `a:segmentation`: the segmentation of the app users based on the age. Here the temporal information is not significant and the analytic will be computed on all the app users directly from the profile manager component. Note that the project is not related to the name used in the db. It is requested the id of the application;
+      * `a:segmentation`: the segmentation of the app users based on the age. This kind of analytic will be computed directly from the hub and profile manager components. Note that the project is not related to the name used in the db. It is requested the id of the application;
 
-      * `g:segmentation`: the segmentation of the app users based on the gender. Here the temporal information is not significant and the analytic will be computed on all the app users directly from the profile manager component. Note that the project is not related to the name used in the db. It is requested the id of the application.
+      * `g:segmentation`: the segmentation of the app users based on the gender. This kind of analytic will be computed directly from the hub and profile manager components. Note that the project is not related to the name used in the db. It is requested the id of the application.
 
 
       MessageMetrics have `dimension` value set to `message`. The following `metric` values are supported:
@@ -503,7 +505,7 @@ paths:
           schema:
             type: string
           example: "wenet-ask-for-help"
-          description: "Optionally you can also specify the name of the project related to the analytic you want to retrieve. Note that: for the task and transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
+          description: "Optionally you can also specify the name of the project related to the analytic you want to retrieve. Note that: for the task, transaction and user segmentation based on age or gender analytics, the project is not related to the name used in the db. It is requested the id of the application"
 
       responses:
         '200':
@@ -544,7 +546,7 @@ paths:
           schema:
             type: string
           example: "wenet-ask-for-help"
-          description: "Optionally you can also specify the name of the project related to the analytic you want to retrieve. Note that: for the task and transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
+          description: "Optionally you can also specify the name of the project related to the analytic you want to retrieve. Note that: for the task, transaction and user segmentation based on age or gender analytics, the project is not related to the name used in the db. It is requested the id of the application"
 
       responses:
         '200':
@@ -1154,7 +1156,7 @@ components:
       properties:
         project:
           type: string
-          description: "Note that for the age and gender analytics, the project is not related to the name used in the db. It is requested the id of the application"
+          description: "Note that for the user segmentation based on age or gender analytics, the project is not related to the name used in the db. It is requested the id of the application"
         dimension:
           type: string
           enum: ["user"]
