@@ -363,13 +363,13 @@ paths:
 
       UserMetrics have `dimension` value set to `user`. The following `metric` values are supported:
 
-      * `u:total`: the number of total users in a certain time range;
+      * `u:total`: the number of total users in a certain time range (that have sent/received at least a message);
 
-      * `u:active`: the number of active users in a certain time range (that send at least a request message);
+      * `u:active`: the number of active users in a certain time range (that have sent at least a request message);
 
-      * `u:engaged`: the number of engaged users in a certain time range (that receive at least a notification message);
+      * `u:engaged`: the number of engaged users in a certain time range (that have received at least a notification message);
 
-      * `u:new`: the number of new users in a certain time range;
+      * `u:new`: the number of new users in a certain time range (that have sent/received at least a message for the first time);
 
       * `a:segmentation`: the segmentation of the app users based on the age. Here the temporal information is not significant and the analytic will be computed on all the app users directly from the profile manager component. Note that the project is not related to the name used in the db. It is requested the id of the application;
 
