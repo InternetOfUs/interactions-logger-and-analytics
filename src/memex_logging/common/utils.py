@@ -82,6 +82,16 @@ class Utils:
             logger.info(f"Unrecognized type [{type(time_object)}] for timespan")
             raise ValueError(f"Unrecognized type [{type(time_object)}] for timespan")
 
+    @staticmethod
+    def compute_age(date_of_birth: datetime) -> int:
+        now = datetime.now()
+        years = now.year - date_of_birth.year
+        if now.month >= date_of_birth.month and now.day >= date_of_birth.day:
+            age = years
+        else:
+            age = years - 1
+        return age
+
     # TODO stop using this and remove!!!!!
     @staticmethod
     def extract_date(data: dict) -> str:

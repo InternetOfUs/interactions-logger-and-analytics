@@ -121,7 +121,6 @@ class AnalyticInterface(Resource):
                 "code": 500
             }, 500
 
-        update_analytic.delay(static_id=static_id)
         return {"staticId": static_id}, 200
 
     def delete(self):

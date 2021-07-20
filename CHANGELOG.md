@@ -17,6 +17,8 @@
 * Making sure that analytic documents are stored in the same index they were read from, when they are updated in ElasticSearch.
 * Allowed nullable result values for analytics.
 * Supported the deletion of an analytic and its associated result.
+* Added user age segmentation analytic.
+* Removed the immediate computation of an analytic after its creation.
 
 ### 1.4.0
 
