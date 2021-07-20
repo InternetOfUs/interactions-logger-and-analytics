@@ -19,6 +19,7 @@ from datetime import datetime
 
 from elasticsearch import Elasticsearch
 from wenet.interface.wenet import WeNet
+from wenet.model.user.common import Gender
 
 from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic, TaskAnalytic, TransactionAnalytic, \
     ConversationAnalytic, DialogueAnalytic, BotAnalytic, DimensionAnalytic
@@ -49,6 +50,8 @@ class AnalyticComputation:
                 result = self._new_users(analytic)
             elif analytic.metric.lower() == "a:segmentation":
                 result = self._user_age_segmentation(analytic)
+            elif analytic.metric.lower() == "g:segmentation":
+                result = self._user_gender_segmentation(analytic)
             else:
                 logger.info(f"Unknown value for metric [{analytic.metric}] for UserAnalytic")
                 raise ValueError(f"Unknown value for metric [{analytic.metric}] for UserAnalytic")
@@ -474,6 +477,24 @@ class AnalyticComputation:
             Segmentation("46-55", len([age for age in ages if age is not None and 46 <= age <= 55])),
             Segmentation("55+", len([age for age in ages if age is not None and 55 < age])),
             Segmentation("unavailable", ages.count(None))
+        ]
+        return SegmentationAnalyticResult(type_counter, datetime.now(), min_bound, max_bound)
+
+    def _user_gender_segmentation(self, analytic: UserAnalytic) -> SegmentationAnalyticResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        user_ids = self.wenet_interface.hub.get_user_ids_for_app(analytic.project, from_datetime=min_bound, to_datetime=max_bound)
+        genders = []
+        for user_id in user_ids:
+            user_profile = self.wenet_interface.profile_manager.get_user_profile(user_id)
+            genders.append(user_profile.gender)
+
+        type_counter = [
+            Segmentation("male", genders.count(Gender.MALE)),
+            Segmentation("female", genders.count(Gender.FEMALE)),
+            Segmentation("non-binary", genders.count(Gender.NON_BINARY)),
+            Segmentation("in-another-way", genders.count(Gender.OTHER)),
+            Segmentation("prefer-not-to-say", genders.count(Gender.NOT_SAY)),
+            Segmentation("unavailable", genders.count(None))
         ]
         return SegmentationAnalyticResult(type_counter, datetime.now(), min_bound, max_bound)
 

@@ -19,6 +19,7 @@
 * Supported the deletion of an analytic and its associated result.
 * Added user age segmentation analytic.
 * Removed the immediate computation of an analytic after its creation.
+* Added user gender segmentation analytic.
 
 ### 1.4.0
 
