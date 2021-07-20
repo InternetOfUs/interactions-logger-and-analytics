@@ -52,7 +52,7 @@ class AnalyticsPerformer(Resource):
         static_id = request.args.get('staticId')
         logger.info(f"Retrieving analytic with static_id: {static_id}")
         if static_id == "" or static_id is None:
-            logger.info("Missing required staticId parameter")
+            logger.debug("Missing required staticId parameter")
             return {
                 "status": "Malformed request: missing required parameter `staticId`",
                 "code": 400
@@ -63,7 +63,7 @@ class AnalyticsPerformer(Resource):
         response = self._es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
 
         if response['hits']['total']['value'] == 0:
-            logger.info("Resource not found")
+            logger.debug("Resource not found")
             return {
                 "status": "Not found: resource not found",
                 "code": 404
@@ -75,7 +75,7 @@ class AnalyticsPerformer(Resource):
         analytic = request.json
         logger.info(f"Creating analytic: {analytic}")
         if analytic is None:
-            logger.info("Analytic failed to be computed due to missing data")
+            logger.debug("Analytic failed to be computed due to missing data")
             return {
                 "status": "Malformed request: data is missing",
                 "code": 400
@@ -84,7 +84,7 @@ class AnalyticsPerformer(Resource):
         try:
             analytic = AnalyticBuilder.from_repr(analytic)
         except (KeyError, ValueError, TypeError, AttributeError) as e:
-            logger.info("Error while parsing input analytic data", exc_info=e)
+            logger.warning("Error while parsing input analytic data", exc_info=e)
             return {
                 "status": f"Malformed request: analytic not valid. Cause: {e.args[0]}",
                 "code": 400
@@ -100,12 +100,12 @@ class AnalyticsPerformer(Resource):
         if isinstance(analytic, DimensionAnalytic):
             index_name = "analytic-" + analytic.project.lower() + "-" + analytic.dimension.lower()
             self._es.index(index=index_name, doc_type='_doc', body=AnalyticResponse(analytic, None, static_id).to_repr())
-            logger.info("Response stored in " + str(index_name))
+            logger.debug(f"Analytic stored in index [{index_name}]")
 
         elif isinstance(analytic, AggregationAnalytic):
             index_name = "analytic-" + analytic.project.lower() + "-" + analytic.aggregation.lower()
             self._es.index(index=index_name, doc_type='_doc', body=AggregationResponse(analytic, None, static_id).to_repr())
-            logger.info("Response stored in " + str(index_name))
+            logger.debug(f"Aggregation stored in index [{index_name}]")
 
         else:
             logger.error(f"Unrecognized class of analytic [{type(analytic)}]")

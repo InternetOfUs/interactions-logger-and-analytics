@@ -15,7 +15,7 @@
   The new values will be used for describing the requested data.
 * Supported an open range of values for days, weeks, months, and years in moving time window.
 * When updating the analytics, stored the updated version in the index it belongs to (to avoid duplication of data by using a curator).
-* Stored response with empty result at the creation of the analytic.
+* Allowed nullable result in the analytic.
 
 ### 1.4.0
 
