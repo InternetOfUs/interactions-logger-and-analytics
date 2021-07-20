@@ -101,7 +101,7 @@ class MigrationManager:
 
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(description="Elasticsearch Migrator")
-    arg_parser.add_argument("-f", "--folder", default=os.getenv("MIGRATION_FOLDER"), type=str, help="Migration folder")
+    arg_parser.add_argument("-f", "--folder", default=os.getenv("MIGRATION_FOLDER", "actions"), type=str, help="Migration folder")
     arg_parser.add_argument("-i", "--index", default=os.getenv("MIGRATION_MANAGER_INDEX", "migrations"), type=str, help="Migration manager index")
 
     args = arg_parser.parse_args()

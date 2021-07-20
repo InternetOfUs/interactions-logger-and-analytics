@@ -30,6 +30,7 @@ class CommonWsTestCase(TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.dao_collector = MockDaoCollectorBuilder.build_mock_daos()
-        api = WsInterface(self.dao_collector, Elasticsearch())
+        self.es = Elasticsearch()
+        api = WsInterface(self.dao_collector, self.es)
         api.get_application().testing = True
         self.client = api.get_application().test_client()
