@@ -51,25 +51,23 @@ def update_analytic(static_id: str):
         logger.info(f"Analytic with static id [{static_id}] not found")
         raise ValueError(f"Analytic with static id [{static_id}] not found")
 
+    index = raw_response['hits']['hits'][0]['_index']
     trace_id = raw_response['hits']['hits'][0]['_id']
-    analytic = AnalyticBuilder.from_repr(raw_response['hits']['hits'][0]['_source']["query"])
+    doc_type = raw_response['hits']['hits'][0]['_type']
 
+    analytic = AnalyticBuilder.from_repr(raw_response['hits']['hits'][0]['_source']['query'])
     if isinstance(analytic, DimensionAnalytic):
         response = AnalyticResponse.from_repr(raw_response['hits']['hits'][0]['_source'])
         analytic_computation = AnalyticComputation(es, task_manager_interface)
         response.result = analytic_computation.get_analytic_result(analytic)
-        project = analytic.project
-        index_name = "analytic-" + project.lower() + "-" + analytic.dimension.lower()
-        es.index(index=index_name, id=trace_id, doc_type='_doc', body=response.to_repr())
+        es.index(index=index, id=trace_id, doc_type=doc_type, body=response.to_repr())
         logger.info("Result updated")
 
     elif isinstance(analytic, AggregationAnalytic):
         response = AggregationResponse.from_repr(raw_response['hits']['hits'][0]['_source'])
         aggregation_computation = AggregationComputation(es)
         response.result = aggregation_computation.get_aggregation_result(analytic)
-        project = analytic.project
-        index_name = "analytic-" + project.lower() + "-" + analytic.aggregation.lower()
-        es.index(index=index_name, id=trace_id, doc_type='_doc', body=response.to_repr())
+        es.index(index=index, id=trace_id, doc_type=doc_type, body=response.to_repr())
         logger.info("Result updated")
 
     else:
