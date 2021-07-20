@@ -36,36 +36,6 @@ from memex_logging.common.utils import Utils
 logger = logging.getLogger("logger.celery.analytic")
 
 
-@celery.task(name='tasks.compute_analytic')
-def compute_analytic(raw_analytic: dict, static_id: str):
-    logger.info("Computing analytic: " + str(raw_analytic))
-    analytic = AnalyticBuilder.from_repr(raw_analytic)
-
-    es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
-    client = ApikeyClient(os.getenv("APIKEY"))
-    task_manager_interface = TaskManagerInterface(client, os.getenv("INSTANCE"))
-
-    if isinstance(analytic, DimensionAnalytic):
-        analytic_computation = AnalyticComputation(es, task_manager_interface)
-        result = analytic_computation.get_analytic_result(analytic)
-        project = analytic.project
-        index_name = "analytic-" + project.lower() + "-" + analytic.dimension.lower()
-        es.index(index=index_name, doc_type='_doc', body=AnalyticResponse(analytic, result, static_id).to_repr())
-        logger.info("Result stored in " + str(index_name))
-
-    elif isinstance(analytic, AggregationAnalytic):
-        aggregation_computation = AggregationComputation(es)
-        result = aggregation_computation.get_aggregation_result(analytic)
-        project = analytic.project
-        index_name = "analytic-" + project.lower() + "-" + analytic.aggregation.lower()
-        es.index(index=index_name, doc_type='_doc', body=AggregationResponse(analytic, result, static_id).to_repr())
-        logger.info("Result stored in " + str(index_name))
-
-    else:
-        logger.info(f"Unrecognized class of analytic [{type(analytic)}]")
-        raise ValueError(f"Unrecognized class of analytic [{type(analytic)}]")
-
-
 @celery.task(name='tasks.update_analytic')
 def update_analytic(static_id: str):
     logger.info(f"Updating analytic with static id [{static_id}]")
@@ -81,25 +51,23 @@ def update_analytic(static_id: str):
         logger.info(f"Analytic with static id [{static_id}] not found")
         raise ValueError(f"Analytic with static id [{static_id}] not found")
 
+    index = raw_response['hits']['hits'][0]['_index']
     trace_id = raw_response['hits']['hits'][0]['_id']
-    analytic = AnalyticBuilder.from_repr(raw_response['hits']['hits'][0]['_source']["query"])
+    doc_type = raw_response['hits']['hits'][0]['_type']
 
+    analytic = AnalyticBuilder.from_repr(raw_response['hits']['hits'][0]['_source']['query'])
     if isinstance(analytic, DimensionAnalytic):
         response = AnalyticResponse.from_repr(raw_response['hits']['hits'][0]['_source'])
         analytic_computation = AnalyticComputation(es, task_manager_interface)
         response.result = analytic_computation.get_analytic_result(analytic)
-        project = analytic.project
-        index_name = "analytic-" + project.lower() + "-" + analytic.dimension.lower()
-        es.index(index=index_name, id=trace_id, doc_type='_doc', body=response.to_repr())
+        es.index(index=index, id=trace_id, doc_type=doc_type, body=response.to_repr())
         logger.info("Result updated")
 
     elif isinstance(analytic, AggregationAnalytic):
         response = AggregationResponse.from_repr(raw_response['hits']['hits'][0]['_source'])
         aggregation_computation = AggregationComputation(es)
         response.result = aggregation_computation.get_aggregation_result(analytic)
-        project = analytic.project
-        index_name = "analytic-" + project.lower() + "-" + analytic.aggregation.lower()
-        es.index(index=index_name, id=trace_id, doc_type='_doc', body=response.to_repr())
+        es.index(index=index, id=trace_id, doc_type=doc_type, body=response.to_repr())
         logger.info("Result updated")
 
     else:

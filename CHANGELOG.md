@@ -14,6 +14,8 @@
   Deprecated values are still supported in the creation step of analytics, they will be officially removed in the next major release.
   The new values will be used for describing the requested data.
 * Supported an open range of values for days, weeks, months, and years in moving time window.
+* Making sure that analytic documents are stored in the same index they were read from, when they are updated in ElasticSearch.
+* Allowed nullable result values for analytics.
 * Supported the deletion of an analytic and its associated result.
 
 ### 1.4.0

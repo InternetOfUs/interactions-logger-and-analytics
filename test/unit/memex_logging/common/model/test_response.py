@@ -30,9 +30,17 @@ class TestAnalyticResponse(TestCase):
         response = AnalyticResponse(UserAnalytic(MovingTimeWindow("7D"), "project", "u:total"), AnalyticResult(1, ["1"], "userId", datetime.now(), datetime.now(), datetime.now()), "static_id")
         self.assertEqual(response, AnalyticResponse.from_repr(response.to_repr()))
 
+    def test_repr_null_result(self):
+        response = AnalyticResponse(UserAnalytic(MovingTimeWindow("7D"), "project", "u:total"), None, "static_id")
+        self.assertEqual(response, AnalyticResponse.from_repr(response.to_repr()))
+
 
 class TestAggregationResponse(TestCase):
 
     def test_repr(self):
         response = AggregationResponse(AggregationAnalytic(MovingTimeWindow("7D"), "project", "intent.confidence", "avg", None), AggregationResult("avg", 0.78, datetime.now(), datetime.now(), datetime.now()), "static_id")
+        self.assertEqual(response, AggregationResponse.from_repr(response.to_repr()))
+
+    def test_repr_null_result(self):
+        response = AggregationResponse(AggregationAnalytic(MovingTimeWindow("7D"), "project", "intent.confidence", "avg", None), None, "static_id")
         self.assertEqual(response, AggregationResponse.from_repr(response.to_repr()))

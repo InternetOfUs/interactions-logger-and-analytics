@@ -176,8 +176,6 @@ class MessageDao(CommonDao):
 
         if from_time > to_time:
             raise ValueError("`fromTime` is greater than `toTime`: `fromTime` must be is smaller than `toTime`")
-        elif from_time.date() == to_time.date():
-            return self._generate_index(project=project, dt=from_time)
         else:
             return self._generate_index(project=project)
 
