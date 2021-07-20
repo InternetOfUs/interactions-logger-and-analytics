@@ -467,7 +467,7 @@ class AnalyticComputation:
         ages = []
         for user_id in user_ids:
             user_profile = self.wenet_interface.profile_manager.get_user_profile(user_id)
-            ages.append(Utils.compute_age(user_profile.date_of_birth.date_dt) if user_profile.date_of_birth is not None else None)
+            ages.append(Utils.compute_age(user_profile.date_of_birth.date_dt) if user_profile.date_of_birth is not None and user_profile.date_of_birth.date_dt is not None else None)
 
         type_counter = [
             Segmentation("0-18", len([age for age in ages if age is not None and 0 <= age <= 18])),
