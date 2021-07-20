@@ -14,6 +14,8 @@
 
 from __future__ import absolute_import, annotations
 
+from typing import Optional
+
 from memex_logging.common.model.aggregation import AggregationAnalytic
 from memex_logging.common.model.analytic import DimensionAnalytic
 from memex_logging.common.model.result import CommonResult, AggregationResult
@@ -21,7 +23,7 @@ from memex_logging.common.model.result import CommonResult, AggregationResult
 
 class AnalyticResponse:
 
-    def __init__(self, analytic: DimensionAnalytic, result: CommonResult, static_id: str) -> None:
+    def __init__(self, analytic: DimensionAnalytic, result: Optional[CommonResult], static_id: str) -> None:
         self.analytic = analytic
         self.result = result
         self.static_id = static_id
@@ -29,14 +31,14 @@ class AnalyticResponse:
     def to_repr(self) -> dict:
         return {
             'query': self.analytic.to_repr(),
-            'result': self.result.to_repr(),
+            'result': self.result.to_repr() if self.result is not None else None,
             'staticId': self.static_id
         }
 
     @staticmethod
     def from_repr(raw_data: dict) -> AnalyticResponse:
         analytic = DimensionAnalytic.from_repr(raw_data['query'])
-        result = CommonResult.from_repr(raw_data['result'])
+        result = CommonResult.from_repr(raw_data['result']) if raw_data['result'] is not None else None
         return AnalyticResponse(analytic, result, raw_data['staticId'])
 
     def __eq__(self, o) -> bool:
@@ -48,7 +50,7 @@ class AnalyticResponse:
 
 class AggregationResponse:
 
-    def __init__(self, analytic: AggregationAnalytic, result: AggregationResult, static_id: str) -> None:
+    def __init__(self, analytic: AggregationAnalytic, result: Optional[AggregationResult], static_id: str) -> None:
         self.analytic = analytic
         self.result = result
         self.static_id = static_id
@@ -56,14 +58,14 @@ class AggregationResponse:
     def to_repr(self) -> dict:
         return {
             'query': self.analytic.to_repr(),
-            'result': self.result.to_repr(),
+            'result': self.result.to_repr() if self.result is not None else None,
             'staticId': self.static_id
         }
 
     @staticmethod
     def from_repr(raw_data: dict) -> AggregationResponse:
         analytic = AggregationAnalytic.from_repr(raw_data['query'])
-        result = AggregationResult.from_repr(raw_data['result'], analytic.aggregation)
+        result = AggregationResult.from_repr(raw_data['result'], analytic.aggregation) if raw_data['result'] is not None else None
         return AggregationResponse(analytic, result, raw_data['staticId'])
 
     def __eq__(self, o) -> bool:

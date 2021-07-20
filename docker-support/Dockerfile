@@ -27,6 +27,7 @@ COPY run.sh .
 COPY run_logger.sh .
 COPY run_worker.sh .
 COPY run_beat.sh .
+COPY run_migrator.sh .
 
 ADD src/ /scripts/
 ADD documentation/ /documentation/

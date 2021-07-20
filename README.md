@@ -66,18 +66,18 @@ pip install -r requirements.txt
 Before starting the services, apply migration to your Elasticsearch instance.
 To run the migration you only need to run the migration module:
 
-```shell script
-python -m uhopper.utils.elasticsearch.el_migrator
+```bash
+python -m memex_logging.migration.migration
 ```
 
 In order to execute the migrations, configure the following environment variables:
 
-- `MIGRATION_FOLDER`: The folder which contains all the migration
-- `MIGRATION_MANAGER_INDEX`: The index in which the applied migrations are stored
-- `EL_HOST` (optional, the default value is `localhost`): the host where the Elasticsearch database is going to be available;
-- `EL_PORT` (optional, the default value is `9200`): the port where the Elasticsearch database is going to be available;
-- `EL_USERNAME` (optional for versions of Elasticsearch < `7`): the username of the user to access the Elasticsearch database;
-- `EL_PASSWORD` (optional for versions of Elasticsearch < `7`): the password of the user to access the Elasticsearch database;
+* `MIGRATION_FOLDER`  (optional, the default value is `actions`): the folder which contains all the migration;
+* `MIGRATION_MANAGER_INDEX`  (optional, the default value is `migrations`): the index in which the applied migrations are stored;
+* `EL_HOST` (optional, the default value is `localhost`): the host where the Elasticsearch database is going to be available;
+* `EL_PORT` (optional, the default value is `9200`): the port where the Elasticsearch database is going to be available;
+* `EL_USERNAME` (optional for versions of Elasticsearch < `7`): the username of the user to access the Elasticsearch database;
+* `EL_PASSWORD` (optional for versions of Elasticsearch < `7`): the password of the user to access the Elasticsearch database;
 
 
 ### Environment variables
