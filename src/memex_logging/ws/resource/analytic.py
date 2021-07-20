@@ -60,7 +60,7 @@ class AnalyticInterface(Resource):
         try:
             response = self._es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
         except Exception as e:
-            logger.exception("Analytic failed to be retrieved", exc_info=e)
+            logger.exception(f"Analytic with static_id [{static_id}] failed to be retrieved", exc_info=e)
             return {
                 "status": "Internal server error: could not retrieved the analytic",
                 "code": 500
@@ -102,7 +102,7 @@ class AnalyticInterface(Resource):
         static_id = request.args.get('staticId')
         logger.info(f"Deleting analytic with static_id: {static_id}")
         if static_id == "" or static_id is None:
-            logger.info("Missing required staticId parameter")
+            logger.debug("Missing required staticId parameter")
             return {
                 "status": "Malformed request: missing required parameter `staticId`",
                 "code": 400
@@ -113,7 +113,7 @@ class AnalyticInterface(Resource):
         try:
             self._es.delete_by_query(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
         except Exception as e:
-            logger.exception("Analytic failed to be deleted", exc_info=e)
+            logger.exception(f"Analytic with static_id [{static_id}] failed to be deleted", exc_info=e)
             return {
                 "status": "Internal server error: could not delete the analytic",
                 "code": 500
