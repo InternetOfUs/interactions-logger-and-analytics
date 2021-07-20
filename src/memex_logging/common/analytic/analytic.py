@@ -463,7 +463,7 @@ class AnalyticComputation:
 
     def _user_age_segmentation(self, analytic: UserAnalytic) -> SegmentationAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        user_ids = self.wenet_interface.hub.get_user_ids_for_app(analytic.project)  # TODO add min_bound and max_bound as query params when the endpoint (and the common models) supports them
+        user_ids = self.wenet_interface.hub.get_user_ids_for_app(analytic.project, from_datetime=min_bound, to_datetime=max_bound)
         ages = []
         for user_id in user_ids:
             user_profile = self.wenet_interface.profile_manager.get_user_profile(user_id)
@@ -482,7 +482,7 @@ class AnalyticComputation:
 
     def _user_gender_segmentation(self, analytic: UserAnalytic) -> SegmentationAnalyticResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-        user_ids = self.wenet_interface.hub.get_user_ids_for_app(analytic.project)  # TODO add min_bound and max_bound as query params when the endpoint (and the common models) supports them
+        user_ids = self.wenet_interface.hub.get_user_ids_for_app(analytic.project, from_datetime=min_bound, to_datetime=max_bound)
         genders = []
         for user_id in user_ids:
             user_profile = self.wenet_interface.profile_manager.get_user_profile(user_id)
