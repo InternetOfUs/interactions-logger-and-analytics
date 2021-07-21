@@ -103,8 +103,8 @@ class Utils:
             try:
                 positioned = dateutil.parser.parse(data['timestamp'])
                 return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
-            except:
-                logging.error("`timestamp` of the message cannot be parsed")
+            except Exception as e:
+                logging.error("`timestamp` of the message cannot be parsed", exc_info=e)
                 logging.error(data)
         else:
             support_bound = datetime.now().isoformat()

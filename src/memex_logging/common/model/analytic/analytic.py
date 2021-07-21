@@ -38,7 +38,7 @@ class Analytic:
 
     @staticmethod
     def from_repr(raw_data: dict) -> Analytic:
-        descriptor = AnalyticDescriptorBuilder.from_repr(raw_data['query'])
+        descriptor = AnalyticDescriptorBuilder.build(raw_data['query'])
         result = AnalyticResultBuilder.from_repr(raw_data['result']) if raw_data['result'] is not None else None
         return Analytic(raw_data['staticId'], descriptor, result=result)
 

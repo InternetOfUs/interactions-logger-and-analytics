@@ -25,12 +25,12 @@ class TestAggregation(TestCase):
 
     def test_repr(self):
         aggregation = AggregationAnalytic(MovingTimeWindow("7D"), "project", "intent.confidence", "avg", None)
-        self.assertEqual(aggregation, AggregationAnalytic.from_repr(aggregation.to_repr()))
-        self.assertEqual(aggregation, AnalyticBuilder.from_repr(aggregation.to_repr()))
+        self.assertEqual(aggregation, AggregationAnalytic.build(aggregation.to_repr()))
+        self.assertEqual(aggregation, AnalyticBuilder.build(aggregation.to_repr()))
 
 
 class TestFilter(TestCase):
 
     def test_repr(self):
         aggregation_filter = Filter("messageId", "match", "hi")
-        self.assertEqual(aggregation_filter, Filter.from_repr(aggregation_filter.to_repr()))
+        self.assertEqual(aggregation_filter, Filter.build(aggregation_filter.to_repr()))

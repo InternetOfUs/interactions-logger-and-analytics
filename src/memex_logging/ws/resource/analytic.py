@@ -14,32 +14,30 @@
 
 from __future__ import absolute_import, annotations
 
-import json
 import logging
 import uuid
 
 from elasticsearch import Elasticsearch
-from flask import request, Response
-from flask_restful import Resource, abort
+from flask import request
+from flask_restful import Resource
 
-from memex_logging.common.analytic.builder import AnalyticBuilder
-from memex_logging.celery.analytic import update_analytic
-from memex_logging.common.model.aggregation import AggregationAnalytic
-from memex_logging.common.model.analytic import DimensionAnalytic
-from memex_logging.common.model.response import AnalyticResponse, AggregationResponse
+from memex_logging.common.model.analytic.analytic import Analytic
+from memex_logging.common.model.analytic.descriptor.aggregation import AggregationDescriptor
+from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
+from memex_logging.common.model.analytic.descriptor.count import CountDescriptor
+from memex_logging.common.model.analytic.descriptor.segmentation import SegmentationDescriptor
 from memex_logging.common.utils import Utils
-
 
 logger = logging.getLogger("logger.resource.analytic")
 
 
-class AnalyticsResourceBuilder(object):
+class AnalyticsResourceBuilder:
     @staticmethod
     def routes(es: Elasticsearch):
         return [
             (AnalyticInterface, '/analytic', (es,)),
-            (GetNoClickPerUser, '/analytic/usercount', (es,)),
-            (GetNoClickPerEvent, '/analytic/eventcount', (es,))
+            # (GetNoClickPerUser, '/analytic/usercount', (es,)),
+            # (GetNoClickPerEvent, '/analytic/eventcount', (es,))
         ]
 
 
@@ -49,21 +47,22 @@ class AnalyticInterface(Resource):
         self._es = es
 
     def get(self):
-        static_id = request.args.get('staticId')
-        logger.info(f"Retrieving analytic with static_id: {static_id}")
-        if static_id == "" or static_id is None:
-            logger.debug("Missing required staticId parameter")
+        analytic_id = request.args.get("id")
+        logger.info(f"Retrieving analytic with id [{analytic_id}]")
+        if analytic_id == "" or analytic_id is None:
+            logger.debug("Analytic id has not been specified")
             return {
-                "status": "Malformed request: missing required parameter `staticId`",
+                "status": "Malformed request: missing required parameter `id`",
                 "code": 400
             }, 400
 
         project = request.args.get('project', None)
         index_name = Utils.generate_index("analytic", project=project)
         try:
-            response = self._es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
+            # TODO should be moved into a dedicated dao
+            response = self._es.search(index=index_name, body={"query": {"match": {"id.keyword": analytic_id}}})
         except Exception as e:
-            logger.exception(f"Analytic with static_id [{static_id}] failed to be retrieved", exc_info=e)
+            logger.exception(f"Analytic with id [{analytic_id}] could not be retrieved", exc_info=e)
             return {
                 "status": "Internal server error: could not retrieved the analytic",
                 "code": 500
@@ -76,20 +75,21 @@ class AnalyticInterface(Resource):
                 "code": 404
             }, 404
         else:
+            # TODO we should never return data that has not successfully passed a parsing step, in this case we do not know what we are sending back as result
             return response['hits']['hits'][0]['_source'], 200
 
     def post(self):
-        analytic = request.json
-        logger.info(f"Creating analytic: {analytic}")
-        if analytic is None:
-            logger.debug("Analytic failed to be computed due to missing data")
+        body = request.json
+        logger.info("Defining new analytic")
+        if body is None:
+            logger.debug("Could not build analytic descriptor: no data was posted")
             return {
                 "status": "Malformed request: data is missing",
                 "code": 400
             }, 400
 
         try:
-            analytic = AnalyticBuilder.from_repr(analytic)
+            descriptor = AnalyticDescriptorBuilder.build(body)
         except (KeyError, ValueError, TypeError, AttributeError) as e:
             logger.warning("Error while parsing input analytic data", exc_info=e)
             return {
@@ -99,137 +99,140 @@ class AnalyticInterface(Resource):
         except Exception as e:
             logger.exception("Something went wrong in parsing the analytic", exc_info=e)
             return {
-                "status": "Internal server error: something went wrong in parsing the analytic",
+                "status": "Internal server error: something went wrong while parsing the posted analytic",
                 "code": 500
             }, 500
 
-        static_id = str(uuid.uuid4())
-        if isinstance(analytic, DimensionAnalytic):
-            index_name = "analytic-" + analytic.project.lower() + "-" + analytic.dimension.lower()
-            self._es.index(index=index_name, doc_type='_doc', body=AnalyticResponse(analytic, None, static_id).to_repr())
-            logger.debug(f"Analytic stored in index [{index_name}]")
-
-        elif isinstance(analytic, AggregationAnalytic):
-            index_name = "analytic-" + analytic.project.lower() + "-" + analytic.aggregation.lower()
-            self._es.index(index=index_name, doc_type='_doc', body=AggregationResponse(analytic, None, static_id).to_repr())
-            logger.debug(f"Aggregation stored in index [{index_name}]")
-
+        # TODO should we maybe using the Utils.generate_index() method?
+        if isinstance(descriptor, CountDescriptor):
+            index_name = "analytic-" + descriptor.project.lower() + "-" + descriptor.dimension.lower()  # TODO it should always be lowercase at this stage
+        elif isinstance(descriptor, AggregationDescriptor):
+            index_name = "analytic-" + descriptor.project.lower() + "-" + descriptor.aggregation.lower()  # TODO it should always be lowercase at this stage
+        elif isinstance(descriptor, SegmentationDescriptor):
+            index_name = "analytic-" + descriptor.project.lower() + "-" + descriptor.dimension.lower()  # TODO it should always be lowercase at this stage
         else:
-            logger.error(f"Unrecognized class of analytic [{type(analytic)}]")
+            logger.error(f"Un-supported analytic descriptor of type [{type(descriptor)}]")
             return {
-                "status": "Internal server error: something went wrong in handling the analytic",
+                "status": "Internal server error: something went wrong while building the new analytic",
                 "code": 500
             }, 500
 
-        return {"staticId": static_id}, 200
+        new_analytic_id = str(uuid.uuid4())
+        analytic = Analytic(new_analytic_id, descriptor, None)
+
+        # TODO should be moved into a dedicated dao
+        self._es.index(index=index_name, doc_type='_doc', body=analytic.to_repr())
+        logger.debug(f"Analytic stored in index [{index_name}]")
+
+        return {
+                   "id": new_analytic_id
+                }, 200
 
     def delete(self):
-        static_id = request.args.get('staticId')
-        logger.info(f"Deleting analytic with static_id: {static_id}")
-        if static_id == "" or static_id is None:
-            logger.debug("Missing required staticId parameter")
+        analytic_id = request.args.get("id")
+        logger.info(f"Deleting analytic with id [{analytic_id}]")
+        if analytic_id == "" or analytic_id is None:
+            logger.debug("Analytic id has not been specified")
             return {
-                "status": "Malformed request: missing required parameter `staticId`",
+                "status": "Malformed request: missing required parameter `id`",
                 "code": 400
             }, 400
 
-        project = request.args.get('project', None)
+        project = request.args.get("project", None)
         index_name = Utils.generate_index("analytic", project=project)
         try:
-            self._es.delete_by_query(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
+            # TODO should be moved into a dedicated dao
+            self._es.delete_by_query(index=index_name, body={"query": {"match": {"id.keyword": analytic_id}}})
         except Exception as e:
-            logger.exception(f"Analytic with static_id [{static_id}] failed to be deleted", exc_info=e)
+            logger.exception(f"Analytic with id [{analytic_id}] could not be to be deleted", exc_info=e)
             return {
-                "status": "Internal server error: could not delete the analytic",
+                "status": "Internal server error: could not delete the requested analytic",
                 "code": 500
             }, 500
 
-        return {
-            "status": "Ok: analytic deleted",
-            "code": 200
-        }, 200
+        return {}, 200
 
 
-class GetNoClickPerUser(Resource):
-
-    def __init__(self, es: Elasticsearch):
-        self._es = es
-
-    def get(self):
-        if 'userId' in request.args:
-            response = self._es.search(index="logging-memex*", body={"query": {"match": {"metadata.userId": request.args['userId']}}})
-            if response['hits']['total']['value'] != 0:
-                event_collection = {}
-                # TODO check da qualche parte su namespace per capire se sto contando un evento
-                for item in response['hits']['hits']:
-                    if 'metadata' in item['_source']:
-                        if 'eventId' in item['_source']['metadata']:
-                            if item['_source']['metadata']['eventId'] in event_collection:
-                                event_collection[item['_source']['metadata']['eventId']] = event_collection[item['_source']['metadata']['eventId']] + 1
-                            else:
-                                event_collection[item['_source']['metadata']['eventId']] = 1
-
-                json_response = {
-                    "type": "click_per_user",
-                    "user": request.args['userId'],
-                    "click": event_collection,
-                    "status": "ok",
-                    "code": 200
-                }
-            else:
-                json_response = {
-                    "type": "click_per_user",
-                    "user": request.args['userId'],
-                    "click": {},
-                    "status": "ok",
-                    "code": 200
-                }
-
-            resp = Response(json.dumps(json_response), mimetype='application/json')
-            resp.status_code = 200
-
-            return resp
-        else:
-            abort(400, message="Parameter `userId` is needed")
-
-
-class GetNoClickPerEvent(Resource):
-
-    def __init__(self, es: Elasticsearch):
-        self._es = es
-
-    def get(self):
-        if 'eventId' in request.args:
-            response = self._es.search(index="logging-memex*", body={"query": {"match": {"metadata.eventId": request.args['eventId']}}})
-            if response['hits']['total']['value'] != 0:
-                user_collection = {}
-                for item in response['hits']['hits']:
-                    if 'metadata' in item['_source']:
-                        if 'userId' in item['_source']['metadata']:
-                            if item['_source']['metadata']['userId'] in user_collection:
-                                user_collection[item['_source']['metadata']['userId']] = user_collection[item['_source']['metadata']['userId']] + 1
-                            else:
-                                user_collection[item['_source']['metadata']['userId']] = 1
-
-                json_response = {
-                    "type": "click_per_event",
-                    "event": request.args['eventId'],
-                    "click": user_collection,
-                    "status": "ok",
-                    "code": 200
-                }
-            else:
-                json_response = {
-                    "type": "click_per_event",
-                    "event": request.args['eventId'],
-                    "click": {},
-                    "status": "ok",
-                    "code": 200
-                }
-
-            resp = Response(json.dumps(json_response), mimetype='application/json')
-            resp.status_code = 200
-
-            return resp
-        else:
-            abort(400, message="Parameter `eventId` is needed")
+# class GetNoClickPerUser(Resource):
+#
+#     def __init__(self, es: Elasticsearch):
+#         self._es = es
+#
+#     def get(self):
+#         if 'userId' in request.args:
+#             response = self._es.search(index="logging-memex*", body={"query": {"match": {"metadata.userId": request.args['userId']}}})
+#             if response['hits']['total']['value'] != 0:
+#                 event_collection = {}
+#                 # TODO check da qualche parte su namespace per capire se sto contando un evento
+#                 for item in response['hits']['hits']:
+#                     if 'metadata' in item['_source']:
+#                         if 'eventId' in item['_source']['metadata']:
+#                             if item['_source']['metadata']['eventId'] in event_collection:
+#                                 event_collection[item['_source']['metadata']['eventId']] = event_collection[item['_source']['metadata']['eventId']] + 1
+#                             else:
+#                                 event_collection[item['_source']['metadata']['eventId']] = 1
+#
+#                 json_response = {
+#                     "type": "click_per_user",
+#                     "user": request.args['userId'],
+#                     "click": event_collection,
+#                     "status": "ok",
+#                     "code": 200
+#                 }
+#             else:
+#                 json_response = {
+#                     "type": "click_per_user",
+#                     "user": request.args['userId'],
+#                     "click": {},
+#                     "status": "ok",
+#                     "code": 200
+#                 }
+#
+#             resp = Response(json.dumps(json_response), mimetype='application/json')
+#             resp.status_code = 200
+#
+#             return resp
+#         else:
+#             abort(400, message="Parameter `userId` is needed")
+#
+#
+# class GetNoClickPerEvent(Resource):
+#
+#     def __init__(self, es: Elasticsearch):
+#         self._es = es
+#
+#     def get(self):
+#         if 'eventId' in request.args:
+#             response = self._es.search(index="logging-memex*", body={"query": {"match": {"metadata.eventId": request.args['eventId']}}})
+#             if response['hits']['total']['value'] != 0:
+#                 user_collection = {}
+#                 for item in response['hits']['hits']:
+#                     if 'metadata' in item['_source']:
+#                         if 'userId' in item['_source']['metadata']:
+#                             if item['_source']['metadata']['userId'] in user_collection:
+#                                 user_collection[item['_source']['metadata']['userId']] = user_collection[item['_source']['metadata']['userId']] + 1
+#                             else:
+#                                 user_collection[item['_source']['metadata']['userId']] = 1
+#
+#                 json_response = {
+#                     "type": "click_per_event",
+#                     "event": request.args['eventId'],
+#                     "click": user_collection,
+#                     "status": "ok",
+#                     "code": 200
+#                 }
+#             else:
+#                 json_response = {
+#                     "type": "click_per_event",
+#                     "event": request.args['eventId'],
+#                     "click": {},
+#                     "status": "ok",
+#                     "code": 200
+#                 }
+#
+#             resp = Response(json.dumps(json_response), mimetype='application/json')
+#             resp.status_code = 200
+#
+#             return resp
+#         else:
+#             abort(400, message="Parameter `eventId` is needed")

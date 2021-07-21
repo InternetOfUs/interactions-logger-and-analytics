@@ -26,67 +26,67 @@ class TestAnalyticResult(TestCase):
 
     def test_repr(self):
         result = AnalyticResult(1, ["1"], "userId", datetime.now(), datetime.now(), datetime.now())
-        self.assertEqual(result, AnalyticResult.from_repr(result.to_repr()))
+        self.assertEqual(result, AnalyticResult.build(result.to_repr()))
 
 
 class TestConversationLength(TestCase):
 
     def test_repr(self):
         length = ConversationLength("1", 2)
-        self.assertEqual(length, ConversationLength.from_repr(length.to_repr()))
+        self.assertEqual(length, ConversationLength.build(length.to_repr()))
 
 
 class TestConversationLengthAnalyticResult(TestCase):
 
     def test_repr(self):
         response = ConversationLengthAnalyticResult(1, [ConversationLength("1", 2)], datetime.now(), datetime.now(), datetime.now())
-        self.assertEqual(response, ConversationLengthAnalyticResult.from_repr(response.to_repr()))
+        self.assertEqual(response, ConversationLengthAnalyticResult.build(response.to_repr()))
 
 
 class TestConversationPath(TestCase):
 
     def test_repr(self):
         path = ConversationPath("1", ["1"])
-        self.assertEqual(path, ConversationPath.from_repr(path.to_repr()))
+        self.assertEqual(path, ConversationPath.build(path.to_repr()))
 
 
 class TestConversationPathAnalyticResult(TestCase):
 
     def test_repr(self):
         response = ConversationPathAnalyticResult(1, [ConversationPath("1", ["1"])], datetime.now(), datetime.now(), datetime.now())
-        self.assertEqual(response, ConversationPathAnalyticResult.from_repr(response.to_repr()))
+        self.assertEqual(response, ConversationPathAnalyticResult.build(response.to_repr()))
 
 
 class TestSegmentation(TestCase):
 
     def test_repr(self):
         segmentation = Segmentation("type1", 1)
-        self.assertEqual(segmentation, Segmentation.from_repr(segmentation.to_repr()))
+        self.assertEqual(segmentation, Segmentation.build(segmentation.to_repr()))
 
 
 class TestSegmentationAnalyticResult(TestCase):
 
     def test_repr(self):
         response = SegmentationAnalyticResult([Segmentation("type1", 1)], datetime.now(), datetime.now(), datetime.now())
-        self.assertEqual(response, SegmentationAnalyticResult.from_repr(response.to_repr()))
+        self.assertEqual(response, SegmentationAnalyticResult.build(response.to_repr()))
 
 
 class TestTransactionReturn(TestCase):
 
     def test_repr(self):
         transaction_return = TransactionReturn("task_id", ["1"])
-        self.assertEqual(transaction_return, TransactionReturn.from_repr(transaction_return.to_repr()))
+        self.assertEqual(transaction_return, TransactionReturn.build(transaction_return.to_repr()))
 
 
 class TestTransactionAnalyticResult(TestCase):
 
     def test_repr(self):
         response = TransactionAnalyticResult(1, [TransactionReturn("task_id", ["1"])], datetime.now(), datetime.now(), datetime.now())
-        self.assertEqual(response, TransactionAnalyticResult.from_repr(response.to_repr()))
+        self.assertEqual(response, TransactionAnalyticResult.build(response.to_repr()))
 
 
 class TestAggregationResult(TestCase):
 
     def test_repr(self):
         response = AggregationResult("min", 0.1, datetime.now(), datetime.now(), datetime.now())
-        self.assertEqual(response, AggregationResult.from_repr(response.to_repr(), response.aggregation))
+        self.assertEqual(response, AggregationResult.build(response.to_repr(), response.aggregation))

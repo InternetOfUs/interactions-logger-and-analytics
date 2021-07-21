@@ -23,7 +23,7 @@ from memex_logging.common.model.analytic.descriptor.segmentation import Segmenta
 class AnalyticDescriptorBuilder:
 
     @staticmethod
-    def from_repr(raw_data: dict) -> CommonAnalyticDescriptor:
+    def build(raw_data: dict) -> CommonAnalyticDescriptor:
         if str(raw_data['type']).lower() == CountDescriptor.TYPE:
             return CountDescriptor.from_repr(raw_data)
         elif str(raw_data['type']).lower() == SegmentationDescriptor.TYPE:

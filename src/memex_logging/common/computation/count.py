@@ -603,7 +603,7 @@ class CountComputation:
             if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
                 logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
 
-        return CountResult(total_len,datetime.now(), min_bound, max_bound)
+        return CountResult(total_len, datetime.now(), min_bound, max_bound)
 
     # def _unhandled_messages(self, analytic: MessageCountDescriptor) -> CountResult:
     #     min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)

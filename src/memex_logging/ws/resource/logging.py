@@ -86,8 +86,8 @@ class LogGeneralLogs(Resource):
                 index_name = "logging-" + project_name + "-" + date
                 query = self._es.index(index=index_name, doc_type='_doc', body=temp_log.to_repr())
                 log_ids.append(query['_id'])
-            except:
-                logger.error(f"Failed to log: {log}")
+            except Exception as e:
+                logger.error(f"Failed to log: {log}", exc_info=e)
 
         return {
             "traceIds": log_ids,

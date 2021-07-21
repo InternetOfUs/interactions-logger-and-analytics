@@ -27,60 +27,60 @@ class TestUserAnalytic(TestCase):
 
     def test_repr(self):
         analytic = UserAnalytic(MovingTimeWindow("7D"), "project", "u:total")
-        self.assertEqual(analytic, UserAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, UserAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, AnalyticBuilder.build(analytic.to_repr()))
 
 
 class TestMessageAnalytic(TestCase):
 
     def test_repr(self):
         analytic = MessageAnalytic(FixedTimeWindow(datetime.now(), datetime.now()), "project", "m:segmentation")
-        self.assertEqual(analytic, MessageAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, MessageAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, AnalyticBuilder.build(analytic.to_repr()))
 
 
 class TestTaskAnalytic(TestCase):
 
     def test_repr(self):
         analytic = TaskAnalytic(MovingTimeWindow("7D"), "project", "t:active")
-        self.assertEqual(analytic, TaskAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, TaskAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, AnalyticBuilder.build(analytic.to_repr()))
 
 
 class TestTransactionAnalytic(TestCase):
 
     def test_repr(self):
         analytic = TransactionAnalytic(MovingTimeWindow("7D"), "project", "t:segmentation")
-        self.assertEqual(analytic, TransactionAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, TransactionAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, AnalyticBuilder.build(analytic.to_repr()))
 
 
 class TestConversationAnalytic(TestCase):
 
     def test_repr(self):
         analytic = ConversationAnalytic(MovingTimeWindow("7D"), "project", "c:new")
-        self.assertEqual(analytic, ConversationAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, ConversationAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, AnalyticBuilder.build(analytic.to_repr()))
 
 
 class TestDialogueAnalytic(TestCase):
 
     def test_repr(self):
         analytic = DialogueAnalytic(MovingTimeWindow("7D"), "project", "d:fallback")
-        self.assertEqual(analytic, DialogueAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, DialogueAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, AnalyticBuilder.build(analytic.to_repr()))
 
 
 class TestBotAnalytic(TestCase):
 
     def test_repr(self):
         analytic = BotAnalytic(MovingTimeWindow("7D"), "project", "b:response")
-        self.assertEqual(analytic, BotAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, DimensionAnalytic.from_repr(analytic.to_repr()))
-        self.assertEqual(analytic, AnalyticBuilder.from_repr(analytic.to_repr()))
+        self.assertEqual(analytic, BotAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, DimensionAnalytic.build(analytic.to_repr()))
+        self.assertEqual(analytic, AnalyticBuilder.build(analytic.to_repr()))
