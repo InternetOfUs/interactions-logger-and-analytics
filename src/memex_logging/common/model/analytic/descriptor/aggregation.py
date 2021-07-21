@@ -16,13 +16,13 @@ from __future__ import absolute_import, annotations
 
 from typing import Union, List, Optional
 
-from memex_logging.common.model.analytic import CommonAnalytic
+from memex_logging.common.model.analytic.descriptor.common import CommonAnalyticDescriptor
 from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
 
 
-class AggregationAnalytic(CommonAnalytic):
+class AggregationDescriptor(CommonAnalyticDescriptor):
 
-    AGGREGATION_TYPE = "aggregation"
+    TYPE = "aggregation"
     ALLOWED_AGGREGATION_VALUES = ["avg", "min", "max", "sum", "stats", "extended_stats", "value_count", "cardinality", "percentiles"]
 
     def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, field: str, aggregation: str, filters: Optional[List[Filter]] = None) -> None:
@@ -38,16 +38,16 @@ class AggregationAnalytic(CommonAnalytic):
         return {
             'timespan': self.timespan.to_repr(),
             'project': self.project,
-            'type': self.AGGREGATION_TYPE,
+            'type': self.TYPE,
             'field': self.field,
             'aggregation': self.aggregation,
             'filters': [aggregation_filter.to_repr() for aggregation_filter in self.filters] if self.filters is not None else []
         }
 
     @staticmethod
-    def from_repr(raw_data: dict) -> AggregationAnalytic:
-        if str(raw_data['type']).lower() != AggregationAnalytic.AGGREGATION_TYPE:
-            raise ValueError(f"Unrecognized type [{raw_data['type']}] for Aggregation")
+    def from_repr(raw_data: dict) -> AggregationDescriptor:
+        if str(raw_data['type']).lower() != AggregationDescriptor.TYPE:
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for AggregationDescriptor")
 
         if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
             timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
@@ -56,8 +56,8 @@ class AggregationAnalytic(CommonAnalytic):
         else:
             raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
 
-        if str(raw_data['aggregation']).lower() not in AggregationAnalytic.ALLOWED_AGGREGATION_VALUES:
-            raise ValueError(f"Unrecognized type [{raw_data['aggregation']}] of aggregation")
+        if str(raw_data['aggregation']).lower() not in AggregationDescriptor.ALLOWED_AGGREGATION_VALUES:
+            raise ValueError(f"Unrecognized type [{raw_data['aggregation']}] of AggregationDescriptor")
 
         filters = None
         if raw_data.get('filters'):
@@ -66,10 +66,10 @@ class AggregationAnalytic(CommonAnalytic):
             else:
                 raise ValueError("Filters is not a list")
 
-        return AggregationAnalytic(timespan, raw_data['project'], raw_data['field'], raw_data['aggregation'], filters)
+        return AggregationDescriptor(timespan, raw_data['project'], raw_data['field'], raw_data['aggregation'], filters)
 
     def __eq__(self, o) -> bool:
-        if isinstance(o, AggregationAnalytic):
+        if isinstance(o, AggregationDescriptor):
             return o.timespan == self.timespan and o.project == self.project and o.field == self.field and o.aggregation == self.aggregation and o.filters == self.filters
         else:
             return False

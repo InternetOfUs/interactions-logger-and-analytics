@@ -23,12 +23,8 @@ from wenet.interface.client import ApikeyClient
 from wenet.interface.wenet import WeNet
 
 from memex_logging.celery import celery
-from memex_logging.common.analytic.aggregation import AggregationComputation
-from memex_logging.common.analytic.analytic import AnalyticComputation
-from memex_logging.common.analytic.builder import AnalyticBuilder
-from memex_logging.common.model.aggregation import AggregationAnalytic
-from memex_logging.common.model.analytic import DimensionAnalytic
-from memex_logging.common.model.response import AnalyticResponse, AggregationResponse
+from memex_logging.common.computation.analytic import AnalyticComputation
+from memex_logging.common.model.analytic.analytic import Analytic
 from memex_logging.common.model.time import MovingTimeWindow
 from memex_logging.common.utils import Utils
 
@@ -55,24 +51,11 @@ def update_analytic(static_id: str):
     trace_id = raw_response['hits']['hits'][0]['_id']
     doc_type = raw_response['hits']['hits'][0]['_type']
 
-    analytic = AnalyticBuilder.from_repr(raw_response['hits']['hits'][0]['_source']['query'])
-    if isinstance(analytic, DimensionAnalytic):
-        response = AnalyticResponse.from_repr(raw_response['hits']['hits'][0]['_source'])
-        analytic_computation = AnalyticComputation(es, wenet_interface)
-        response.result = analytic_computation.get_analytic_result(analytic)
-        es.index(index=index, id=trace_id, doc_type=doc_type, body=response.to_repr())
-        logger.info("Result updated")
-
-    elif isinstance(analytic, AggregationAnalytic):
-        response = AggregationResponse.from_repr(raw_response['hits']['hits'][0]['_source'])
-        aggregation_computation = AggregationComputation(es)
-        response.result = aggregation_computation.get_aggregation_result(analytic)
-        es.index(index=index, id=trace_id, doc_type=doc_type, body=response.to_repr())
-        logger.info("Result updated")
-
-    else:
-        logger.info(f"Unrecognized class of analytic [{type(analytic)}]")
-        raise ValueError(f"Unrecognized class of analytic [{type(analytic)}]")
+    response = Analytic.from_repr(raw_response['hits']['hits'][0]['_source'])
+    analytic_computation = AnalyticComputation(es, wenet_interface)
+    response.result = analytic_computation.get_result(response.descriptor)
+    es.index(index=index, id=trace_id, doc_type=doc_type, body=response.to_repr())
+    logger.info("Result updated")
 
 
 @celery.task(name='tasks.update_analytics')
