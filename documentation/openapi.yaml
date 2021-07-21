@@ -399,11 +399,11 @@ paths:
 
       * `t:total`: the number of total tasks in a certain time range;
 
-      * `t:active`: the number of active/open tasks in a certain time range;
+      * `t:active`: the number of tasks active at the end of a certain time range;
 
       * `t:closed`: the number of closed tasks in a certain time range;
 
-      * `t:new`: the number of new tasks in a certain time range.
+      * `t:new`: the number of new tasks created in a certain time range.
 
 
       TransactionMetrics have `dimension` value set to `transaction`. This kind of analytics will be computed directly from the task manager component. Note that the project is not related to the name used in the db. It is requested the id of the application. For this metric you can also specify the task id of interest using the field `taskId`. The following `metric` values are supported:
