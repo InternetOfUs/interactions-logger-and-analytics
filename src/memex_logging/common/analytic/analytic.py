@@ -862,6 +862,13 @@ class AnalyticComputation:
         return AnalyticResult(total_len, messages, "messageId", datetime.now(), min_bound, max_bound)
 
     def _total_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
+        """
+        Compute the number of total tasks of a given application (analytic.project) in a given time range (analytic.timespan).
+        The computation of that count is done summing up:
+        * the number of tasks created up to the end of the time range that are still open;
+        * the number of tasks created up to the end of the time range that are closed after the end of the time range;
+        * the number of tasks closed in the time range.
+        """
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = []
         tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
@@ -870,6 +877,12 @@ class AnalyticComputation:
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _active_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
+        """
+        Compute the number of tasks of a given application (analytic.project) active at the end of a given time range (analytic.timespan).
+        The computation of that count is done summing up:
+        * the number of tasks created up to the end of the time range that are still open;
+        * the number of tasks created up to the end of the time range that are closed after the end of the time range.
+        """
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = []
         tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
@@ -877,16 +890,29 @@ class AnalyticComputation:
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _closed_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
+        """
+        Compute the number of tasks of a given application (analytic.project) closed in a given time range (analytic.timespan).
+        The computation of that count is the number of tasks closed in the time range.
+        """
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound)
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _new_tasks(self, analytic: TaskAnalytic) -> AnalyticResult:
+        """
+        Compute the number of new tasks of a given application (analytic.project) created in a given time range (analytic.timespan).
+        The computation of that count is the number of tasks created in the time range.
+        """
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         tasks = self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound)
         return AnalyticResult(len(tasks), [task.task_id for task in tasks], "taskId", datetime.now(), min_bound, max_bound)
 
     def _total_transactions(self, analytic: TransactionAnalytic) -> TransactionAnalyticResult:
+        """
+        Compute the number of total transactions of a given application (analytic.project) in a given time range (analytic.timespan).
+        The computation of that count, since transactions do not have the concept of closed, is simply the number of transactions created in the time range.
+        Optionally if specified a task identifier the transactions are only relative to that task.
+        """
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         transactions = self.wenet_interface.task_manager.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
         task_ids = set([transaction.task_id for transaction in transactions])
@@ -894,6 +920,11 @@ class AnalyticComputation:
         return TransactionAnalyticResult(len(transactions), transaction_returns, datetime.now(), min_bound, max_bound)
 
     def _transactions_segmentation(self, analytic: TransactionAnalytic) -> SegmentationAnalyticResult:
+        """
+        Compute the segmentation of the transactions of a given application (analytic.project) in a given time range (analytic.timespan).
+        The computation of that count is done segmenting based on the labels of the transactions created in the time range.
+        Optionally if specified a task identifier the transactions are only relative to that task.
+        """
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
         transactions = self.wenet_interface.task_manager.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
         transaction_labels = [transaction.label for transaction in transactions]
