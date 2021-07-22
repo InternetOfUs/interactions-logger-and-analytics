@@ -358,101 +358,106 @@ paths:
         - analytic
       summary: Create an analytic
       description: "
-      This end-point allows to create an analytic based on the messages in the database (for this kind of analitics the project should be the one used to store the messages) or on external WeNet servicies (for this kind of analitics the project should be the id of the application).
-      It returns a `staticId` that you have to use to retrieve the analytic.
-      There are different kind of supported analytics.
+      This end-point allows to create an analytic based on the messages in the database (for this kind of analytics the project should be the one used to store the messages) or on external WeNet services (for this kind of analytics the project should be the id of the application).
+      It returns an `id` that you have to use to retrieve the analytic. There are different kind of supported descriptors.
 
 
-      UserMetrics have `dimension` value set to `user`. The following `metric` values are supported:
+      UserCountDescriptor has `type` value set to `count`, `dimension` value set to `user`. The following `metric` values are supported:
 
-      * `u:total`: the number of total users in a certain time range (that have sent/received at least a message);
+      * `total`: the number of total users in a certain time range (that have sent/received at least a message);
 
-      * `u:active`: the number of active users in a certain time range (that have sent at least a request message);
+      * `active`: the number of active users in a certain time range (that have sent at least a request message);
 
-      * `u:engaged`: the number of engaged users in a certain time range (that have received at least a notification message);
+      * `engaged`: the number of engaged users in a certain time range (that have received at least a notification message);
 
-      * `u:new`: the number of new users in a certain time range (that have sent/received at least a message for the first time);
-
-      * `a:segmentation`: the segmentation of the app users based on the age. This kind of analytic will be computed directly from the hub and profile manager components. Note that the project is not related to the name used in the db. It is requested the id of the application;
-
-      * `g:segmentation`: the segmentation of the app users based on the gender. This kind of analytic will be computed directly from the hub and profile manager components. Note that the project is not related to the name used in the db. It is requested the id of the application.
+      * `new`: the number of new users in a certain time range (that have sent/received at least a message for the first time).
 
 
-      MessageMetrics have `dimension` value set to `message`. The following `metric` values are supported:
+      MessageCountDescriptor has `type` value set to `count`, `dimension` value set to `message`. The following `metric` values are supported:
 
-      * `m:from_users`: the number of messages from the users in a certain time range;
+      * `from_users`: the number of messages from the users in a certain time range;
 
-      * `m:from_bot`: the number of messages from the bot in a certain time range;
+      * `from_bot`: the number of messages from the bot in a certain time range;
 
-      * `m:responses`: the number of response messages in a certain time range;
+      * `responses`: the number of response messages in a certain time range;
 
-      * `m:notifications`: the number of notification messages in a certain time range;
-
-      * `m:unhandled`: the number of unhandled messages in a certain time range;
-
-      * `m:segmentation`: the segmentation of the messages based on the type in a certain time range;
-
-      * `u:segmentation`: the segmentation of the user messages based on the type in a certain time range.
+      * `notifications`: the number of notification messages in a certain time range.
 
 
-      TaskMetrics with `dimension` set to `task`. This kind of analytics will be computed directly from the task manager component. Note that the project is not related to the name used in the db. It is requested the id of the application. The following `metric` values are supported:
+      TaskCountDescriptor has `type` value set to `count`, `dimension` value set to `task`. This kind of analytics will be computed directly from the task manager component. Note that the project is not related to the name used in the db. It is requested the id of the application. The following `metric` values are supported:
 
-      * `t:total`: the number of total tasks in a certain time range;
+      * `total`: the number of total tasks in a certain time range;
 
-      * `t:active`: the number of active/open tasks in a certain time range;
+      * `active`: the number of active/open tasks in a certain time range;
 
-      * `t:closed`: the number of closed tasks in a certain time range;
+      * `closed`: the number of closed tasks in a certain time range;
 
-      * `t:new`: the number of new tasks in a certain time range.
-
-
-      TransactionMetrics have `dimension` value set to `transaction`. This kind of analytics will be computed directly from the task manager component. Note that the project is not related to the name used in the db. It is requested the id of the application. For this metric you can also specify the task id of interest using the field `taskId`. The following `metric` values are supported:
-
-      * `t:total`: the number of total transactions in a certain time range;
-
-      * `t:segmentation`: the segmentation of the transactions based on the type in a certain time range.
+      * `new`: the number of new tasks in a certain time range.
 
 
-      ConversationMetrics have `dimension` value set to `conversation`. The following `metric` values are supported:
+      TransactionCountDescriptor has `type` value set to `count`, `dimension` value set to `transaction`. This kind of analytics will be computed directly from the task manager component. Note that the project is not related to the name used in the db. It is requested the id of the application. For this metric you can also specify the task id of interest using the field `taskId`. The following `metric` values are supported:
 
-      * `c:total`: the number of conversation in a certain time range;
-
-      * `c:new`: the number of new conversation in a certain time range;
-
-      * `c:length`: the number of conversation in a certain time range with the length;
-
-      * `c:path`: the number of paths of the conversations in a certain time.
+      * `total`: the number of total transactions in a certain time range.
 
 
-      DialogueMetrics have `dimension` value set to `dialogue`. The following `metric` values are supported:
+      ConversationCountDescriptor has `type` value set to `count`, `dimension` value set to `conversation`. The following `metric` values are supported:
 
-      * `d:fallback`: the number of missed intent messages in a certain time range;
+      * `total`: the number of conversation in a certain time range;
 
-      * `d:intents`: the number of intents in a certain time range;
-
-      * `d:domains`: the number of domains in a certain time range.
+      * `new`: the number of new conversation in a certain time range.
 
 
-      BotMetrics have `dimension` value set to `bot`. The following `metric` values are supported:
+      DialogueCountDescriptor has `type` value set to `count`, `dimension` value set to `dialogue`. The following `metric` values are supported:
 
-      * `b:response`: the number of users and messages in a certain time range.
+      * `fallback`: the number of missed intent messages in a certain time range;
+
+      * `intents`: the number of intents in a certain time range;
+
+      * `domains`: the number of domains in a certain time range.
 
 
-      It is possible to post also aggregations.
+      BotCountDescriptor has `type` value set to `count`, `dimension` value set to `bot`. The following `metric` values are supported:
+
+      * `response`: the number of users and messages in a certain time range.
+
+
+      UserSegmentationDescriptor has `type` value set to `segmentation`, `dimension` value set to `user`. The following `metric` values are supported:
+
+      * `age`: the segmentation of the app users based on the age. This kind of analytic will be computed directly from the hub and profile manager components. Note that the project is not related to the name used in the db. It is requested the id of the application;
+
+      * `gender`: the segmentation of the app users based on the gender. This kind of analytic will be computed directly from the hub and profile manager components. Note that the project is not related to the name used in the db. It is requested the id of the application.
+
+
+      MessageSegmentationDescriptor has `type` value set to `segmentation`, `dimension` value set to `message`. The following `metric` values are supported:
+
+      * `all`: the segmentation of the messages based on the type in a certain time range;
+
+      * `from_users`: the segmentation of the user messages based on the type in a certain time range.
+
+
+      TransactionSegmentationDescriptor has `type` value set to `segmentation`, `dimension` value set to `transaction`. This kind of analytics will be computed directly from the task manager component. Note that the project is not related to the name used in the db. It is requested the id of the application. For this metric you can also specify the task id of interest using the field `taskId`. The following `metric` values are supported:
+
+      * `label`: the segmentation of the transactions based on the label in a certain time range.
+
+
+      AggregationDescriptor has `type` value set to `aggregation` and there is to specify the `field` value and the `aggregation` to perform among [`'avg'`, `'min'`, `'max'`, `'sum'`, `'stats'`, `'extended_stats'`, `'value_count'`, `'cardinality'`, `'percentiles'`]
       "
       requestBody:
         content:
           application/json:
             schema:
               oneOf:
-                - $ref: '#/components/schemas/UserAnalytic'
-                - $ref: '#/components/schemas/MessageAnalytic'
-                - $ref: '#/components/schemas/TaskAnalytic'
-                - $ref: '#/components/schemas/TransactionAnalytic'
-                - $ref: '#/components/schemas/ConversationAnalytic'
-                - $ref: '#/components/schemas/DialogueAnalytic'
-                - $ref: '#/components/schemas/BotAnalytic'
-                - $ref: '#/components/schemas/Aggregation'
+                - $ref: '#/components/schemas/UserCountDescriptor'
+                - $ref: '#/components/schemas/MessageCountDescriptor'
+                - $ref: '#/components/schemas/TaskCountDescriptor'
+                - $ref: '#/components/schemas/TransactionCountDescriptor'
+                - $ref: '#/components/schemas/ConversationCountDescriptor'
+                - $ref: '#/components/schemas/DialogueCountDescriptor'
+                - $ref: '#/components/schemas/BotCountDescriptor'
+                - $ref: '#/components/schemas/UserSegmentationDescriptor'
+                - $ref: '#/components/schemas/MessageSegmentationDescriptor'
+                - $ref: '#/components/schemas/TransactionSegmentationDescriptor'
+                - $ref: '#/components/schemas/AggregationDescriptor'
       responses:
         '200':
           description: success
@@ -460,7 +465,7 @@ paths:
             application/json:
               schema:
                 properties:
-                  staticId:
+                  id:
                     type: string
                     example: "bcpg8XYBHD_pmQ1jA7b8"
         '400':
@@ -475,27 +480,20 @@ paths:
         - analytic
       summary: Retrieve an analytic
       description: "
-      This end-point allows to retrieve an analytic or an aggregation based on a `staticId`.
+      This end-point allows to retrieve an analytic or an aggregation based on an `id`.
 
 
-      For the analytics, the endpoint will return a `HTTP_200_ANALYTIC` object. The object contained in the `result` field is a:
+      For the analytics, the endpoint will return a `Analytic` object. The object contained in the `result` field is a:
 
-      * `SegmentationResult` object if the analytic requested is a segmentation metric;
+      * `CountResult` object if the descriptor of the analytic is a `CountDescriptor`;
 
-      * `ConversationLengthResult` object if the analytic requested is a `ConversationMetrics` with metric `c:length`;
+      * `SegmentationResult` object if the descriptor of the analytic is a `SegmentationDescriptor`;
 
-      * `ConversationPathResult` object if the analytic requested is a `ConversationMetrics` with metric `c:path`;
-
-      * `TransactionResult` object if the analytic requested is a `TransactionMetrics`;
-
-      * `AnalyticResult` in all the other cases.
-
-
-      For the aggreagtions, the endpoint will return a `HTTP_200_AGGREGATION` object.
+      * `AggregationResult` object if the descriptor of the analytic is a `AggregationDescriptor`.
       "
       parameters:
         - in: query
-          name: staticId
+          name: id
           schema:
             type: string
           required: true
@@ -513,9 +511,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/HTTP_200_ANALYTIC'
-                  - $ref: '#/components/schemas/HTTP_200_AGGREGATION'
+                $ref: '#/components/schemas/HTTP_200_ANALYTIC'
         '400':
           description: malformed request
           content:
@@ -533,10 +529,10 @@ paths:
       tags:
         - analytic
       summary: Delete an analytic
-      description: This end-point allows to delete an analytic based on a `staticId`.
+      description: "This end-point allows to delete an analytic based on an `id`."
       parameters:
         - in: query
-          name: staticId
+          name: id
           schema:
             type: string
           required: true
@@ -554,7 +550,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTP_200_basic'
+                type: object
         '400':
           description: malformed request
           content:
@@ -562,47 +558,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTP_400'
 
-  /analytic/usercount:
-    get:
-      tags:
-        - analytic
-      parameters:
-        - in: query
-          name: userId
-          schema:
-            type: string
-          required: true
-          description: the identifier of the user for which you want to count the clicks
-      summary: Retrieve the number click based on a user identifier
-      description: Retrieve the number click based on a user identifier
-      responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/200_user_count'
-
-  /analytic/eventcount:
-    get:
-      tags:
-        - analytic
-      parameters:
-        - in: query
-          name: eventId
-          schema:
-            type: string
-          required: true
-          description: the identifier of the event for which you want to count the clicks
-      summary: Retrieve the number click based on an event identifier
-      description: Retrieve the number click based on an event identifier
-      responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/200_event_count'
+#  /analytic/usercount:
+#    get:
+#      tags:
+#        - analytic
+#      parameters:
+#        - in: query
+#          name: userId
+#          schema:
+#            type: string
+#          required: true
+#          description: the identifier of the user for which you want to count the clicks
+#      summary: Retrieve the number click based on a user identifier
+#      description: Retrieve the number click based on a user identifier
+#      responses:
+#        '200':
+#          description: success
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/200_user_count'
+#
+#  /analytic/eventcount:
+#    get:
+#      tags:
+#        - analytic
+#      parameters:
+#        - in: query
+#          name: eventId
+#          schema:
+#            type: string
+#          required: true
+#          description: the identifier of the event for which you want to count the clicks
+#      summary: Retrieve the number click based on an event identifier
+#      description: Retrieve the number click based on an event identifier
+#      responses:
+#        '200':
+#          description: success
+#          content:
+#            application/json:
+#              schema:
+#                $ref: '#/components/schemas/200_event_count'
 
   # DOCUMENTATION API
   /documentation:
@@ -1079,7 +1075,7 @@ components:
       items:
         $ref: '#/components/schemas/Log'
 
-    CommonAnalytic:
+    CountDescriptor:
       type: object
       properties:
         project:
@@ -1092,14 +1088,122 @@ components:
             - $ref: '#/components/schemas/FixedTimeWindow'
         type:
           type: string
-          enum: ["analytic"]
-          example: "analytic"
+          enum: [ "count" ]
+          example: "count"
+        dimension:
+          type: string
+        metric:
+          type: string
       required:
         - project
         - timespan
         - type
+        - dimension
+        - metric
 
-    Aggregation:
+    UserCountDescriptor:
+      allOf:
+        - $ref: '#/components/schemas/CountDescriptor'
+      properties:
+        dimension:
+          type: string
+          enum: [ "user" ]
+          example: "user"
+        metric:
+          type: string
+          enum: [ "total", "active", "engaged", "new" ]
+          example: "active"
+
+    MessageCountDescriptor:
+      allOf:
+        - $ref: '#/components/schemas/CountDescriptor'
+      properties:
+        dimension:
+          type: string
+          enum: [ "message" ]
+          example: "message"
+        metric:
+          type: string
+          enum: [ "from_users", "from_bot", "responses", "notifications" ]  # removed "m:unhandled"
+          example: "from_users"
+
+    TaskCountDescriptor:
+      allOf:
+        - $ref: '#/components/schemas/CountDescriptor'
+      properties:
+        project:
+          type: string
+          description: "Note that for the task analytics the project is not related to the name used in the db. It is requested the id of the application"
+          example: "I2BIO3UXx6"
+        dimension:
+          type: string
+          enum: [ "task" ]
+          example: "task"
+        metric:
+          type: string
+          enum: [ "total", "active", "closed", "new" ]
+          example: "active"
+
+    TransactionCountDescriptor:
+      allOf:
+        - $ref: '#/components/schemas/CountDescriptor'
+      properties:
+        project:
+          type: string
+          description: "For the transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
+          example: "I2BIO3UXx6"
+        dimension:
+          type: string
+          enum: [ "transaction" ]
+          example: "transaction"
+        metric:
+          type: string
+          enum: [ "total" ]
+          example: "total"
+        taskId:
+          type: string
+          example: "704ad78d6d52bf159d1d7a97"
+
+    ConversationCountDescriptor:
+      allOf:
+        - $ref: '#/components/schemas/CountDescriptor'
+      properties:
+        dimension:
+          type: string
+          enum: [ "conversation" ]
+          example: "conversation"
+        metric:
+          type: string
+          enum: [ "total", "new" ]  # removed "c:length", "c:path"
+          example: "new"
+
+    DialogueCountDescriptor:
+      allOf:
+        - $ref: '#/components/schemas/CountDescriptor'
+      properties:
+        dimension:
+          type: string
+          enum: [ "dialogue" ]
+          example: "dialogue"
+        metric:
+          type: string
+          enum: [ "fallback", "intents", "domains" ]
+          example: "domains"
+
+    BotCountDescriptor:
+      allOf:
+        - $ref: '#/components/schemas/CountDescriptor'
+      properties:
+        dimension:
+          type: string
+          enum: [ "bot" ]
+          example: "bot"
+        metric:
+          type: string
+          enum: [ "response" ]
+          example: "response"
+
+    SegmentationDescriptor:
       type: object
       properties:
         project:
@@ -1112,14 +1216,89 @@ components:
             - $ref: '#/components/schemas/FixedTimeWindow'
         type:
           type: string
-          enum: ["aggregation"]
+          enum: [ "segmentation" ]
+          example: "segmentation"
+        dimension:
+          type: string
+        metric:
+          type: string
+      required:
+        - project
+        - timespan
+        - type
+        - dimension
+        - metric
+
+    UserSegmentationDescriptor:
+      allOf:
+        - $ref: '#/components/schemas/SegmentationDescriptor'
+      properties:
+        project:
+          type: string
+          description: "Note that for the user segmentation based on age or gender analytics, the project is not related to the name used in the db. It is requested the id of the application"
+        dimension:
+          type: string
+          enum: ["user"]
+          example: "user"
+        metric:
+          type: string
+          enum: ["age", "gender"]
+          example: "age"
+
+    MessageSegmentationDescriptor:
+      allOf:
+        - $ref: '#/components/schemas/SegmentationDescriptor'
+      properties:
+        dimension:
+          type: string
+          enum: ["message"]
+          example: "message"
+        metric:
+          type: string
+          enum: ["all", "from_users"]
+          example: "all"
+
+    TransactionSegmentationDescriptor:
+      allOf:
+        - $ref: '#/components/schemas/SegmentationDescriptor'
+      properties:
+        project:
+          type: string
+          description: "For the transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
+          example: "I2BIO3UXx6"
+        dimension:
+          type: string
+          enum: ["transaction"]
+          example: "transaction"
+        metric:
+          type: string
+          enum: ["label"]
+          example: "label"
+        taskId:
+          type: string
+          example: "704ad78d6d52bf159d1d7a97"
+
+    AggregationDescriptor:
+      type: object
+      properties:
+        project:
+          type: string
+          example: "wenet-ask-for-help"
+        timespan:
+          type: object
+          oneOf:
+            - $ref: '#/components/schemas/MovingTimeWindow'
+            - $ref: '#/components/schemas/FixedTimeWindow'
+        type:
+          type: string
+          enum: [ "aggregation" ]
         field:
           type: string
           description: The field has to be a numeric field
           example: "intent.confidence"
         aggregation:
           type: string
-          enum: ["avg", "min", "max", "sum", "stats", "extended_stats", "value_count", "cardinality", "percentiles"]
+          enum: [ "avg", "min", "max", "sum", "stats", "extended_stats", "value_count", "cardinality", "percentiles" ]
           example: "min"
         filters:
           type: array
@@ -1140,7 +1319,7 @@ components:
           example: "text"
         operation:
           type: string
-          enum: ["gr", "gre", "lq", "lqe", "term", "match"]
+          enum: [ "gr", "gre", "lq", "lqe", "term", "match" ]
           example: "match"
         value:
           type: string
@@ -1149,132 +1328,6 @@ components:
         - field
         - operation
         - value
-
-    UserAnalytic:
-      allOf:
-        - $ref: '#/components/schemas/CommonAnalytic'
-      properties:
-        project:
-          type: string
-          description: "Note that for the user segmentation based on age or gender analytics, the project is not related to the name used in the db. It is requested the id of the application"
-        dimension:
-          type: string
-          enum: ["user"]
-          example: "user"
-        metric:
-          type: string
-          enum: ["u:total", "u:active", "u:engaged", "u:new"]
-          example: "u:active"
-      required:
-        - dimension
-        - metric
-
-    MessageAnalytic:
-      allOf:
-        - $ref: '#/components/schemas/CommonAnalytic'
-      properties:
-        dimension:
-          type: string
-          enum: ["message"]
-          example: "message"
-        metric:
-          type: string
-          enum: ["m:from_users", "m:from_bot", "m:responses", "m:notifications", "m:unhandled", "m:segmentation", "u:segmentation"]
-          example: "m:from_users"
-      required:
-        - dimension
-        - metric
-
-    TaskAnalytic:
-      allOf:
-        - $ref: '#/components/schemas/CommonAnalytic'
-      properties:
-        project:
-          type: string
-          description: "Note that for the task analytics the project is not related to the name used in the db. It is requested the id of the application"
-          example: "I2BIO3UXx6"
-        dimension:
-          type: string
-          enum: ["task"]
-          example: "task"
-        metric:
-          type: string
-          enum: ["t:total", "t:active", "t:closed", "t:new"]
-          example: "t:active"
-      required:
-        - dimension
-        - metric
-
-    TransactionAnalytic:
-      allOf:
-        - $ref: '#/components/schemas/CommonAnalytic'
-      properties:
-        project:
-          type: string
-          description: "For the transaction analytics, the project is not related to the name used in the db. It is requested the id of the application"
-          example: "I2BIO3UXx6"
-        dimension:
-          type: string
-          enum: ["transaction"]
-          example: "transaction"
-        metric:
-          type: string
-          enum: ["t:total", "t:segmentation"]
-          example: "t:new"
-        taskId:
-          type: string
-          example: "704ad78d6d52bf159d1d7a97"
-      required:
-        - dimension
-        - metric
-
-    ConversationAnalytic:
-      allOf:
-        - $ref: '#/components/schemas/CommonAnalytic'
-      properties:
-        dimension:
-          type: string
-          enum: ["conversation"]
-          example: "conversation"
-        metric:
-          type: string
-          enum: ["c:total", "c:new", "c:length", "c:path"]
-          example: "c:new"
-      required:
-        - dimension
-        - metric
-
-    DialogueAnalytic:
-      allOf:
-        - $ref: '#/components/schemas/CommonAnalytic'
-      properties:
-        dimension:
-          type: string
-          enum: ["dialogue"]
-          example: "dialogue"
-        metric:
-          type: string
-          enum: ["d:fallback", "d:intents", "d:domains"]
-          example: "d:domains"
-      required:
-        - dimension
-        - metric
-
-    BotAnalytic:
-      allOf:
-        - $ref: '#/components/schemas/CommonAnalytic'
-      properties:
-        dimension:
-          type: string
-          enum: ["bot"]
-          example: "bot"
-        metric:
-          type: string
-          enum: ["b:response"]
-          example: "b:response"
-      required:
-        - dimension
-        - metric
 
     MovingTimeWindow:
       type: object
@@ -1339,24 +1392,27 @@ components:
     HTTP_200_ANALYTIC:
       type: object
       properties:
-        query:
-          oneOf:
-            - $ref: '#/components/schemas/UserAnalytic'
-            - $ref: '#/components/schemas/MessageAnalytic'
-            - $ref: '#/components/schemas/TaskAnalytic'
-            - $ref: '#/components/schemas/TransactionAnalytic'
-            - $ref: '#/components/schemas/DialogueAnalytic'
-            - $ref: '#/components/schemas/BotAnalytic'
-        result:
-          oneOf:
-            - $ref: '#/components/schemas/AnalyticResult'
-            - $ref: '#/components/schemas/SegmentationResult'
-            - $ref: '#/components/schemas/TransactionResult'
-            - $ref: '#/components/schemas/ConversationLengthResult'
-            - $ref: '#/components/schemas/ConversationPathResult'
-        staticId:
+        id:
           type: string
           example: "wAu4EW4BFurD9NUGZY3z"
+        descriptor:
+          oneOf:
+            - $ref: '#/components/schemas/UserCountDescriptor'
+            - $ref: '#/components/schemas/MessageCountDescriptor'
+            - $ref: '#/components/schemas/TaskCountDescriptor'
+            - $ref: '#/components/schemas/TransactionCountDescriptor'
+            - $ref: '#/components/schemas/ConversationCountDescriptor'
+            - $ref: '#/components/schemas/DialogueCountDescriptor'
+            - $ref: '#/components/schemas/BotCountDescriptor'
+            - $ref: '#/components/schemas/UserSegmentationDescriptor'
+            - $ref: '#/components/schemas/MessageSegmentationDescriptor'
+            - $ref: '#/components/schemas/TransactionSegmentationDescriptor'
+            - $ref: '#/components/schemas/AggregationDescriptor'
+        result:
+          oneOf:
+            - $ref: '#/components/schemas/CountResult'
+            - $ref: '#/components/schemas/SegmentationResult'
+            - $ref: '#/components/schemas/AggregationResult'
 
     CommonResult:
       type: object
@@ -1375,9 +1431,8 @@ components:
           example: "2021-02-25T14:18:36.141378"
         type:
           type: string
-          example: "userId"
 
-    AnalyticResult:
+    CountResult:
       allOf:
         - $ref: '#/components/schemas/CommonResult'
       type: object
@@ -1385,17 +1440,17 @@ components:
         count:
           type: number
           format: int32
-        items:
-          type: array
-          items:
-            type: string
+          example: 3
+        type:
+          type: string
+          example: "count"
 
     SegmentationResult:
       allOf:
         - $ref: '#/components/schemas/CommonResult'
       type: object
       properties:
-        counts:
+        segments:
           type: array
           items:
             type: object
@@ -1412,111 +1467,19 @@ components:
           enum: [ "segmentation" ]
           example: "segmentation"
 
-    TransactionResult:
+    AggregationResult:
       allOf:
         - $ref: '#/components/schemas/CommonResult'
       type: object
       properties:
-        count:
+        aggregation:
           type: number
-          format: int32
-        transactions:
-          type: array
-          items:
-            type: object
-            properties:
-              taskId:
-                type: string
-                example: "604ad78d6d61bf149d1d7a97"
-              trnsactionIds:
-                type: array
-                items:
-                  type: string
-                  example: "1"
+          description: "The value is a number in the case of the simple stats. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
+          example: 3
         type:
           type: string
-          enum: [ "transaction" ]
-          example: "transaction"
-
-    ConversationLengthResult:
-      allOf:
-        - $ref: '#/components/schemas/CommonResult'
-      type: object
-      properties:
-        count:
-          type: number
-          format: int32
-        lengths:
-          type: array
-          items:
-            type: object
-            properties:
-              conversationId:
-                type: string
-                example: "CONV-DOWI41-DAJPRTI3"
-              length:
-                type: number
-                format: int32
-                example: 3
-        type:
-          type: string
-          enum: [ "length" ]
-          example: "length"
-
-    ConversationPathResult:
-      allOf:
-        - $ref: '#/components/schemas/CommonResult'
-      type: object
-      properties:
-        count:
-          type: number
-          format: int32
-        paths:
-          type: array
-          items:
-            type: object
-            properties:
-              conversationId:
-                type: string
-                example: "CONV-DOWI41-DAJPRTI3"
-              messages:
-                type: array
-                items:
-                  type: string
-                  example: "2A6F67A4-42D2-4DE0-9F00-DE4A564A83A9"
-        type:
-          type: string
-          enum: [ "path" ]
-          example: "path"
-
-    HTTP_200_AGGREGATION:
-      type: object
-      properties:
-        query:
-          allOf:
-            - $ref: '#/components/schemas/Aggregation'
-        result:
-          type: object
-          properties:
-            <aggregation>:
-              type: number
-              description: "The <aggregation> key correspond to the name of the aggregation. The value is a number in the case of the simple stats. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
-              example: 3
-            creationDt:
-              type: string
-              format: date-time
-              example: "2021-02-25T14:18:36.141378"
-            fromDt:
-              type: string
-              format: date-time
-              example: "2021-01-25T14:18:36.141378"
-            toDt:
-              type: string
-              format: date-time
-              example: "2021-02-25T14:18:36.141378"
-        staticId:
-          type: string
-          example: "wAu4EW4BFurD9NUGZY3z"
+          enum: [ "aggregation" ]
+          example: "aggregation"
 
     HTTP_201:
       type: object
@@ -1546,41 +1509,41 @@ components:
           enum: [ '201' ]
           example: 201
 
-    200_event_count:
-      type: object
-      properties:
-        type:
-          enum: ["click_per_event"]
-          example: "click_per_event"
-        event:
-          type: string
-          example: "EV321423"
-        click:
-          type: object
-        status:
-          enum: ['ok']
-          example: 'ok'
-        cose:
-          enum: [ '200' ]
-          example: '200'
-
-    200_user_count:
-      type: object
-      properties:
-        type:
-          enum: ["click_per_user"]
-          example: "click_per_user"
-        user:
-          type: string
-          example: "USR30942"
-        click:
-          type: object
-        status:
-          enum: ['ok']
-          example: 'ok'
-        cose:
-          enum: [ '200' ]
-          example: '200'
+#    200_event_count:
+#      type: object
+#      properties:
+#        type:
+#          enum: ["click_per_event"]
+#          example: "click_per_event"
+#        event:
+#          type: string
+#          example: "EV321423"
+#        click:
+#          type: object
+#        status:
+#          enum: ['ok']
+#          example: 'ok'
+#        cose:
+#          enum: [ '200' ]
+#          example: '200'
+#
+#    200_user_count:
+#      type: object
+#      properties:
+#        type:
+#          enum: ["click_per_user"]
+#          example: "click_per_user"
+#        user:
+#          type: string
+#          example: "USR30942"
+#        click:
+#          type: object
+#        status:
+#          enum: ['ok']
+#          example: 'ok'
+#        cose:
+#          enum: [ '200' ]
+#          example: '200'
 
     HTTP_400:
       type: object
