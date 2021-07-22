@@ -33,19 +33,19 @@ logger = logging.getLogger("logger.celery.analytic")
 
 
 @celery.task(name='tasks.update_analytic')
-def update_analytic(static_id: str):
-    logger.info(f"Updating analytic with static id [{static_id}]")
+def update_analytic(analytic_id: str):
+    logger.info(f"Updating analytic with id [{analytic_id}]")
 
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     client = ApikeyClient(os.getenv("APIKEY"))
     wenet_interface = WeNet.build(client, platform_url=os.getenv("INSTANCE"))
 
     index_name = Utils.generate_index("analytic")
-    raw_response = es.search(index=index_name, body={"query": {"match": {"staticId.keyword": static_id}}})
+    raw_response = es.search(index=index_name, body={"query": {"match": {"id.keyword": analytic_id}}})
 
     if raw_response['hits']['total']['value'] == 0:
-        logger.info(f"Analytic with static id [{static_id}] not found")
-        raise ValueError(f"Analytic with static id [{static_id}] not found")
+        logger.warning(f"Analytic with id [{analytic_id}] not found")
+        raise ValueError(f"Analytic with id [{analytic_id}] not found")
 
     index = raw_response['hits']['hits'][0]['_index']
     trace_id = raw_response['hits']['hits'][0]['_id']
@@ -55,7 +55,7 @@ def update_analytic(static_id: str):
     analytic_computation = AnalyticComputation(es, wenet_interface)
     response.result = analytic_computation.get_result(response.descriptor)
     es.index(index=index, id=trace_id, doc_type=doc_type, body=response.to_repr())
-    logger.info("Result updated")
+    logger.info(f"Result of analytic with id [{analytic_id}] updated")
 
 
 @celery.task(name='tasks.update_analytics')
@@ -66,4 +66,4 @@ def update_analytics():
     results = scan(es, index=index_name, query={"query": {"match": {"query.timespan.type.keyword": MovingTimeWindow.moving_time_window_type()}}})
 
     for result in results:
-        update_analytic.delay(result['_source']["staticId"])
+        update_analytic.delay(result['_source']["id"])

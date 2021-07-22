@@ -22,7 +22,7 @@ from typing import Optional, List
 
 import requests
 
-from memex_logging.common.model.analytic import CommonAnalytic
+from memex_logging.common.model.analytic.descriptor.common import CommonAnalyticDescriptor
 from memex_logging.common.model.message import Entity, ActionResponse, CarouselCardResponse
 
 
@@ -1139,7 +1139,7 @@ class LoggingUtility:
         else:
             raise ValueError("The log has not been logged")
 
-    def get_analytic(self, analytic: CommonAnalytic, sleep_time: int = 1, number_of_trials: int = 10) -> dict:
+    def get_analytic(self, analytic: CommonAnalyticDescriptor, sleep_time: int = 1, number_of_trials: int = 10) -> dict:
 
         json_payload = analytic.to_repr()
 
@@ -1151,11 +1151,11 @@ class LoggingUtility:
 
         response = requests.post(api_point, headers={**headers, **self._custom_headers}, json=json_payload)
 
-        static_id = json.loads(response.content)["staticId"]
+        analytic_id = json.loads(response.content)["id"]
 
         for i in range(number_of_trials):
             sleep(sleep_time)
-            response = requests.get(api_point, headers=self._custom_headers, params={"staticId": static_id, "project": analytic.project})
+            response = requests.get(api_point, headers=self._custom_headers, params={"id": analytic_id, "project": analytic.project})
             if response.status_code == 200:
                 break
 

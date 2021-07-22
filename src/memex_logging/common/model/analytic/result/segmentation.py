@@ -66,7 +66,7 @@ class SegmentationResult(CommonAnalyticResult):
         if str(raw_data['type']).lower() != SegmentationResult.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for SegmentationAnalyticResult")
 
-        counts = [Segmentation.from_repr(count) for count in raw_data['counts']]
+        counts = [Segmentation.from_repr(count) for count in raw_data['segments']]
         return SegmentationResult(
             counts,
             datetime.fromisoformat(raw_data['creationDt']),

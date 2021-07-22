@@ -23,7 +23,7 @@ from memex_logging.common.model.analytic.result.segmentation import Segmentation
 class AnalyticResultBuilder:
 
     @staticmethod
-    def from_repr(raw_data: dict) -> CommonAnalyticResult:
+    def build(raw_data: dict) -> CommonAnalyticResult:
         if str(raw_data['type']).lower() == CountResult.TYPE:
             return CountResult.from_repr(raw_data)
         elif str(raw_data['type']).lower() == SegmentationResult.TYPE:

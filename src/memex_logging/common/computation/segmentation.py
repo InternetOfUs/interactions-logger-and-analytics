@@ -49,6 +49,8 @@ class SegmentationComputation:
         elif isinstance(analytic, MessageSegmentationDescriptor):
             if analytic.metric.lower() == "all":
                 result = self._messages_segmentation(analytic)
+            elif analytic.metric.lower() == "from_users":
+                result = self._user_messages_segmentation(analytic)
             else:
                 logger.info(f"Unknown value for metric [{analytic.metric}] for MessageSegmentationDescriptor")
                 raise ValueError(f"Unknown value for metric [{analytic.metric}] for MessageSegmentationDescriptor")
@@ -150,57 +152,57 @@ class SegmentationComputation:
 
         return SegmentationResult(type_counter, datetime.now(), min_bound, max_bound)
 
-    # def _user_messages_segmentation(self, analytic: MessageSegmentationDescriptor) -> SegmentationResult:
-    #     min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
-    #     body = {
-    #         "query": {
-    #             "bool": {
-    #                 "must": [
-    #                     {
-    #                         "match": {
-    #                             "type.keyword": "request"
-    #                         }
-    #                     },
-    #                     {
-    #                         "match": {
-    #                             "project.keyword": analytic.project
-    #                         }
-    #                     }
-    #                 ],
-    #                 "filter": [
-    #                     {
-    #                         "range": {
-    #                             "timestamp": {
-    #                                 "gte": min_bound.isoformat(),
-    #                                 "lte": max_bound.isoformat()
-    #                             }
-    #                         }
-    #                     }
-    #                 ]
-    #             }
-    #         },
-    #         "aggs": {
-    #             "terms_count": {
-    #                 "terms": {
-    #                     "field": "content.type.keyword",
-    #                     "size": 10
-    #                 }
-    #             }
-    #         }
-    #     }
-    #
-    #     index = Utils.generate_index(data_type="message", project=analytic.project)
-    #     response = self.es.search(index=index, body=body, size=0)
-    #     type_counter = []
-    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-    #         for item in response['aggregations']['terms_count']['buckets']:
-    #             type_counter.append(Segmentation(item['key'], item['doc_count']))
-    #
-    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-    #         if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-    #             logger.warning("The number of buckets is limited at `10` but the number of content types is higher")
-    #
-    #     return SegmentationResult(type_counter, datetime.now(), min_bound, max_bound)
+    def _user_messages_segmentation(self, analytic: MessageSegmentationDescriptor) -> SegmentationResult:
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        body = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "match": {
+                                "type.keyword": "request"
+                            }
+                        },
+                        {
+                            "match": {
+                                "project.keyword": analytic.project
+                            }
+                        }
+                    ],
+                    "filter": [
+                        {
+                            "range": {
+                                "timestamp": {
+                                    "gte": min_bound.isoformat(),
+                                    "lte": max_bound.isoformat()
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "aggs": {
+                "terms_count": {
+                    "terms": {
+                        "field": "content.type.keyword",
+                        "size": 10
+                    }
+                }
+            }
+        }
+
+        index = Utils.generate_index(data_type="message", project=analytic.project)
+        response = self.es.search(index=index, body=body, size=0)
+        type_counter = []
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+            for item in response['aggregations']['terms_count']['buckets']:
+                type_counter.append(Segmentation(item['key'], item['doc_count']))
+
+        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                logger.warning("The number of buckets is limited at `10` but the number of content types is higher")
+
+        return SegmentationResult(type_counter, datetime.now(), min_bound, max_bound)
 
     def _transactions_segmentation(self, analytic: TransactionSegmentationDescriptor) -> SegmentationResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)

@@ -32,15 +32,16 @@ class Analytic:
     def to_repr(self) -> dict:
         return {
             'id': self.analytic_id,
-            'query': self.descriptor.to_repr(),
+            'descriptor': self.descriptor.to_repr(),
             'result': self.result.to_repr() if self.result is not None else None
         }
 
     @staticmethod
     def from_repr(raw_data: dict) -> Analytic:
-        descriptor = AnalyticDescriptorBuilder.build(raw_data['query'])
-        result = AnalyticResultBuilder.from_repr(raw_data['result']) if raw_data['result'] is not None else None
-        return Analytic(raw_data['staticId'], descriptor, result=result)
+        analytic_id = raw_data['id']
+        descriptor = AnalyticDescriptorBuilder.build(raw_data['descriptor'])
+        result = AnalyticResultBuilder.build(raw_data['result']) if raw_data['result'] is not None else None
+        return Analytic(analytic_id, descriptor, result=result)
 
     def __eq__(self, o) -> bool:
         if isinstance(o, Analytic):

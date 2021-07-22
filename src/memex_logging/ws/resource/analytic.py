@@ -28,6 +28,7 @@ from memex_logging.common.model.analytic.descriptor.count import CountDescriptor
 from memex_logging.common.model.analytic.descriptor.segmentation import SegmentationDescriptor
 from memex_logging.common.utils import Utils
 
+
 logger = logging.getLogger("logger.resource.analytic")
 
 
@@ -56,7 +57,7 @@ class AnalyticInterface(Resource):
                 "code": 400
             }, 400
 
-        project = request.args.get('project', None)
+        project = request.args.get("project", None)
         index_name = Utils.generate_index("analytic", project=project)
         try:
             # TODO should be moved into a dedicated dao
@@ -69,14 +70,14 @@ class AnalyticInterface(Resource):
             }, 500
 
         if response['hits']['total']['value'] == 0:
-            logger.debug("Resource not found")
+            logger.debug(f"Analytic with id [{analytic_id}] not found")
             return {
-                "status": "Not found: resource not found",
+                "status": f"Not found: analytic with id [{analytic_id}] not found",
                 "code": 404
             }, 404
         else:
-            # TODO we should never return data that has not successfully passed a parsing step, in this case we do not know what we are sending back as result
-            return response['hits']['hits'][0]['_source'], 200
+            analytic = Analytic.from_repr(response['hits']['hits'][0]['_source'])
+            return analytic.to_repr(), 200
 
     def post(self):
         body = request.json
@@ -118,15 +119,15 @@ class AnalyticInterface(Resource):
             }, 500
 
         new_analytic_id = str(uuid.uuid4())
-        analytic = Analytic(new_analytic_id, descriptor, None)
+        analytic = Analytic(new_analytic_id, descriptor, result=None)
 
         # TODO should be moved into a dedicated dao
         self._es.index(index=index_name, doc_type='_doc', body=analytic.to_repr())
         logger.debug(f"Analytic stored in index [{index_name}]")
 
         return {
-                   "id": new_analytic_id
-                }, 200
+            "id": new_analytic_id
+        }, 200
 
     def delete(self):
         analytic_id = request.args.get("id")

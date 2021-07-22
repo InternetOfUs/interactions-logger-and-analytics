@@ -56,4 +56,3 @@ class AggregationResult(CommonAnalyticResult):
                    and o.from_datetime == self.from_datetime and o.to_datetime == self.to_datetime
         else:
             return False
-

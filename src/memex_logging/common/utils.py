@@ -14,7 +14,7 @@
 
 from __future__ import absolute_import, annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 import logging
 import uuid
 from typing import Optional, Tuple, Union
