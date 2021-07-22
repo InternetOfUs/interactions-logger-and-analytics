@@ -19,7 +19,6 @@ from datetime import datetime
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 
-from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
 from memex_logging.common.utils import Utils
 from memex_logging.migration.migration import MigrationAction
 
