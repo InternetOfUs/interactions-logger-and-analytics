@@ -1,12 +1,12 @@
 # Changelog
 
+
 ## Version 1.*
+
 
 ### NEXT
 
-* Re-organised logic for handling analytics
-  * `staticId` has been renamed to `id`
-* Included timestamp details in analytic results
+* Included timestamp details in analytic results.
 * The support for periodical (once a day, at midnight) re-computation of _moving time window_ analytic results have been added.
 * _Time window_ type values have been updated. In particular:
   
@@ -22,6 +22,44 @@
 * Added user age segmentation analytic.
 * Removed the immediate computation of an analytic after its creation.
 * Added user gender segmentation analytic.
+* Re-organised logic for handling analytics:
+  * aligned analytic descriptor and result types. Now `count`, `segmentation` and `aggregation` are available ;
+  * metrics renamed into more meaningful ones and `c:path`, `c:length`, `m:unhandled` are removed;
+  * removed the field items from the analytic result.
+
+* breaking changes:
+  * the parameter `staticId` of the Analytic has been renamed to `id`;
+  * the parameter `query` of the Analytic has been renamed to `descriptor`;
+  * for segmentation result `count` has been renamed into `segments`;
+  * Rename metric values to the new ones:
+    - `u:total` into `total`
+    - `u:active` into `active`
+    - `u:engaged` into `engaged`
+    - `u:new` into `new`
+    - `a:segmentation` into `age`
+    - `g:segmentation` into `gender`
+    - `m:from_users` into `from_users`
+    - `m:segmentation` into `all`
+    - `r:segmentation` into `from_users`
+    - `u:segmentation` into `from_users`
+    - `m:from_bot` into `from_bot`
+    - `m:responses` into `responses`
+    - `m:notifications` into `notifications`
+    - `t:total` into `total`
+    - `t:active` into `active`
+    - `t:closed` into `closed`
+    - `t:new` into `new`
+    - `t:segmentation` into `label`
+    - `c:total` into `total`
+    - `c:new` into `new`
+    - `d:fallback` into `fallback`
+    - `d:intents` into `intents`
+    - `d:domains` into `domains`
+    - `b:response` into `response`
+  * Remove from the analytic result the following keys:
+    - `items`
+    - `transactions`
+  
 
 ### 1.4.0
 
