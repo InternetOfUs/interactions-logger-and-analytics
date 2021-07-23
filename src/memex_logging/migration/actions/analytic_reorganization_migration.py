@@ -169,7 +169,7 @@ class AnalyticReorganizationMigration(MigrationAction):
                     if isinstance(analytic['_source']['result']['segments'], dict):
                         segments = []
                         for key in analytic['_source']['result']['segments']:
-                            segments.append({'count': analytic['_source']['result']['segments'].pop('key'), 'type': key})
+                            segments.append({'count': analytic['_source']['result']['segments'][key], 'type': key})
                         analytic['_source']['result']['segments'] = segments
 
                 # Align analytic descriptor and result types
