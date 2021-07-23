@@ -26,6 +26,7 @@
   * aligned analytic descriptor and result types. Now `count`, `segmentation` and `aggregation` are available ;
   * metrics renamed into more meaningful ones and `c:path`, `c:length`, `m:unhandled` are removed;
   * removed the field items from the analytic result.
+* Removed older usercount and eventcount endpoints.
 
 * breaking changes:
   * the parameter `staticId` of the Analytic has been renamed to `id`;

@@ -511,7 +511,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HTTP_200_ANALYTIC'
+                $ref: '#/components/schemas/Analytic'
         '400':
           description: malformed request
           content:
@@ -1364,32 +1364,7 @@ components:
         - start
         - end
 
-    # Responses
-
-    HTTP_200_basic:
-      type: object
-      properties:
-        status:
-          type: string
-          example: "Ok"
-        code:
-          enum: [ '200' ]
-          example: 200
-
-    HTTP_200:
-      type: object
-      properties:
-        traceId:
-          type: string
-          example: "bcpg8XYBHD_pmQ1jA7b8"
-        status:
-          type: string
-          example: "Object deleted"
-        code:
-          enum: [ '200' ]
-          example: 200
-
-    HTTP_200_ANALYTIC:
+    Analytic:
       type: object
       properties:
         id:
@@ -1480,6 +1455,31 @@ components:
           type: string
           enum: [ "aggregation" ]
           example: "aggregation"
+
+    # Responses
+
+    HTTP_200_basic:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "Ok"
+        code:
+          enum: [ '200' ]
+          example: 200
+
+    HTTP_200:
+      type: object
+      properties:
+        traceId:
+          type: string
+          example: "bcpg8XYBHD_pmQ1jA7b8"
+        status:
+          type: string
+          example: "Object deleted"
+        code:
+          enum: [ '200' ]
+          example: 200
 
     HTTP_201:
       type: object
