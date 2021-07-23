@@ -24,11 +24,12 @@ class AnalyticDescriptorBuilder:
 
     @staticmethod
     def build(raw_data: dict) -> CommonAnalyticDescriptor:
-        if str(raw_data['type']).lower() == CountDescriptor.TYPE:
+        descriptor_type = raw_data['type'].lower()
+        if descriptor_type == CountDescriptor.TYPE:
             return CountDescriptor.from_repr(raw_data)
-        elif str(raw_data['type']).lower() == SegmentationDescriptor.TYPE:
+        elif descriptor_type == SegmentationDescriptor.TYPE:
             return SegmentationDescriptor.from_repr(raw_data)
-        elif str(raw_data['type']).lower() == AggregationDescriptor.TYPE:
+        elif descriptor_type == AggregationDescriptor.TYPE:
             return AggregationDescriptor.from_repr(raw_data)
         else:
-            raise ValueError(f"Unrecognized type [{raw_data['type']}] for AnalyticDescriptor")
+            raise ValueError(f"Unrecognized type [{descriptor_type}] for AnalyticDescriptor")

@@ -1054,7 +1054,6 @@ components:
           example: "nlu"
         severity:
           type: string
-          enum: [ "error", "warning", "info", "debug" ]
           example: "error"
         logContent:
           type: string

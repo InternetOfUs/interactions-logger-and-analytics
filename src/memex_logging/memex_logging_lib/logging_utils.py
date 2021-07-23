@@ -1139,7 +1139,7 @@ class LoggingUtility:
         else:
             raise ValueError("The log has not been logged")
 
-    def get_analytic(self, analytic: CommonAnalyticDescriptor, sleep_time: int = 1, number_of_trials: int = 10) -> dict:
+    def get_analytic_result(self, analytic: CommonAnalyticDescriptor, sleep_time: int = 1, number_of_trials: int = 10) -> dict:
 
         json_payload = analytic.to_repr()
 

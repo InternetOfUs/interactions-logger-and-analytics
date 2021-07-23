@@ -38,7 +38,7 @@ class CountResult(CommonAnalyticResult):
 
     @staticmethod
     def from_repr(raw_data: dict) -> CountResult:
-        if str(raw_data['type']).lower() != CountResult.TYPE:
+        if raw_data['type'].lower() != CountResult.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for CountResult")
 
         return CountResult(

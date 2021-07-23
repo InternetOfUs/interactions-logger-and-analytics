@@ -14,17 +14,15 @@
 
 from __future__ import absolute_import, annotations
 
-from typing import Union
-
 from memex_logging.common.model.analytic.descriptor.common import CommonAnalyticDescriptor
-from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
+from memex_logging.common.model.time import TimeWindow
 
 
 class CountDescriptor(CommonAnalyticDescriptor):
 
     TYPE = "count"
 
-    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, dimension: str, metric: str) -> None:
+    def __init__(self, timespan: TimeWindow, project: str, dimension: str, metric: str) -> None:
         super().__init__(timespan, project)
         self.dimension = dimension
         self.metric = metric
@@ -40,31 +38,26 @@ class CountDescriptor(CommonAnalyticDescriptor):
 
     @staticmethod
     def from_repr(raw_data: dict) -> CountDescriptor:
-        if str(raw_data['type']).lower() != CountDescriptor.TYPE:
+        if raw_data['type'].lower() != CountDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for CountDescriptor")
 
-        if str(raw_data['timespan']['type']).upper() not in [MovingTimeWindow.moving_time_window_type(),
-                                                             FixedTimeWindow.fixed_time_window_type(),
-                                                             MovingTimeWindow.default_time_window_type(),
-                                                             FixedTimeWindow.custom_time_window_type()]:
-            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
-
-        if str(raw_data['dimension']).lower() == UserCountDescriptor.DIMENSION:
+        dimension = raw_data['dimension'].lower()
+        if dimension == UserCountDescriptor.DIMENSION:
             return UserCountDescriptor.from_repr(raw_data)
-        elif str(raw_data['dimension']).lower() == MessageCountDescriptor.DIMENSION:
+        elif dimension == MessageCountDescriptor.DIMENSION:
             return MessageCountDescriptor.from_repr(raw_data)
-        elif str(raw_data['dimension']).lower() == TaskCountDescriptor.DIMENSION:
+        elif dimension == TaskCountDescriptor.DIMENSION:
             return TaskCountDescriptor.from_repr(raw_data)
-        elif str(raw_data['dimension']).lower() == TransactionCountDescriptor.DIMENSION:
+        elif dimension == TransactionCountDescriptor.DIMENSION:
             return TransactionCountDescriptor.from_repr(raw_data)
-        elif str(raw_data['dimension']).lower() == ConversationCountDescriptor.DIMENSION:
+        elif dimension == ConversationCountDescriptor.DIMENSION:
             return ConversationCountDescriptor.from_repr(raw_data)
-        elif str(raw_data['dimension']).lower() == DialogueCountDescriptor.DIMENSION:
+        elif dimension == DialogueCountDescriptor.DIMENSION:
             return DialogueCountDescriptor.from_repr(raw_data)
-        elif str(raw_data['dimension']).lower() == BotCountDescriptor.DIMENSION:
+        elif dimension == BotCountDescriptor.DIMENSION:
             return BotCountDescriptor.from_repr(raw_data)
         else:
-            raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for CountDescriptor")
+            raise ValueError(f"Unrecognized dimension [{dimension}] for CountDescriptor")
 
     def __eq__(self, o) -> bool:
         if isinstance(o, CountDescriptor):
@@ -78,28 +71,24 @@ class UserCountDescriptor(CountDescriptor):
     DIMENSION = "user"
     ALLOWED_METRIC_VALUES = ["total", "active", "engaged", "new"]
 
-    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+    def __init__(self, timespan: TimeWindow, project: str, metric: str):
         super().__init__(timespan, project, self.DIMENSION, metric)
 
     @staticmethod
     def from_repr(raw_data: dict) -> UserCountDescriptor:
-        if str(raw_data['type']).lower() != UserCountDescriptor.TYPE:
+        if raw_data['type'].lower() != UserCountDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for UserCountDescriptor")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
-            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
-            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
-        else:
-            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
-
-        if str(raw_data['dimension']).lower() != UserCountDescriptor.DIMENSION:
+        if raw_data['dimension'].lower() != UserCountDescriptor.DIMENSION:
             raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for UserCountDescriptor")
 
-        if str(raw_data['metric']).lower() not in UserCountDescriptor.ALLOWED_METRIC_VALUES:
-            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for UserCountDescriptor")
+        timespan = TimeWindow.from_repr(raw_data['timespan'])
 
-        return UserCountDescriptor(timespan, raw_data['project'], raw_data['metric'])
+        metric = raw_data['metric'].lower()
+        if raw_data['metric'].lower() not in UserCountDescriptor.ALLOWED_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{metric}] for UserCountDescriptor")
+
+        return UserCountDescriptor(timespan, raw_data['project'], metric)
 
 
 class MessageCountDescriptor(CountDescriptor):
@@ -107,28 +96,24 @@ class MessageCountDescriptor(CountDescriptor):
     DIMENSION = "message"
     ALLOWED_METRIC_VALUES = ["from_users", "from_bot", "responses", "notifications"]  # "unhandled"
 
-    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+    def __init__(self, timespan: TimeWindow, project: str, metric: str):
         super().__init__(timespan, project, self.DIMENSION, metric)
 
     @staticmethod
     def from_repr(raw_data: dict) -> MessageCountDescriptor:
-        if str(raw_data['type']).lower() != MessageCountDescriptor.TYPE:
+        if raw_data['type'].lower() != MessageCountDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for MessageCountDescriptor")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
-            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
-            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
-        else:
-            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
-
-        if str(raw_data['dimension']).lower() != MessageCountDescriptor.DIMENSION:
+        if raw_data['dimension'].lower() != MessageCountDescriptor.DIMENSION:
             raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for MessageCountDescriptor")
 
-        if str(raw_data['metric']).lower() not in MessageCountDescriptor.ALLOWED_METRIC_VALUES:
-            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for MessageCountDescriptor")
+        timespan = TimeWindow.from_repr(raw_data['timespan'])
 
-        return MessageCountDescriptor(timespan, raw_data['project'], raw_data['metric'])
+        metric = raw_data['metric'].lower()
+        if metric not in MessageCountDescriptor.ALLOWED_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{metric}] for MessageCountDescriptor")
+
+        return MessageCountDescriptor(timespan, raw_data['project'], metric)
 
 
 class TaskCountDescriptor(CountDescriptor):
@@ -136,28 +121,24 @@ class TaskCountDescriptor(CountDescriptor):
     DIMENSION = "task"
     ALLOWED_METRIC_VALUES = ["total", "active", "closed", "new"]
 
-    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+    def __init__(self, timespan: TimeWindow, project: str, metric: str):
         super().__init__(timespan, project, self.DIMENSION, metric)
 
     @staticmethod
     def from_repr(raw_data: dict) -> TaskCountDescriptor:
-        if str(raw_data['type']).lower() != TaskCountDescriptor.TYPE:
+        if raw_data['type'].lower() != TaskCountDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for TaskCountDescriptor")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
-            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
-            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
-        else:
-            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
-
-        if str(raw_data['dimension']).lower() != TaskCountDescriptor.DIMENSION:
+        if raw_data['dimension'].lower() != TaskCountDescriptor.DIMENSION:
             raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for TaskCountDescriptor")
 
-        if str(raw_data['metric']).lower() not in TaskCountDescriptor.ALLOWED_METRIC_VALUES:
-            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for TaskCountDescriptor")
+        timespan = TimeWindow.from_repr(raw_data['timespan'])
 
-        return TaskCountDescriptor(timespan, raw_data['project'], raw_data['metric'])
+        metric = raw_data['metric'].lower()
+        if metric not in TaskCountDescriptor.ALLOWED_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{metric}] for TaskCountDescriptor")
+
+        return TaskCountDescriptor(timespan, raw_data['project'], metric)
 
 
 class TransactionCountDescriptor(CountDescriptor):
@@ -165,7 +146,7 @@ class TransactionCountDescriptor(CountDescriptor):
     DIMENSION = "transaction"
     ALLOWED_METRIC_VALUES = ["total"]
 
-    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str, task_id: str = None):
+    def __init__(self, timespan: TimeWindow, project: str, metric: str, task_id: str = None):
         super().__init__(timespan, project, self.DIMENSION, metric)
         self.task_id = task_id
 
@@ -176,23 +157,19 @@ class TransactionCountDescriptor(CountDescriptor):
 
     @staticmethod
     def from_repr(raw_data: dict) -> TransactionCountDescriptor:
-        if str(raw_data['type']).lower() != TransactionCountDescriptor.TYPE:
+        if raw_data['type'].lower() != TransactionCountDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for TransactionCountDescriptor")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
-            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
-            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
-        else:
-            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
-
-        if str(raw_data['dimension']).lower() != TransactionCountDescriptor.DIMENSION:
+        if raw_data['dimension'].lower() != TransactionCountDescriptor.DIMENSION:
             raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for TransactionCountDescriptor")
 
-        if str(raw_data['metric']).lower() not in TransactionCountDescriptor.ALLOWED_METRIC_VALUES:
-            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for TransactionCountDescriptor")
+        timespan = TimeWindow.from_repr(raw_data['timespan'])
 
-        return TransactionCountDescriptor(timespan, raw_data['project'], raw_data['metric'], task_id=raw_data.get('taskId'))
+        metric = raw_data['metric'].lower()
+        if metric not in TransactionCountDescriptor.ALLOWED_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{metric}] for TransactionCountDescriptor")
+
+        return TransactionCountDescriptor(timespan, raw_data['project'], metric, task_id=raw_data.get('taskId'))
 
 
 class ConversationCountDescriptor(CountDescriptor):
@@ -200,28 +177,24 @@ class ConversationCountDescriptor(CountDescriptor):
     DIMENSION = "conversation"
     ALLOWED_METRIC_VALUES = ["total", "new"]  # "length", "path"
 
-    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+    def __init__(self, timespan: TimeWindow, project: str, metric: str):
         super().__init__(timespan, project, self.DIMENSION, metric)
 
     @staticmethod
     def from_repr(raw_data: dict) -> ConversationCountDescriptor:
-        if str(raw_data['type']).lower() != ConversationCountDescriptor.TYPE:
+        if raw_data['type'].lower() != ConversationCountDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for ConversationCountDescriptor")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
-            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
-            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
-        else:
-            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
-
-        if str(raw_data['dimension']).lower() != ConversationCountDescriptor.DIMENSION:
+        if raw_data['dimension'].lower() != ConversationCountDescriptor.DIMENSION:
             raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for ConversationCountDescriptor")
 
-        if str(raw_data['metric']).lower() not in ConversationCountDescriptor.ALLOWED_METRIC_VALUES:
-            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for ConversationCountDescriptor")
+        timespan = TimeWindow.from_repr(raw_data['timespan'])
 
-        return ConversationCountDescriptor(timespan, raw_data['project'], raw_data['metric'])
+        metric = raw_data['metric'].lower()
+        if metric not in ConversationCountDescriptor.ALLOWED_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{metric}] for ConversationCountDescriptor")
+
+        return ConversationCountDescriptor(timespan, raw_data['project'], metric)
 
 
 class DialogueCountDescriptor(CountDescriptor):
@@ -229,28 +202,24 @@ class DialogueCountDescriptor(CountDescriptor):
     DIMENSION = "dialogue"
     ALLOWED_METRIC_VALUES = ["fallback", "intents", "domains"]
 
-    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+    def __init__(self, timespan: TimeWindow, project: str, metric: str):
         super().__init__(timespan, project, self.DIMENSION, metric)
 
     @staticmethod
     def from_repr(raw_data: dict) -> DialogueCountDescriptor:
-        if str(raw_data['type']).lower() != DialogueCountDescriptor.TYPE:
+        if raw_data['type'].lower() != DialogueCountDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for DialogueCountDescriptor")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
-            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
-            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
-        else:
-            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
-
-        if str(raw_data['dimension']).lower() != DialogueCountDescriptor.DIMENSION:
+        if raw_data['dimension'].lower() != DialogueCountDescriptor.DIMENSION:
             raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for DialogueCountDescriptor")
 
-        if str(raw_data['metric']).lower() not in DialogueCountDescriptor.ALLOWED_METRIC_VALUES:
-            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for DialogueCountDescriptor")
+        timespan = TimeWindow.from_repr(raw_data['timespan'])
 
-        return DialogueCountDescriptor(timespan, raw_data['project'], raw_data['metric'])
+        metric = raw_data['metric'].lower()
+        if metric not in DialogueCountDescriptor.ALLOWED_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{metric}] for DialogueCountDescriptor")
+
+        return DialogueCountDescriptor(timespan, raw_data['project'], metric)
 
 
 class BotCountDescriptor(CountDescriptor):
@@ -258,25 +227,21 @@ class BotCountDescriptor(CountDescriptor):
     DIMENSION = "bot"
     ALLOWED_METRIC_VALUES = ["response"]
 
-    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+    def __init__(self, timespan: TimeWindow, project: str, metric: str):
         super().__init__(timespan, project, self.DIMENSION, metric)
 
     @staticmethod
     def from_repr(raw_data: dict) -> BotCountDescriptor:
-        if str(raw_data['type']).lower() != BotCountDescriptor.TYPE:
+        if raw_data['type'].lower() != BotCountDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for BotCountDescriptor")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
-            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
-            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
-        else:
-            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
-
-        if str(raw_data['dimension']).lower() != BotCountDescriptor.DIMENSION:
+        if raw_data['dimension'].lower() != BotCountDescriptor.DIMENSION:
             raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for BotCountDescriptor")
 
-        if str(raw_data['metric']).lower() not in BotCountDescriptor.ALLOWED_METRIC_VALUES:
-            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for BotCountDescriptor")
+        timespan = TimeWindow.from_repr(raw_data['timespan'])
 
-        return BotCountDescriptor(timespan, raw_data['project'], raw_data['metric'])
+        metric = raw_data['metric'].lower()
+        if metric not in BotCountDescriptor.ALLOWED_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{metric}] for BotCountDescriptor")
+
+        return BotCountDescriptor(timespan, raw_data['project'], metric)

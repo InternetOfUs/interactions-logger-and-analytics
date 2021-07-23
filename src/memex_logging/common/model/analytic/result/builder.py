@@ -24,11 +24,12 @@ class AnalyticResultBuilder:
 
     @staticmethod
     def build(raw_data: dict) -> CommonAnalyticResult:
-        if str(raw_data['type']).lower() == CountResult.TYPE:
+        result_type = raw_data['type'].lower()
+        if result_type == CountResult.TYPE:
             return CountResult.from_repr(raw_data)
-        elif str(raw_data['type']).lower() == SegmentationResult.TYPE:
+        elif result_type == SegmentationResult.TYPE:
             return SegmentationResult.from_repr(raw_data)
-        elif str(raw_data['type']).lower() == AggregationResult.TYPE:
+        elif result_type == AggregationResult.TYPE:
             return AggregationResult.from_repr(raw_data)
         else:
-            raise ValueError(f"Unrecognized type [{raw_data['type']}] for AnalyticResult")
+            raise ValueError(f"Unrecognized type [{result_type}] for AnalyticResult")

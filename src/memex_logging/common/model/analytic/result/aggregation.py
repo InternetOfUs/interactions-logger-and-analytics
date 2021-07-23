@@ -40,7 +40,7 @@ class AggregationResult(CommonAnalyticResult):
 
     @staticmethod
     def from_repr(raw_data: dict) -> AggregationResult:
-        if str(raw_data['type']).lower() != AggregationResult.TYPE:
+        if raw_data['type'].lower() != AggregationResult.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for CountResult")
 
         return AggregationResult(

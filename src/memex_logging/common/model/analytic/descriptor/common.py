@@ -15,14 +15,13 @@
 from __future__ import absolute_import, annotations
 
 from abc import ABC, abstractmethod
-from typing import Union
 
-from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
+from memex_logging.common.model.time import TimeWindow
 
 
 class CommonAnalyticDescriptor(ABC):
 
-    def __init__(self, timespan: Union[MovingTimeWindow, FixedTimeWindow], project: str) -> None:
+    def __init__(self, timespan: TimeWindow, project: str) -> None:
         self.timespan = timespan
         self.project = project
 

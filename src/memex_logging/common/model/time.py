@@ -15,12 +15,37 @@
 from __future__ import absolute_import, annotations
 
 import re
+from abc import ABC, abstractmethod
 from datetime import datetime
 
 import deprecation
 
 
-class MovingTimeWindow:
+class TimeWindow(ABC):
+
+    @abstractmethod
+    def to_repr(self) -> dict:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def from_repr(raw_data: dict) -> TimeWindow:
+        time_window_type = raw_data['type'].upper()
+        if time_window_type == MovingTimeWindow.moving_time_window_type():
+            timespan = MovingTimeWindow.from_repr(raw_data)
+        elif time_window_type == FixedTimeWindow.fixed_time_window_type():
+            timespan = FixedTimeWindow.from_repr(raw_data)
+        elif time_window_type == MovingTimeWindow.default_time_window_type():
+            timespan = MovingTimeWindow.from_repr(raw_data)
+        elif time_window_type == FixedTimeWindow.custom_time_window_type():
+            timespan = FixedTimeWindow.from_repr(raw_data)
+        else:
+            raise ValueError(f"Unrecognized type [{time_window_type}] for TimeWindow")
+
+        return timespan
+
+
+class MovingTimeWindow(TimeWindow):
 
     def __init__(self, value: str):
         match = re.match(r"^([0-9]+)([dDwWmMyY])$", value)
@@ -51,8 +76,10 @@ class MovingTimeWindow:
 
     @staticmethod
     def from_repr(raw_data: dict) -> MovingTimeWindow:
-        if str(raw_data['type']).upper() not in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
-            raise ValueError("Unrecognized type for MovingTimeWindow")
+        time_window_type = raw_data['type'].upper()
+        if time_window_type != MovingTimeWindow.moving_time_window_type():
+            if time_window_type != MovingTimeWindow.default_time_window_type():
+                raise ValueError(f"Unrecognized type [{time_window_type}] for MovingTimeWindow")
 
         return MovingTimeWindow(raw_data['value'])
 
@@ -63,7 +90,7 @@ class MovingTimeWindow:
             return False
 
 
-class FixedTimeWindow:
+class FixedTimeWindow(TimeWindow):
 
     def __init__(self, start: datetime, end: datetime):
         self.start = start
@@ -91,8 +118,10 @@ class FixedTimeWindow:
 
     @staticmethod
     def from_repr(raw_data: dict) -> FixedTimeWindow:
-        if str(raw_data['type']).upper() not in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
-            raise ValueError("Unrecognized type for FixedTimeWindow")
+        time_window_type = raw_data['type'].upper()
+        if time_window_type != FixedTimeWindow.fixed_time_window_type():
+            if time_window_type != FixedTimeWindow.custom_time_window_type():
+                raise ValueError(f"Unrecognized type [{time_window_type}] for FixedTimeWindow")
 
         return FixedTimeWindow.from_isoformat(raw_data['start'], raw_data['end'])
 
