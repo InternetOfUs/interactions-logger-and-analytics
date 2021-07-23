@@ -95,8 +95,8 @@ class CountComputation:
             # elif analytic.metric.lower() == "path":
             #     result = self._path_conversations(analytic)
             else:
-                logger.info(f"Unknown value for metric [{analytic.metric}] for ConversationAnalytic")
-                raise ValueError(f"Unknown value for metric [{analytic.metric}] for ConversationAnalytic")
+                logger.info(f"Unknown value for metric [{analytic.metric}] for ConversationCountDescriptor")
+                raise ValueError(f"Unknown value for metric [{analytic.metric}] for ConversationCountDescriptor")
 
         elif isinstance(analytic, DialogueCountDescriptor):
             if analytic.metric.lower() == "fallback":
@@ -106,15 +106,15 @@ class CountComputation:
             elif analytic.metric.lower() == "domains":
                 result = self._domains(analytic)
             else:
-                logger.info(f"Unknown value for metric [{analytic.metric}] for DialogueAnalytic")
-                raise ValueError(f"Unknown value for metric [{analytic.metric}] for DialogueAnalytic")
+                logger.info(f"Unknown value for metric [{analytic.metric}] for DialogueCountDescriptor")
+                raise ValueError(f"Unknown value for metric [{analytic.metric}] for DialogueCountDescriptor")
 
         elif isinstance(analytic, BotCountDescriptor):
             if analytic.metric.lower() == "response":
                 result = self._bot_response(analytic)
             else:
-                logger.info(f"Unknown value for metric [{analytic.metric}] for BotAnalytic")
-                raise ValueError(f"Unknown value for metric [{analytic.metric}] for BotAnalytic")
+                logger.info(f"Unknown value for metric [{analytic.metric}] for BotCountDescriptor")
+                raise ValueError(f"Unknown value for metric [{analytic.metric}] for BotCountDescriptor")
 
         else:
             logger.info(f"Unrecognized class of CountDescriptor [{type(analytic)}]")
