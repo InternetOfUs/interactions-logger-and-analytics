@@ -164,41 +164,40 @@ class StaticIdMigration(MigrationAction):
                     segments = analytic['_source']['result'].pop('counts')
                     analytic['_source']['result']['segments'] = segments
 
+                # Align analytic descriptor and result types
+                if analytic['_source']['descriptor']['type'] == "count":
+                    analytic['_source']['result']['type'] = "count"
+                if analytic['_source']['descriptor']['type'] == "segmentation":
+                    analytic['_source']['result']['type'] = "segmentation"
+                if analytic['_source']['descriptor']['type'] == "aggregation":
+                    analytic['_source']['result']['type'] = "aggregation"
+
                 # Change the structure of the AggregationResult
                 if "avg" in analytic['_source']['result']:
-                    analytic['_source']['result']['type'] = "aggregation"
                     aggregation = analytic['_source']['result'].pop('avg')
                     analytic['_source']['result']['aggregation'] = aggregation
                 if "min" in analytic['_source']['result']:
-                    analytic['_source']['result']['type'] = "aggregation"
                     aggregation = analytic['_source']['result'].pop('min')
                     analytic['_source']['result']['aggregation'] = aggregation
                 if "max" in analytic['_source']['result']:
-                    analytic['_source']['result']['type'] = "aggregation"
                     aggregation = analytic['_source']['result'].pop('max')
                     analytic['_source']['result']['aggregation'] = aggregation
                 if "sum" in analytic['_source']['result']:
-                    analytic['_source']['result']['type'] = "aggregation"
                     aggregation = analytic['_source']['result'].pop('sum')
                     analytic['_source']['result']['aggregation'] = aggregation
                 if "stats" in analytic['_source']['result']:
-                    analytic['_source']['result']['type'] = "aggregation"
                     aggregation = analytic['_source']['result'].pop('stats')
                     analytic['_source']['result']['aggregation'] = aggregation
                 if "extended_stats" in analytic['_source']['result']:
-                    analytic['_source']['result']['type'] = "aggregation"
                     aggregation = analytic['_source']['result'].pop('extended_stats')
                     analytic['_source']['result']['aggregation'] = aggregation
                 if "value_count" in analytic['_source']['result']:
-                    analytic['_source']['result']['type'] = "aggregation"
                     aggregation = analytic['_source']['result'].pop('value_count')
                     analytic['_source']['result']['aggregation'] = aggregation
                 if "cardinality" in analytic['_source']['result']:
-                    analytic['_source']['result']['type'] = "aggregation"
                     aggregation = analytic['_source']['result'].pop('cardinality')
                     analytic['_source']['result']['aggregation'] = aggregation
                 if "percentiles" in analytic['_source']['result']:
-                    analytic['_source']['result']['type'] = "aggregation"
                     aggregation = analytic['_source']['result'].pop('percentiles')
                     analytic['_source']['result']['aggregation'] = aggregation
 
