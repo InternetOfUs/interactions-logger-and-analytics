@@ -14,6 +14,7 @@
 
 from __future__ import absolute_import, annotations
 
+from copy import deepcopy
 from datetime import datetime
 
 from elasticsearch import Elasticsearch
@@ -30,6 +31,7 @@ class AnalyticReorganizationMigration(MigrationAction):
         analytics = scan(es, index=index_name, query={"query": {"match_all": {}}})
 
         for analytic in analytics:
+            stored_analytic = deepcopy(analytic)
             # Rename staticId key into id in the Analytic
             if "staticId" in analytic['_source']:
                 analytic_id = analytic['_source'].pop("staticId")
@@ -144,7 +146,7 @@ class AnalyticReorganizationMigration(MigrationAction):
                     analytic['_source']['result']['creationDt'] = now.isoformat()
                 if analytic['_source']['result'].get('fromDt') is None or analytic['_source']['result'].get('toDt') is None:
                     timespan_type = analytic['_source']['descriptor']['timespan']['type']
-                    if timespan_type == 'fixed':
+                    if timespan_type == 'FIXED':
                         analytic['_source']['result']['fromDt'] = analytic['_source']['descriptor']['timespan']['start']
                         analytic['_source']['result']['toDt'] = analytic['_source']['descriptor']['timespan']['end']
                     else:
@@ -209,7 +211,8 @@ class AnalyticReorganizationMigration(MigrationAction):
                     aggregation = analytic['_source']['result'].pop('percentiles')
                     analytic['_source']['result']['aggregation'] = aggregation
 
-            es.index(index=analytic['_index'], id=analytic['_id'], doc_type=analytic['_type'], body=analytic['_source'])
+            if analytic != stored_analytic:
+                es.index(index=analytic['_index'], id=analytic['_id'], doc_type=analytic['_type'], body=analytic['_source'])
 
     @property
     def action_name(self) -> str:
