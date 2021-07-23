@@ -464,6 +464,7 @@ paths:
           content:
             application/json:
               schema:
+                type: object
                 properties:
                   id:
                     type: string
@@ -1384,10 +1385,15 @@ components:
             - $ref: '#/components/schemas/TransactionSegmentationDescriptor'
             - $ref: '#/components/schemas/AggregationDescriptor'
         result:
+          nullable: true
           oneOf:
             - $ref: '#/components/schemas/CountResult'
             - $ref: '#/components/schemas/SegmentationResult'
             - $ref: '#/components/schemas/AggregationResult'
+      required:
+        - id
+        - descriptor
+        - result
 
     CommonResult:
       type: object
@@ -1406,6 +1412,11 @@ components:
           example: "2021-02-25T14:18:36.141378"
         type:
           type: string
+      required:
+        - creationDt
+        - fromDt
+        - toDt
+        - type
 
     CountResult:
       allOf:
@@ -1419,6 +1430,12 @@ components:
         type:
           type: string
           example: "count"
+      required:
+        - creationDt
+        - fromDt
+        - toDt
+        - type
+        - count
 
     SegmentationResult:
       allOf:
@@ -1441,6 +1458,12 @@ components:
           type: string
           enum: [ "segmentation" ]
           example: "segmentation"
+      required:
+        - creationDt
+        - fromDt
+        - toDt
+        - type
+        - segments
 
     AggregationResult:
       allOf:
@@ -1448,13 +1471,18 @@ components:
       type: object
       properties:
         aggregation:
-          type: number
           description: "The value is a number in the case of the simple stats. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
           example: 3
         type:
           type: string
           enum: [ "aggregation" ]
           example: "aggregation"
+      required:
+        - creationDt
+        - fromDt
+        - toDt
+        - type
+        - aggregation
 
     # Responses
 
