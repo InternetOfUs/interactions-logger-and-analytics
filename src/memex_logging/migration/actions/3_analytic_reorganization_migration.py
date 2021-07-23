@@ -23,7 +23,7 @@ from memex_logging.common.utils import Utils
 from memex_logging.migration.migration import MigrationAction
 
 
-class StaticIdMigration(MigrationAction):
+class AnalyticReorganizationMigration(MigrationAction):
 
     def apply(self, es: Elasticsearch) -> None:
         index_name = Utils.generate_index("analytic")
@@ -163,6 +163,14 @@ class StaticIdMigration(MigrationAction):
                 if 'counts' in analytic['_source']['result']:
                     segments = analytic['_source']['result'].pop('counts')
                     analytic['_source']['result']['segments'] = segments
+
+                # Changed older segments structure into the new one
+                if 'segments' in analytic['_source']['result']:
+                    if isinstance(analytic['_source']['result']['segments'], dict):
+                        segments = []
+                        for key in analytic['_source']['result']['segments']:
+                            segments.append({'count': analytic['_source']['result']['segments'].pop('key'), 'type': key})
+                        analytic['_source']['result']['segments'] = segments
 
                 # Align analytic descriptor and result types
                 if analytic['_source']['descriptor']['type'] == "count":
