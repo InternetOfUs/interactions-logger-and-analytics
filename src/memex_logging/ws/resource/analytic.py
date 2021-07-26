@@ -171,7 +171,7 @@ class ComputeAnalyticInterface(Resource):
 
     def post(self):
         analytic_id = request.args.get("id", None)
-        time_window_type = request.args.get("type", None)
+        time_window_type = request.args.get("timeWindowType", None)
         if analytic_id is None:
             if time_window_type is None:
                 logger.info("Updating all analytics")
@@ -185,7 +185,7 @@ class ComputeAnalyticInterface(Resource):
             else:
                 logger.info(f"Unrecognized type [{time_window_type}] for TimeWindow")
                 return {
-                           "status": "Malformed request: unrecognized value for parameter `type`",
+                           "status": "Malformed request: unrecognized value for parameter `timeWindowType`",
                            "code": 400
                        }, 400
         else:

@@ -581,7 +581,7 @@ paths:
           example: "bcpg8XYBHD_pmQ1jA7b8"
           description: the identifier of the analytic
         - in: query
-          name: type
+          name: timeWindowType
           schema:
             type: string
             enum: ["moving", "fixed"]
