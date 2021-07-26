@@ -1334,8 +1334,8 @@ components:
       properties:
         type:
           type: string
-          enum: ["MOVING"]
-          example: "MOVING"
+          enum: ["moving"]
+          example: "moving"
         value:
           type: string
           description: "Arbitral time range, it supports any values for days (d), weeks (w), months (m), and years (y) in the format `<value><descriptor>` (the descriptor is case insensitive) or in alternative you can also use `today` for an analytic about the current day"
@@ -1349,8 +1349,8 @@ components:
       properties:
         type:
           type: string
-          enum: ["FIXED"]
-          example: "FIXED"
+          enum: ["fixed"]
+          example: "fixed"
         start:
           type: string
           format: date-time
