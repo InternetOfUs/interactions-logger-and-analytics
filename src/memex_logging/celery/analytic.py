@@ -25,7 +25,7 @@ from wenet.interface.wenet import WeNet
 from memex_logging.celery import celery
 from memex_logging.common.computation.analytic import AnalyticComputation
 from memex_logging.common.model.analytic.analytic import Analytic
-from memex_logging.common.model.analytic.time import MovingTimeWindow
+from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow
 from memex_logging.common.utils import Utils
 
 
@@ -58,12 +58,34 @@ def update_analytic(analytic_id: str):
     logger.info(f"Result of analytic with id [{analytic_id}] updated")
 
 
-@celery.task(name='tasks.update_analytics')
-def update_analytics():
+@celery.task(name='tasks.update_moving_time_window_analytics')
+def update_moving_time_window_analytics():
     logger.info("Updating moving time window analytics")
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     index_name = Utils.generate_index("analytic")
     results = scan(es, index=index_name, query={"query": {"match": {"descriptor.timespan.type.keyword": MovingTimeWindow.type()}}})
+
+    for result in results:
+        update_analytic.delay(result['_source']["id"])
+
+
+@celery.task(name='tasks.update_fixed_time_window_analytics')
+def update_fixed_time_window_analytics():
+    logger.info("Updating fixed time window analytics")
+    es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
+    index_name = Utils.generate_index("analytic")
+    results = scan(es, index=index_name, query={"query": {"match": {"descriptor.timespan.type.keyword": FixedTimeWindow.type()}}})
+
+    for result in results:
+        update_analytic.delay(result['_source']["id"])
+
+
+@celery.task(name='tasks.update_all_analytics')
+def update_all_analytics():
+    logger.info("Updating all analytics")
+    es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
+    index_name = Utils.generate_index("analytic")
+    results = scan(es, index=index_name, query={"query": {"match_all": {}}})
 
     for result in results:
         update_analytic.delay(result['_source']["id"])

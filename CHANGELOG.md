@@ -10,8 +10,8 @@
 * The support for periodical (once a day, at midnight) re-computation of _moving time window_ analytic results have been added.
 * _Time window_ type values have been updated. In particular:
   
-  * `DEFAULT` has bene renamed to `MOVING`
-  * `CUSTOM` has been renamed to `FIXED`
+  * `DEFAULT` has bene renamed to `moving`
+  * `CUSTOM` has been renamed to `fixed`
 
   Deprecated values are still supported in the creation step of analytics, they will be officially removed in the next major release.
   The new values will be used for describing the requested data.
@@ -27,6 +27,7 @@
   * metrics renamed into more meaningful ones and `c:path`, `c:length`, `m:unhandled` are removed;
   * removed the field items from the analytic result.
 * Removed older usercount and eventcount endpoints.
+* Added endpoint for computing the update of the analytics.
 
 * breaking changes:
   * the parameter `staticId` of the Analytic has been renamed to `id`;

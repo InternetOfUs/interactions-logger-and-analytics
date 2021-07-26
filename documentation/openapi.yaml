@@ -497,6 +497,7 @@ paths:
           name: id
           schema:
             type: string
+          example: "bcpg8XYBHD_pmQ1jA7b8"
           required: true
           description: the identifier of the analytic
         - in: query
@@ -536,6 +537,7 @@ paths:
           name: id
           schema:
             type: string
+          example: "bcpg8XYBHD_pmQ1jA7b8"
           required: true
           description: the identifier of the analytic
         - in: query
@@ -558,6 +560,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTP_400'
+
+  /analytic/compute:
+    post:
+      tags:
+        - analytic
+      summary: Compute the update of the analytics
+      description: "
+      The endpoint will run the task for computing the update of the analytics.
+
+      It is possible to set the `type` of time window of analytics to update, if not specified all analytics will be updated.
+
+      It is possible to update only one specific analytic specifying the `id`.
+      "
+      parameters:
+        - in: query
+          name: id
+          schema:
+            type: string
+          example: "bcpg8XYBHD_pmQ1jA7b8"
+          description: the identifier of the analytic
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: ["moving", "fixed"]
+          example: "moving"
+          description: the type of time window of analytics to update
+      responses:
+        '200':
+          description: analytic update started
+          content:
+            application/json:
+              schema:
+                type: object
+
 
 #  /analytic/usercount:
 #    get:
