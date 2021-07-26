@@ -24,30 +24,30 @@ from memex_logging.common.model.analytic.descriptor.segmentation import MessageS
 from memex_logging.common.model.analytic.result.aggregation import AggregationResult
 from memex_logging.common.model.analytic.result.count import CountResult
 from memex_logging.common.model.analytic.result.segmentation import SegmentationResult, Segmentation
-from memex_logging.common.model.analytic.time import MovingTimeWindow
+from test.unit.memex_logging.common_test.generator.time import TimeGenerator
 
 
 class TestAnalytic(TestCase):
 
     def test_repr(self):
-        response = Analytic("id", UserCountDescriptor(MovingTimeWindow("7D"), "project", "total"),
+        response = Analytic("id", UserCountDescriptor(TimeGenerator.generate_random(), "project", "total"),
                             result=CountResult(1, datetime.now(), datetime.now(), datetime.now()))
         self.assertEqual(response, Analytic.from_repr(response.to_repr()))
 
-        response = Analytic("id", AggregationDescriptor(MovingTimeWindow("7D"), "project", "intent.confidence", "avg", None),
+        response = Analytic("id", AggregationDescriptor(TimeGenerator.generate_random(), "project", "intent.confidence", "avg", None),
                             result=AggregationResult(0.78, datetime.now(), datetime.now(), datetime.now()))
         self.assertEqual(response, Analytic.from_repr(response.to_repr()))
 
-        response = Analytic("id", MessageSegmentationDescriptor(MovingTimeWindow("7D"), "project", "all"),
+        response = Analytic("id", MessageSegmentationDescriptor(TimeGenerator.generate_random(), "project", "all"),
                             result=SegmentationResult([Segmentation("request", 1)], datetime.now(), datetime.now(), datetime.now()))
         self.assertEqual(response, Analytic.from_repr(response.to_repr()))
 
     def test_repr_null_result(self):
-        response = Analytic("id", UserCountDescriptor(MovingTimeWindow("7D"), "project", "total"), result=None)
+        response = Analytic("id", UserCountDescriptor(TimeGenerator.generate_random(), "project", "total"), result=None)
         self.assertEqual(response, Analytic.from_repr(response.to_repr()))
 
-        response = Analytic("id", AggregationDescriptor(MovingTimeWindow("7D"), "project", "intent.confidence", "avg", None), result=None)
+        response = Analytic("id", AggregationDescriptor(TimeGenerator.generate_random(), "project", "intent.confidence", "avg", None), result=None)
         self.assertEqual(response, Analytic.from_repr(response.to_repr()))
 
-        response = Analytic("id", MessageSegmentationDescriptor(MovingTimeWindow("7D"), "project", "all"), result=None)
+        response = Analytic("id", MessageSegmentationDescriptor(TimeGenerator.generate_random(), "project", "all"), result=None)
         self.assertEqual(response, Analytic.from_repr(response.to_repr()))

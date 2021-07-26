@@ -76,6 +76,7 @@ class AnalyticInterface(Resource):
                 "code": 404
             }, 404
         else:
+            logger.debug(f"Analytic with id [{analytic_id}] retrieved")
             analytic = Analytic.from_repr(response['hits']['hits'][0]['_source'])
             return analytic.to_repr(), 200
 
@@ -121,9 +122,16 @@ class AnalyticInterface(Resource):
         new_analytic_id = str(uuid.uuid4())
         analytic = Analytic(new_analytic_id, descriptor, result=None)
 
-        # TODO should be moved into a dedicated dao
-        self._es.index(index=index_name, doc_type='_doc', body=analytic.to_repr())
-        logger.debug(f"Analytic stored in index [{index_name}]")
+        try:
+            # TODO should be moved into a dedicated dao
+            self._es.index(index=index_name, doc_type='_doc', body=analytic.to_repr())
+            logger.debug(f"Analytic stored in index [{index_name}] with id [{analytic.analytic_id}]")
+        except Exception as e:
+            logger.exception(f"Analytic could not be stored [{analytic.to_repr()}]", exc_info=e)
+            return {
+                "status": "Internal server error: could not create the analytic",
+                "code": 500
+            }, 500
 
         return {
             "id": new_analytic_id
@@ -144,6 +152,7 @@ class AnalyticInterface(Resource):
         try:
             # TODO should be moved into a dedicated dao
             self._es.delete_by_query(index=index_name, body={"query": {"match": {"id.keyword": analytic_id}}})
+            logger.debug(f"Analytic with id [{analytic_id}] deleted")
         except Exception as e:
             logger.exception(f"Analytic with id [{analytic_id}] could not be to be deleted", exc_info=e)
             return {

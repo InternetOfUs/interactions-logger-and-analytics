@@ -18,13 +18,13 @@ from unittest import TestCase
 
 from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
 from memex_logging.common.model.analytic.descriptor.aggregation import AggregationDescriptor, Filter
-from memex_logging.common.model.analytic.time import MovingTimeWindow
+from test.unit.memex_logging.common_test.generator.time import TimeGenerator
 
 
 class TestAggregationDescriptor(TestCase):
 
     def test_repr(self):
-        descriptor = AggregationDescriptor(MovingTimeWindow("7D"), "project", "intent.confidence", "avg", None)
+        descriptor = AggregationDescriptor(TimeGenerator.generate_random(), "project", "intent.confidence", "avg", None)
         self.assertEqual(descriptor, AggregationDescriptor.from_repr(descriptor.to_repr()))
         self.assertEqual(descriptor, AnalyticDescriptorBuilder.build(descriptor.to_repr()))
 

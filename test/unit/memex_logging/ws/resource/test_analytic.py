@@ -18,7 +18,9 @@ import json
 
 from mock import Mock
 
+from memex_logging.common.model.analytic.descriptor.count import UserCountDescriptor
 from test.unit.memex_logging.common_test.common_test_ws import CommonWsTestCase
+from test.unit.memex_logging.common_test.generator.time import TimeGenerator
 
 
 class TestAnalyticInterface(CommonWsTestCase):
@@ -49,6 +51,19 @@ class TestAnalyticInterface(CommonWsTestCase):
 
         self.es.search = Mock(side_effect=Exception)
         response = self.client.get(f"/analytic?id={analytic_id}&project={project}")
+        self.assertEqual(500, response.status_code)
+
+    def test_post_analytic(self):
+        raw_descriptor = UserCountDescriptor(TimeGenerator.generate_random(), "project", "total").to_repr()
+        self.es.index = Mock(return_value=None)
+        response = self.client.post("/analytic", json=raw_descriptor)
+        self.assertEqual(200, response.status_code)
+
+        response = self.client.post("/analytic", json={})
+        self.assertEqual(400, response.status_code)
+
+        self.es.index = Mock(side_effect=Exception)
+        response = self.client.post("/analytic", json=raw_descriptor)
         self.assertEqual(500, response.status_code)
 
     def test_delete_analytic(self):

@@ -19,13 +19,13 @@ from unittest import TestCase
 from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
 from memex_logging.common.model.analytic.descriptor.segmentation import SegmentationDescriptor, \
     UserSegmentationDescriptor, MessageSegmentationDescriptor, TransactionSegmentationDescriptor
-from memex_logging.common.model.analytic.time import MovingTimeWindow
+from test.unit.memex_logging.common_test.generator.time import TimeGenerator
 
 
 class TestUserSegmentationDescriptor(TestCase):
 
     def test_repr(self):
-        descriptor = UserSegmentationDescriptor(MovingTimeWindow("7D"), "project", "age")
+        descriptor = UserSegmentationDescriptor(TimeGenerator.generate_random(), "project", "age")
         self.assertEqual(descriptor, UserSegmentationDescriptor.from_repr(descriptor.to_repr()))
         self.assertEqual(descriptor, SegmentationDescriptor.from_repr(descriptor.to_repr()))
         self.assertEqual(descriptor, AnalyticDescriptorBuilder.build(descriptor.to_repr()))
@@ -34,7 +34,7 @@ class TestUserSegmentationDescriptor(TestCase):
 class TestMessageSegmentationDescriptor(TestCase):
 
     def test_repr(self):
-        descriptor = MessageSegmentationDescriptor(MovingTimeWindow("7D"), "project", "all")
+        descriptor = MessageSegmentationDescriptor(TimeGenerator.generate_random(), "project", "all")
         self.assertEqual(descriptor, MessageSegmentationDescriptor.from_repr(descriptor.to_repr()))
         self.assertEqual(descriptor, SegmentationDescriptor.from_repr(descriptor.to_repr()))
         self.assertEqual(descriptor, AnalyticDescriptorBuilder.build(descriptor.to_repr()))
@@ -43,7 +43,7 @@ class TestMessageSegmentationDescriptor(TestCase):
 class TestTransactionSegmentationDescriptor(TestCase):
 
     def test_repr(self):
-        descriptor = TransactionSegmentationDescriptor(MovingTimeWindow("7D"), "project", "label")
+        descriptor = TransactionSegmentationDescriptor(TimeGenerator.generate_random(), "project", "label")
         self.assertEqual(descriptor, TransactionSegmentationDescriptor.from_repr(descriptor.to_repr()))
         self.assertEqual(descriptor, SegmentationDescriptor.from_repr(descriptor.to_repr()))
         self.assertEqual(descriptor, AnalyticDescriptorBuilder.build(descriptor.to_repr()))
