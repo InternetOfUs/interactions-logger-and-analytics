@@ -19,7 +19,7 @@ from unittest import TestCase
 from elasticsearch import Elasticsearch
 
 from memex_logging.ws.ws import WsInterface
-from test.unit.memex_logging.ws.common.mock.daos import MockDaoCollectorBuilder
+from test.unit.memex_logging.common_test.mock.daos import MockDaoCollectorBuilder
 
 
 class CommonWsTestCase(TestCase):

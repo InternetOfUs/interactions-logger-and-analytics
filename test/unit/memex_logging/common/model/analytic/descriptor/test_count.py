@@ -19,7 +19,7 @@ from unittest import TestCase
 from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
 from memex_logging.common.model.analytic.descriptor.count import UserCountDescriptor, CountDescriptor, MessageCountDescriptor, TaskCountDescriptor, \
     TransactionCountDescriptor, ConversationCountDescriptor, DialogueCountDescriptor, BotCountDescriptor
-from memex_logging.common.model.time import MovingTimeWindow
+from memex_logging.common.model.analytic.time import MovingTimeWindow
 
 
 class TestUserCountDescriptor(TestCase):

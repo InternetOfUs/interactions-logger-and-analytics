@@ -17,7 +17,7 @@ from __future__ import absolute_import, annotations
 from datetime import datetime
 from unittest import TestCase
 
-from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow, TimeWindow
+from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow, TimeWindow
 
 
 class TestMovingTimeWindow(TestCase):

@@ -21,7 +21,7 @@ from mock import Mock
 
 from memex_logging.common.dao.common import EntryNotFound
 from memex_logging.common.model.message import Message
-from test.unit.memex_logging.ws.common.common_test_ws import CommonWsTestCase
+from test.unit.memex_logging.common_test.common_test_ws import CommonWsTestCase
 
 
 class TestMessageInterface(CommonWsTestCase):

@@ -25,7 +25,7 @@ from elasticsearch import Elasticsearch
 from flask_restful import abort
 
 from memex_logging.common.model.message import RequestMessage, ResponseMessage, NotificationMessage
-from memex_logging.common.model.time import TimeWindow, MovingTimeWindow, FixedTimeWindow
+from memex_logging.common.model.analytic.time import TimeWindow, MovingTimeWindow, FixedTimeWindow
 
 
 logger = logging.getLogger("logger.utils.utils")

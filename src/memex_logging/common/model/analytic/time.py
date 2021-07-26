@@ -82,8 +82,7 @@ class MovingTimeWindow(TimeWindow):
     @staticmethod
     def from_repr(raw_data: dict) -> MovingTimeWindow:
         window_type = raw_data['type'].lower()
-
-        if window_type not in [MovingTimeWindow.type(), MovingTimeWindow.deprecated_type()]:
+        if window_type != MovingTimeWindow.type() and window_type != MovingTimeWindow.deprecated_type():
             raise ValueError("Unrecognized type for MovingTimeWindow")
 
         return MovingTimeWindow(raw_data['value'])
@@ -123,9 +122,8 @@ class FixedTimeWindow(TimeWindow):
 
     @staticmethod
     def from_repr(raw_data: dict) -> FixedTimeWindow:
-
         window_type = raw_data['type'].lower()
-        if window_type not in [FixedTimeWindow.type(), FixedTimeWindow.deprecated_type()]:
+        if window_type != FixedTimeWindow.type() and window_type != FixedTimeWindow.deprecated_type():
             raise ValueError("Unrecognized type for FixedTimeWindow")
 
         return FixedTimeWindow.from_isoformat(raw_data['start'], raw_data['end'])

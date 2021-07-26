@@ -14,10 +14,10 @@
 
 from __future__ import absolute_import, annotations
 
-from typing import Union, List, Optional
+from typing import List, Optional
 
 from memex_logging.common.model.analytic.descriptor.common import CommonAnalyticDescriptor
-from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
+from memex_logging.common.model.analytic.time import TimeWindow
 
 
 class AggregationDescriptor(CommonAnalyticDescriptor):
@@ -25,10 +25,10 @@ class AggregationDescriptor(CommonAnalyticDescriptor):
     TYPE = "aggregation"
     ALLOWED_AGGREGATION_VALUES = ["avg", "min", "max", "sum", "stats", "extended_stats", "value_count", "cardinality", "percentiles"]
 
-    def __init__(self, time_span: Union[MovingTimeWindow, FixedTimeWindow], project: str, field: str, aggregation: str, filters: Optional[List[Filter]] = None) -> None:
+    def __init__(self, time_span: TimeWindow, project: str, field: str, aggregation: str, filters: Optional[List[Filter]] = None) -> None:
         super().__init__(time_span, project)
         self.field = field
-        self.aggregation = aggregation
+        self.aggregation = aggregation.lower()
         self.filters = filters
 
         if self.filters is None:
@@ -46,18 +46,15 @@ class AggregationDescriptor(CommonAnalyticDescriptor):
 
     @staticmethod
     def from_repr(raw_data: dict) -> AggregationDescriptor:
-        if str(raw_data['type']).lower() != AggregationDescriptor.TYPE:
-            raise ValueError(f"Unrecognized type [{raw_data['type']}] for AggregationDescriptor")
+        analytic_type = raw_data['type'].lower()
+        if analytic_type != AggregationDescriptor.TYPE:
+            raise ValueError(f"Unrecognized type [{analytic_type}] for AggregationDescriptor")
 
-        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.type(), MovingTimeWindow.deprecated_type()]:
-            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
-        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.type(), FixedTimeWindow.deprecated_type()]:
-            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
-        else:
-            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
+        timespan = TimeWindow.from_repr(raw_data['timespan'])
 
-        if str(raw_data['aggregation']).lower() not in AggregationDescriptor.ALLOWED_AGGREGATION_VALUES:
-            raise ValueError(f"Unrecognized type [{raw_data['aggregation']}] of AggregationDescriptor")
+        aggregation = raw_data['aggregation'].lower()
+        if aggregation not in AggregationDescriptor.ALLOWED_AGGREGATION_VALUES:
+            raise ValueError(f"Unrecognized type [{aggregation}] of AggregationDescriptor")
 
         filters = None
         if raw_data.get('filters'):
@@ -66,7 +63,7 @@ class AggregationDescriptor(CommonAnalyticDescriptor):
             else:
                 raise ValueError("Filters is not a list")
 
-        return AggregationDescriptor(timespan, raw_data['project'], raw_data['field'], raw_data['aggregation'], filters)
+        return AggregationDescriptor(timespan, raw_data['project'], raw_data['field'], aggregation, filters)
 
     def __eq__(self, o) -> bool:
         if isinstance(o, AggregationDescriptor):
@@ -81,7 +78,7 @@ class Filter:
 
     def __init__(self, field: str, operation: str, value: str):
         self.field = field
-        self.operation = operation
+        self.operation = operation.lower()
         self.value = value
 
     def to_repr(self) -> dict:
@@ -93,10 +90,11 @@ class Filter:
 
     @staticmethod
     def from_repr(raw_data: dict) -> Filter:
-        if str(raw_data['operation']).lower() not in Filter.ALLOWED_OPERATIONS:
-            raise ValueError(f"Unknown value [{raw_data['operation']}] for operation")
+        operation = raw_data['operation'].lower()
+        if operation not in Filter.ALLOWED_OPERATIONS:
+            raise ValueError(f"Unknown value [{operation}] for operation")
 
-        return Filter(raw_data['field'], raw_data['operation'], raw_data['value'])
+        return Filter(raw_data['field'], operation, raw_data['value'])
 
     def __eq__(self, o) -> bool:
         if isinstance(o, Filter):
@@ -130,6 +128,8 @@ class Average:
 
 class WeightedAverage:
 
+    ALLOWED_DATA_FORMATS = ["numeric", "percentage"]
+
     def __init__(self, field: str, weight: str, missing=None, data_format=None):
         self.field = field
         self.weight = weight
@@ -147,9 +147,9 @@ class WeightedAverage:
 
     @staticmethod
     def from_repr(data: dict) -> WeightedAverage:
-        data_format = "NUMERIC"
+        data_format = "numeric"
         if 'format' in data:
-            if str(data['format']).lower() not in ['numeric', 'percentage']:
+            if data['format'].lower() not in WeightedAverage.ALLOWED_DATA_FORMATS:
                 raise ValueError(f"unknown type [{data['format']}] for format")
             else:
                 data_format = data['format']

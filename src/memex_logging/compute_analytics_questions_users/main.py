@@ -32,7 +32,7 @@ from memex_logging.common.model.analytic.descriptor.segmentation import MessageS
 from memex_logging.common.model.analytic.result.count import CountResult
 from memex_logging.common.model.analytic.result.segmentation import SegmentationResult
 from memex_logging.common.model.message import Message
-from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
+from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow
 from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
 from memex_logging.common.utils import Utils
 

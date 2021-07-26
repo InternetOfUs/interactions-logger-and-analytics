@@ -19,7 +19,7 @@ from unittest import TestCase
 
 from freezegun import freeze_time
 
-from memex_logging.common.model.time import FixedTimeWindow, MovingTimeWindow
+from memex_logging.common.model.analytic.time import FixedTimeWindow, MovingTimeWindow
 from memex_logging.common.utils import Utils
 
 

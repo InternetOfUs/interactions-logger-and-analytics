@@ -16,7 +16,7 @@ from __future__ import absolute_import, annotations
 
 from abc import ABC, abstractmethod
 
-from memex_logging.common.model.time import TimeWindow
+from memex_logging.common.model.analytic.time import TimeWindow
 
 
 class CommonAnalyticDescriptor(ABC):

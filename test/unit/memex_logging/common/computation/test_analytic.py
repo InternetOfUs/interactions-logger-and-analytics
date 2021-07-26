@@ -33,7 +33,7 @@ from memex_logging.common.model.analytic.descriptor.segmentation import UserSegm
     MessageSegmentationDescriptor, TransactionSegmentationDescriptor
 from memex_logging.common.model.analytic.result.count import CountResult
 from memex_logging.common.model.analytic.result.segmentation import SegmentationResult, Segmentation
-from memex_logging.common.model.time import FixedTimeWindow
+from memex_logging.common.model.analytic.time import FixedTimeWindow
 
 
 class TestAnalyticComputation(TestCase):

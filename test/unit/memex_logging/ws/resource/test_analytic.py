@@ -18,7 +18,7 @@ import json
 
 from mock import Mock
 
-from test.unit.memex_logging.ws.common.common_test_ws import CommonWsTestCase
+from test.unit.memex_logging.common_test.common_test_ws import CommonWsTestCase
 
 
 class TestAnalyticInterface(CommonWsTestCase):
@@ -34,7 +34,7 @@ class TestAnalyticInterface(CommonWsTestCase):
         response = self.client.get(f"/analytic?id={analytic_id}&project={project}")
         self.assertEqual(200, response.status_code)
         self.assertEqual({
-            'descriptor': {'timespan': {'type': 'MOVING', 'value': '30D'}, 'project': 'project', 'type': 'count', 'dimension': 'task', 'metric': 'new'},
+            'descriptor': {'timespan': {'type': 'moving', 'value': '30D'}, 'project': 'project', 'type': 'count', 'dimension': 'task', 'metric': 'new'},
             'result': {'count': 1, 'type': 'count', 'creationDt': '2021-07-15T11:00:01.065638', 'fromDt': '2021-06-15T00:00:00', 'toDt': '2021-07-15T00:00:00'},
             'id': 'analytic_id'
         }, json.loads(response.data))

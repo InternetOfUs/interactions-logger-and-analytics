@@ -24,7 +24,7 @@ from memex_logging.common.model.analytic.descriptor.segmentation import MessageS
 from memex_logging.common.model.analytic.result.aggregation import AggregationResult
 from memex_logging.common.model.analytic.result.count import CountResult
 from memex_logging.common.model.analytic.result.segmentation import SegmentationResult, Segmentation
-from memex_logging.common.model.time import MovingTimeWindow
+from memex_logging.common.model.analytic.time import MovingTimeWindow
 
 
 class TestAnalytic(TestCase):

@@ -42,6 +42,9 @@ class AnalyticReorganizationMigration(MigrationAction):
                 descriptor = analytic['_source'].pop("query")
                 analytic['_source']['descriptor'] = descriptor
 
+            # Lower the timespan type
+            analytic['_source']['descriptor']['timespan']['type'] = analytic['_source']['descriptor']['timespan']['type'].lower()
+
             if analytic['_source']['descriptor']['type'] == "analytic":
                 # Remove analytics with metric value:
                 # - c:path
@@ -146,7 +149,7 @@ class AnalyticReorganizationMigration(MigrationAction):
                     analytic['_source']['result']['creationDt'] = now.isoformat()
                 if analytic['_source']['result'].get('fromDt') is None or analytic['_source']['result'].get('toDt') is None:
                     timespan_type = analytic['_source']['descriptor']['timespan']['type']
-                    if timespan_type == 'FIXED':
+                    if timespan_type == 'fixed':
                         analytic['_source']['result']['fromDt'] = analytic['_source']['descriptor']['timespan']['start']
                         analytic['_source']['result']['toDt'] = analytic['_source']['descriptor']['timespan']['end']
                     else:

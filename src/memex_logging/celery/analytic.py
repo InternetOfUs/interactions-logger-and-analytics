@@ -25,7 +25,7 @@ from wenet.interface.wenet import WeNet
 from memex_logging.celery import celery
 from memex_logging.common.computation.analytic import AnalyticComputation
 from memex_logging.common.model.analytic.analytic import Analytic
-from memex_logging.common.model.time import MovingTimeWindow
+from memex_logging.common.model.analytic.time import MovingTimeWindow
 from memex_logging.common.utils import Utils
 
 
