@@ -123,7 +123,7 @@ class CountComputation:
         return result
 
     def _total_users(self, analytic: UserCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -164,7 +164,7 @@ class CountComputation:
         return CountResult(number_of_users, datetime.now(), min_bound, max_bound)
 
     def _active_users(self, analytic: UserCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -210,7 +210,7 @@ class CountComputation:
         return CountResult(number_of_users, datetime.now(), min_bound, max_bound)
 
     def _engaged_users(self, analytic: UserCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -256,7 +256,7 @@ class CountComputation:
         return CountResult(number_of_users, datetime.now(), min_bound, max_bound)
 
     def _new_users(self, analytic: UserCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -351,7 +351,7 @@ class CountComputation:
         return CountResult(len(final_users), datetime.now(), min_bound, max_bound)
 
     def _user_messages(self, analytic: MessageCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -403,7 +403,7 @@ class CountComputation:
         return CountResult(total_counter, datetime.now(), min_bound, max_bound)
 
     def _bot_messages(self, analytic: MessageCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -502,7 +502,7 @@ class CountComputation:
         return CountResult(total_len, datetime.now(), min_bound, max_bound)
 
     def _response_messages(self, analytic: MessageCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -554,7 +554,7 @@ class CountComputation:
         return CountResult(total_len, datetime.now(), min_bound, max_bound)
 
     def _notification_messages(self, analytic: MessageCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -658,7 +658,7 @@ class CountComputation:
     #     return CountResult(total_len, datetime.now(), min_bound, max_bound)
 
     def _total_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         tasks = []
         tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
         tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
@@ -666,29 +666,29 @@ class CountComputation:
         return CountResult(len(tasks), datetime.now(), min_bound, max_bound)
 
     def _active_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         tasks = []
         tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=False))
         tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
         return CountResult(len(tasks), datetime.now(), min_bound, max_bound)
 
     def _closed_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         tasks = self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound)
         return CountResult(len(tasks), datetime.now(), min_bound, max_bound)
 
     def _new_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         tasks = self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound)
         return CountResult(len(tasks), datetime.now(), min_bound, max_bound)
 
     def _total_transactions(self, analytic: TransactionCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         transactions = self.wenet_interface.task_manager.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
         return CountResult(len(transactions), datetime.now(), min_bound, max_bound)
 
     def _total_conversations(self, analytic: ConversationCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -729,7 +729,7 @@ class CountComputation:
         return CountResult(total_len, datetime.now(), min_bound, max_bound)
 
     def _new_conversations(self, analytic: ConversationCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -974,7 +974,7 @@ class CountComputation:
     #     return ConversationPathCountResult(len(paths), paths, datetime.now(), min_bound, max_bound)
 
     def _fallback(self, analytic: DialogueCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -1020,7 +1020,7 @@ class CountComputation:
         return CountResult(total_missed, datetime.now(), min_bound, max_bound)
 
     def _intents(self, analytic: DialogueCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -1061,7 +1061,7 @@ class CountComputation:
         return CountResult(value, datetime.now(), min_bound, max_bound)
 
     def _domains(self, analytic: DialogueCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {
@@ -1102,7 +1102,7 @@ class CountComputation:
         return CountResult(value, datetime.now(), min_bound, max_bound)
 
     def _bot_response(self, analytic: BotCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
                 "bool": {

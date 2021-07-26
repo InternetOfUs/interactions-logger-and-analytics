@@ -14,22 +14,24 @@
 
 from __future__ import absolute_import, annotations
 
+from typing import Union
+
 from memex_logging.common.model.analytic.descriptor.common import CommonAnalyticDescriptor
-from memex_logging.common.model.time import TimeWindow
+from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
 
 
 class SegmentationDescriptor(CommonAnalyticDescriptor):
 
     TYPE = "segmentation"
 
-    def __init__(self, timespan: TimeWindow, project: str, dimension: str, metric: str) -> None:
-        super().__init__(timespan, project)
+    def __init__(self, time_span: Union[MovingTimeWindow, FixedTimeWindow], project: str, dimension: str, metric: str) -> None:
+        super().__init__(time_span, project)
         self.dimension = dimension
         self.metric = metric
 
     def to_repr(self) -> dict:
         return {
-            'timespan': self.timespan.to_repr(),
+            'timespan': self.time_span.to_repr(),
             'project': self.project,
             'type': self.TYPE,
             'dimension': self.dimension,
@@ -38,22 +40,27 @@ class SegmentationDescriptor(CommonAnalyticDescriptor):
 
     @staticmethod
     def from_repr(raw_data: dict) -> SegmentationDescriptor:
-        if raw_data['type'].lower() != SegmentationDescriptor.TYPE:
+        if str(raw_data['type']).lower() != SegmentationDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for SegmentationDescriptor")
 
-        dimension = raw_data['dimension'].lower()
-        if dimension == UserSegmentationDescriptor.DIMENSION:
+        if str(raw_data['timespan']['type']).upper() not in [MovingTimeWindow.type(),
+                                                             FixedTimeWindow.type(),
+                                                             MovingTimeWindow.deprecated_type(),
+                                                             FixedTimeWindow.deprecated_type()]:
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
+
+        if str(raw_data['dimension']).lower() == UserSegmentationDescriptor.DIMENSION:
             return UserSegmentationDescriptor.from_repr(raw_data)
-        elif dimension == MessageSegmentationDescriptor.DIMENSION:
+        elif str(raw_data['dimension']).lower() == MessageSegmentationDescriptor.DIMENSION:
             return MessageSegmentationDescriptor.from_repr(raw_data)
-        elif dimension == TransactionSegmentationDescriptor.DIMENSION:
+        elif str(raw_data['dimension']).lower() == TransactionSegmentationDescriptor.DIMENSION:
             return TransactionSegmentationDescriptor.from_repr(raw_data)
         else:
-            raise ValueError(f"Unrecognized dimension [{dimension}] for SegmentationDescriptor")
+            raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for SegmentationDescriptor")
 
     def __eq__(self, o) -> bool:
         if isinstance(o, SegmentationDescriptor):
-            return o.timespan == self.timespan and o.project == self.project and o.dimension == self.dimension and o.metric == self.metric
+            return o.time_span == self.time_span and o.project == self.project and o.dimension == self.dimension and o.metric == self.metric
         else:
             return False
 
@@ -63,24 +70,28 @@ class UserSegmentationDescriptor(SegmentationDescriptor):
     DIMENSION = "user"
     ALLOWED_METRIC_VALUES = ["age", "gender"]
 
-    def __init__(self, timespan: TimeWindow, project: str, metric: str):
-        super().__init__(timespan, project, self.DIMENSION, metric)
+    def __init__(self, time_span: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+        super().__init__(time_span, project, self.DIMENSION, metric)
 
     @staticmethod
     def from_repr(raw_data: dict) -> UserSegmentationDescriptor:
-        if raw_data['type'].lower() != UserSegmentationDescriptor.TYPE:
+        if str(raw_data['type']).lower() != UserSegmentationDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for UserSegmentationDescriptor")
 
-        if raw_data['dimension'].lower() != UserSegmentationDescriptor.DIMENSION:
+        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.type(), MovingTimeWindow.deprecated_type()]:
+            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
+        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.type(), FixedTimeWindow.deprecated_type()]:
+            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
+        else:
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
+
+        if str(raw_data['dimension']).lower() != UserSegmentationDescriptor.DIMENSION:
             raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for UserSegmentationDescriptor")
 
-        timespan = TimeWindow.from_repr(raw_data['timespan'])
+        if str(raw_data['metric']).lower() not in UserSegmentationDescriptor.ALLOWED_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for UserSegmentationDescriptor")
 
-        metric = raw_data['metric'].lower()
-        if metric not in UserSegmentationDescriptor.ALLOWED_METRIC_VALUES:
-            raise ValueError(f"Unknown value for metric [{metric}] for UserSegmentationDescriptor")
-
-        return UserSegmentationDescriptor(timespan, raw_data['project'], metric)
+        return UserSegmentationDescriptor(timespan, raw_data['project'], raw_data['metric'])
 
 
 class MessageSegmentationDescriptor(SegmentationDescriptor):
@@ -88,24 +99,28 @@ class MessageSegmentationDescriptor(SegmentationDescriptor):
     DIMENSION = "message"
     ALLOWED_METRIC_VALUES = ["all", "from_users"]
 
-    def __init__(self, timespan: TimeWindow, project: str, metric: str):
-        super().__init__(timespan, project, self.DIMENSION, metric)
+    def __init__(self, time_span: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str):
+        super().__init__(time_span, project, self.DIMENSION, metric)
 
     @staticmethod
     def from_repr(raw_data: dict) -> MessageSegmentationDescriptor:
-        if raw_data['type'].lower() != MessageSegmentationDescriptor.TYPE:
+        if str(raw_data['type']).lower() != MessageSegmentationDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for MessageSegmentationDescriptor")
 
-        if raw_data['dimension'].lower() != MessageSegmentationDescriptor.DIMENSION:
+        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.type(), MovingTimeWindow.deprecated_type()]:
+            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
+        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.type(), FixedTimeWindow.deprecated_type()]:
+            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
+        else:
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
+
+        if str(raw_data['dimension']).lower() != MessageSegmentationDescriptor.DIMENSION:
             raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for MessageSegmentationDescriptor")
 
-        timespan = TimeWindow.from_repr(raw_data['timespan'])
+        if str(raw_data['metric']).lower() not in MessageSegmentationDescriptor.ALLOWED_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for MessageSegmentationDescriptor")
 
-        metric = raw_data['metric'].lower()
-        if metric not in MessageSegmentationDescriptor.ALLOWED_METRIC_VALUES:
-            raise ValueError(f"Unknown value for metric [{metric}] for MessageSegmentationDescriptor")
-
-        return MessageSegmentationDescriptor(timespan, raw_data['project'], metric)
+        return MessageSegmentationDescriptor(timespan, raw_data['project'], raw_data['metric'])
 
 
 class TransactionSegmentationDescriptor(SegmentationDescriptor):
@@ -113,8 +128,8 @@ class TransactionSegmentationDescriptor(SegmentationDescriptor):
     DIMENSION = "transaction"
     ALLOWED_METRIC_VALUES = ["label"]
 
-    def __init__(self, timespan: TimeWindow, project: str, metric: str, task_id: str = None):
-        super().__init__(timespan, project, self.DIMENSION, metric)
+    def __init__(self, time_span: Union[MovingTimeWindow, FixedTimeWindow], project: str, metric: str, task_id: str = None):
+        super().__init__(time_span, project, self.DIMENSION, metric)
         self.task_id = task_id
 
     def to_repr(self) -> dict:
@@ -124,16 +139,20 @@ class TransactionSegmentationDescriptor(SegmentationDescriptor):
 
     @staticmethod
     def from_repr(raw_data: dict) -> TransactionSegmentationDescriptor:
-        if raw_data['type'].lower() != TransactionSegmentationDescriptor.TYPE:
+        if str(raw_data['type']).lower() != TransactionSegmentationDescriptor.TYPE:
             raise ValueError(f"Unrecognized type [{raw_data['type']}] for TransactionSegmentationDescriptor")
 
-        if raw_data['dimension'].lower() != TransactionSegmentationDescriptor.DIMENSION:
+        if str(raw_data['timespan']['type']).upper() in [MovingTimeWindow.type(), MovingTimeWindow.deprecated_type()]:
+            timespan = MovingTimeWindow.from_repr(raw_data['timespan'])
+        elif str(raw_data['timespan']['type']).upper() in [FixedTimeWindow.type(), FixedTimeWindow.deprecated_type()]:
+            timespan = FixedTimeWindow.from_repr(raw_data['timespan'])
+        else:
+            raise ValueError(f"Unrecognized type [{raw_data['timespan']['type']}] for timespan")
+
+        if str(raw_data['dimension']).lower() != TransactionSegmentationDescriptor.DIMENSION:
             raise ValueError(f"Unrecognized dimension [{raw_data['dimension']}] for TransactionSegmentationDescriptor")
 
-        timespan = TimeWindow.from_repr(raw_data['timespan'])
+        if str(raw_data['metric']).lower() not in TransactionSegmentationDescriptor.ALLOWED_METRIC_VALUES:
+            raise ValueError(f"Unknown value for metric [{raw_data['metric']}] for TransactionSegmentationDescriptor")
 
-        metric = raw_data['metric'].lower()
-        if metric not in TransactionSegmentationDescriptor.ALLOWED_METRIC_VALUES:
-            raise ValueError(f"Unknown value for metric [{metric}] for TransactionSegmentationDescriptor")
-
-        return TransactionSegmentationDescriptor(timespan, raw_data['project'], metric, task_id=raw_data.get('taskId'))
+        return TransactionSegmentationDescriptor(timespan, raw_data['project'], raw_data['metric'], task_id=raw_data.get('taskId'))

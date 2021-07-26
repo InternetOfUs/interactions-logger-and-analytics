@@ -21,8 +21,8 @@ from memex_logging.common.model.time import TimeWindow
 
 class CommonAnalyticDescriptor(ABC):
 
-    def __init__(self, timespan: TimeWindow, project: str) -> None:
-        self.timespan = timespan
+    def __init__(self, time_span: TimeWindow, project: str) -> None:
+        self.time_span = time_span
         self.project = project
 
     @abstractmethod
