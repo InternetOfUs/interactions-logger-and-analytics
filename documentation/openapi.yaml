@@ -358,33 +358,68 @@ paths:
         - analytic
       summary: Create an analytic
       description: "
-      This end-point allows to create an analytic based on the messages in the database (for this kind of analytics the project should be the one used to store the messages) or on external WeNet services (for this kind of analytics the project should be the id of the application).
-      It returns an `id` that you have to use to retrieve the analytic. There are different kind of supported descriptors.
+      This end-point allows to create an analytic. Upon a successful creation, it returns the `id` of the new analytic.
 
 
-      UserCountDescriptor has `type` value set to `count`, `dimension` value set to `user`. The following `metric` values are supported:
+      Analytics are created by specifying the **descriptor**. Three types exists and they respectively allow to define:
 
-      * `total`: the number of total users in a certain time range (that have sent/received at least a message);
+      1. `count` a counter analytic, able to compute the number of occurrences of a certain type of event
 
-      * `active`: the number of active users in a certain time range (that have sent at least a request message);
+      2. `segmentation` a segmentation analytic, able to create a segmentation map collecting all value occurrences of a certain event together with the associated occurrence counter
 
-      * `engaged`: the number of engaged users in a certain time range (that have received at least a notification message);
+      3. `aggregation` an aggregation analytic, it requires the specification of the *field* to aggregate over and the *type* of aggregation to be applied. The following are the supported types: *avg*, *min*, *max*, *sum*, *stats*, *extended_stats, *value_count*, *cardinality* and *percentiles*.
+
+
+      ## User analytics
+
+      They are identified by the value of *dimension* set to `user`.
+      The following *metric* values are supported.
+
+      ### Count
+
+      * `total`: the number of total users in a certain time range (that have sent/received at least a message).
+
+      * `active`: the number of active users in a certain time range (that have sent at least a request message).
+
+      * `engaged`: the number of engaged users in a certain time range (that have received at least a notification message).
 
       * `new`: the number of new users in a certain time range (that have sent/received at least a message for the first time).
 
+      ### Segmentation
 
-      MessageCountDescriptor has `type` value set to `count`, `dimension` value set to `message`. The following `metric` values are supported:
+      * `age`: the segmentation of the app users based on the age.
 
-      * `from_users`: the number of messages from the users in a certain time range;
+      * `gender`: the segmentation of the app users based on the gender.
 
-      * `from_bot`: the number of messages from the bot in a certain time range;
 
-      * `responses`: the number of response messages in a certain time range;
+      ## Message analytics
+
+      They are identified by the value of *dimension* set to `message`.
+      The following *metric* values are supported.
+
+      ### Count
+
+      * `from_users`: the number of messages from the users in a certain time range.
+
+      * `from_bot`: the number of messages from the bot in a certain time range.
+
+      * `responses`: the number of response messages in a certain time range.
 
       * `notifications`: the number of notification messages in a certain time range.
 
+      ### Segmentation
 
-      TaskCountDescriptor has `type` value set to `count`, `dimension` value set to `task`. This kind of analytics will be computed directly from the task manager component. Note that the project is not related to the name used in the db. It is requested the id of the application. The following `metric` values are supported:
+      * `all`: the segmentation of the messages based on the type in a certain time range.
+
+      * `from_users`: the segmentation of the user messages based on the type in a certain time range.
+
+
+      ## Task analytics
+
+      They are identified by the value of *dimension* set to `task`.
+      The following *metric* values are supported.
+
+      ### Count
 
       * `total`: the number of total tasks in a certain time range;
 
@@ -395,52 +430,19 @@ paths:
       * `new`: the number of new tasks in a certain time range.
 
 
-      TransactionCountDescriptor has `type` value set to `count`, `dimension` value set to `transaction`. This kind of analytics will be computed directly from the task manager component. Note that the project is not related to the name used in the db. It is requested the id of the application. For this metric you can also specify the task id of interest using the field `taskId`. The following `metric` values are supported:
+      ## Transaction analytics
+
+      They are identified by the value of *dimension* set to `transaction`.
+      The following *metric* values are supported.
+
+      ### Count
 
       * `total`: the number of total transactions in a certain time range.
 
-
-      ConversationCountDescriptor has `type` value set to `count`, `dimension` value set to `conversation`. The following `metric` values are supported:
-
-      * `total`: the number of conversation in a certain time range;
-
-      * `new`: the number of new conversation in a certain time range.
-
-
-      DialogueCountDescriptor has `type` value set to `count`, `dimension` value set to `dialogue`. The following `metric` values are supported:
-
-      * `fallback`: the number of missed intent messages in a certain time range;
-
-      * `intents`: the number of intents in a certain time range;
-
-      * `domains`: the number of domains in a certain time range.
-
-
-      BotCountDescriptor has `type` value set to `count`, `dimension` value set to `bot`. The following `metric` values are supported:
-
-      * `response`: the number of users and messages in a certain time range.
-
-
-      UserSegmentationDescriptor has `type` value set to `segmentation`, `dimension` value set to `user`. The following `metric` values are supported:
-
-      * `age`: the segmentation of the app users based on the age. This kind of analytic will be computed directly from the hub and profile manager components. Note that the project is not related to the name used in the db. It is requested the id of the application;
-
-      * `gender`: the segmentation of the app users based on the gender. This kind of analytic will be computed directly from the hub and profile manager components. Note that the project is not related to the name used in the db. It is requested the id of the application.
-
-
-      MessageSegmentationDescriptor has `type` value set to `segmentation`, `dimension` value set to `message`. The following `metric` values are supported:
-
-      * `all`: the segmentation of the messages based on the type in a certain time range;
-
-      * `from_users`: the segmentation of the user messages based on the type in a certain time range.
-
-
-      TransactionSegmentationDescriptor has `type` value set to `segmentation`, `dimension` value set to `transaction`. This kind of analytics will be computed directly from the task manager component. Note that the project is not related to the name used in the db. It is requested the id of the application. For this metric you can also specify the task id of interest using the field `taskId`. The following `metric` values are supported:
+      ### Segmentation
 
       * `label`: the segmentation of the transactions based on the label in a certain time range.
 
-
-      AggregationDescriptor has `type` value set to `aggregation` and there is to specify the `field` value and the `aggregation` to perform among [`'avg'`, `'min'`, `'max'`, `'sum'`, `'stats'`, `'extended_stats'`, `'value_count'`, `'cardinality'`, `'percentiles'`]
       "
       requestBody:
         content:
