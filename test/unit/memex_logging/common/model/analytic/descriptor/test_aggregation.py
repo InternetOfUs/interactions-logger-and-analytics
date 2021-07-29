@@ -16,17 +16,17 @@ from __future__ import absolute_import, annotations
 
 from unittest import TestCase
 
-from memex_logging.common.analytic.builder import AnalyticBuilder
-from memex_logging.common.model.aggregation import AggregationAnalytic, Filter
-from memex_logging.common.model.time import MovingTimeWindow
+from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
+from memex_logging.common.model.analytic.descriptor.aggregation import AggregationDescriptor, Filter
+from test.unit.memex_logging.common_test.generator.time import TimeGenerator
 
 
-class TestAggregation(TestCase):
+class TestAggregationDescriptor(TestCase):
 
     def test_repr(self):
-        aggregation = AggregationAnalytic(MovingTimeWindow("7D"), "project", "intent.confidence", "avg", None)
-        self.assertEqual(aggregation, AggregationAnalytic.from_repr(aggregation.to_repr()))
-        self.assertEqual(aggregation, AnalyticBuilder.from_repr(aggregation.to_repr()))
+        descriptor = AggregationDescriptor(TimeGenerator.generate_random(), "project", "intent.confidence", "avg", None)
+        self.assertEqual(descriptor, AggregationDescriptor.from_repr(descriptor.to_repr()))
+        self.assertEqual(descriptor, AnalyticDescriptorBuilder.build(descriptor.to_repr()))
 
 
 class TestFilter(TestCase):

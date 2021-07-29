@@ -15,12 +15,42 @@
 from __future__ import absolute_import, annotations
 
 import re
+from abc import ABC, abstractmethod
 from datetime import datetime
 
 import deprecation
 
 
-class MovingTimeWindow:
+class TimeWindow(ABC):
+
+    @staticmethod
+    def allowed_types():
+        return [
+            MovingTimeWindow.type(),
+            FixedTimeWindow.type(),
+            MovingTimeWindow.deprecated_type(),
+            FixedTimeWindow.deprecated_type()
+        ]
+
+    @abstractmethod
+    def to_repr(self) -> dict:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def from_repr(raw_data: dict) -> TimeWindow:
+        time_window_type = raw_data['type'].lower()
+        if time_window_type == MovingTimeWindow.type() or time_window_type == MovingTimeWindow.deprecated_type():
+            time_span = MovingTimeWindow.from_repr(raw_data)
+        elif time_window_type == FixedTimeWindow.type() or time_window_type == FixedTimeWindow.deprecated_type():
+            time_span = FixedTimeWindow.from_repr(raw_data)
+        else:
+            raise ValueError(f"Unrecognized type [{time_window_type}] for TimeWindow")
+
+        return time_span
+
+
+class MovingTimeWindow(TimeWindow):
 
     def __init__(self, value: str):
         match = re.match(r"^([0-9]+)([dDwWmMyY])$", value)
@@ -28,30 +58,31 @@ class MovingTimeWindow:
             self.value = int(match.group(1))
             self.descriptor = match.group(2)
         else:
-            if value.upper() == "TODAY":
+            if value.lower() == "today":
                 self.value = None
-                self.descriptor = "TODAY"
+                self.descriptor = "today"
             else:
                 raise ValueError("Incorrect format for MovingTimeWindow value")
 
     @staticmethod
-    def moving_time_window_type():
-        return "MOVING"
+    def type():
+        return "moving"
 
     @staticmethod
     @deprecation.deprecated(deprecated_in="1.5.0", removed_in="2.0.0", details="Use the moving_time_window_type method instead")
-    def default_time_window_type():
-        return "DEFAULT"
+    def deprecated_type():
+        return "default"
 
     def to_repr(self) -> dict:
         return {
-            'type': self.moving_time_window_type(),
+            'type': self.type(),
             'value': f"{self.value}{self.descriptor}" if self.value is not None else self.descriptor
         }
 
     @staticmethod
     def from_repr(raw_data: dict) -> MovingTimeWindow:
-        if str(raw_data['type']).upper() not in [MovingTimeWindow.moving_time_window_type(), MovingTimeWindow.default_time_window_type()]:
+        window_type = raw_data['type'].lower()
+        if window_type != MovingTimeWindow.type() and window_type != MovingTimeWindow.deprecated_type():
             raise ValueError("Unrecognized type for MovingTimeWindow")
 
         return MovingTimeWindow(raw_data['value'])
@@ -63,24 +94,24 @@ class MovingTimeWindow:
             return False
 
 
-class FixedTimeWindow:
+class FixedTimeWindow(TimeWindow):
 
     def __init__(self, start: datetime, end: datetime):
         self.start = start
         self.end = end
 
     @staticmethod
-    def fixed_time_window_type():
-        return "FIXED"
+    def type():
+        return "fixed"
 
     @staticmethod
     @deprecation.deprecated(deprecated_in="1.5.0", removed_in="2.0.0", details="Use the fixed_time_window_type method instead")
-    def custom_time_window_type():
-        return "CUSTOM"
+    def deprecated_type():
+        return "custom"
 
     def to_repr(self) -> dict:
         return {
-            'type': self.fixed_time_window_type(),
+            'type': self.type(),
             'start': self.start.isoformat(),
             'end': self.end.isoformat()
         }
@@ -91,7 +122,8 @@ class FixedTimeWindow:
 
     @staticmethod
     def from_repr(raw_data: dict) -> FixedTimeWindow:
-        if str(raw_data['type']).upper() not in [FixedTimeWindow.fixed_time_window_type(), FixedTimeWindow.custom_time_window_type()]:
+        window_type = raw_data['type'].lower()
+        if window_type != FixedTimeWindow.type() and window_type != FixedTimeWindow.deprecated_type():
             raise ValueError("Unrecognized type for FixedTimeWindow")
 
         return FixedTimeWindow.from_isoformat(raw_data['start'], raw_data['end'])

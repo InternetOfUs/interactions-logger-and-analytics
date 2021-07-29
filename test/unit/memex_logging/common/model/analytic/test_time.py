@@ -17,14 +17,15 @@ from __future__ import absolute_import, annotations
 from datetime import datetime
 from unittest import TestCase
 
-from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
+from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow, TimeWindow
 
 
 class TestMovingTimeWindow(TestCase):
 
     def test_repr(self):
-        time = MovingTimeWindow("7D")
-        self.assertEqual(time, MovingTimeWindow.from_repr(time.to_repr()))
+        time_window = MovingTimeWindow("7D")
+        self.assertEqual(time_window, MovingTimeWindow.from_repr(time_window.to_repr()))
+        self.assertEqual(time_window, TimeWindow.from_repr(time_window.to_repr()))
 
     def test_from_deprecated_repr(self):
         raw_time = {
@@ -32,8 +33,9 @@ class TestMovingTimeWindow(TestCase):
             'value': "30D"
         }
         self.assertIsInstance(MovingTimeWindow.from_repr(raw_time), MovingTimeWindow)
+        self.assertIsInstance(TimeWindow.from_repr(raw_time), MovingTimeWindow)
 
-    def test_incorrect_repr(self):
+    def test_incorrect_creation(self):
         with self.assertRaises(ValueError):
             MovingTimeWindow("30GG")
 
@@ -43,6 +45,7 @@ class TestFixedTimeWindow(TestCase):
     def test_repr(self):
         time = FixedTimeWindow(datetime.now(), datetime.now())
         self.assertEqual(time, FixedTimeWindow.from_repr(time.to_repr()))
+        self.assertEqual(time, TimeWindow.from_repr(time.to_repr()))
 
     def test_from_deprecated_repr(self):
         raw_time = {
@@ -51,3 +54,4 @@ class TestFixedTimeWindow(TestCase):
             'end': datetime.now().isoformat()
         }
         self.assertIsInstance(FixedTimeWindow.from_repr(raw_time), FixedTimeWindow)
+        self.assertIsInstance(TimeWindow.from_repr(raw_time), FixedTimeWindow)

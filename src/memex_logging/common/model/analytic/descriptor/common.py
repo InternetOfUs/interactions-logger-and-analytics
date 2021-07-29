@@ -14,17 +14,22 @@
 
 from __future__ import absolute_import, annotations
 
-from memex_logging.common.model.aggregation import AggregationAnalytic
-from memex_logging.common.model.analytic import DimensionAnalytic, CommonAnalytic
+from abc import ABC, abstractmethod
+
+from memex_logging.common.model.analytic.time import TimeWindow
 
 
-class AnalyticBuilder:
+class CommonAnalyticDescriptor(ABC):
+
+    def __init__(self, time_span: TimeWindow, project: str) -> None:
+        self.time_span = time_span
+        self.project = project
+
+    @abstractmethod
+    def to_repr(self) -> dict:
+        pass
 
     @staticmethod
-    def from_repr(raw_data: dict) -> CommonAnalytic:
-        if str(raw_data['type']).lower() == DimensionAnalytic.ANALYTIC_TYPE:
-            return DimensionAnalytic.from_repr(raw_data)
-        elif str(raw_data['type']).lower() == AggregationAnalytic.AGGREGATION_TYPE:
-            return AggregationAnalytic.from_repr(raw_data)
-        else:
-            raise ValueError(f"Unrecognized type [{raw_data['type']}] for Analytic")
+    @abstractmethod
+    def from_repr(raw_data: dict) -> CommonAnalyticDescriptor:
+        pass
