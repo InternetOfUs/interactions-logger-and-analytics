@@ -80,7 +80,7 @@ if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-eh", "--el_host", type=str, default=os.getenv("EL_HOST", "localhost"), help="The elasticsearch host")
     arg_parser.add_argument("-ep", "--el_port", type=int, default=int(os.getenv("EL_PORT", 9200)), help="The elasticsearch port")
-    arg_parser.add_argument("-eu", "--el_username", type=str,default=os.getenv("EL_USERNAME", None), help="The username to access elasticsearch")
+    arg_parser.add_argument("-eu", "--el_username", type=str, default=os.getenv("EL_USERNAME", None), help="The username to access elasticsearch")
     arg_parser.add_argument("-epw", "--el_password", type=str, default=os.getenv("EL_PASSWORD", None), help="The password to access elasticsearch")
     arg_parser.add_argument("-wh", "--ws_host", type=str, default=os.getenv("WS_HOST", "0.0.0.0"), help="The web service host")
     arg_parser.add_argument("-wp", "--ws_port", type=int, default=int(os.getenv("WS_PORT", 80)), help="The web service port")

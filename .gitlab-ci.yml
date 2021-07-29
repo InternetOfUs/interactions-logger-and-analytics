@@ -92,6 +92,41 @@ stages:
   - build
   - test
   - push
+  - deploy
+
+
+#
+# Stages for mr.
+#
+
+
+build:mr:
+  stage: build
+  script:
+    - *apk-before-script
+    - *docker-script
+
+    - ./docker-support/runner.sh -bs latest
+  artifacts:
+    paths:
+      - docker_image.tar.gz
+    expire_in: 1 day
+  when: manual
+  allow_failure: false
+  only:
+    - merge_requests
+
+
+test:mr:
+  stage: test
+  script:
+    - *apk-before-script
+    - docker load -i docker_image.tar.gz
+    - ./docker-support/runner.sh -t latest
+  dependencies:
+    - build:mr
+  only:
+    - merge_requests
 
 
 #
@@ -132,6 +167,42 @@ test:issue:
     - /^milestone.*$/i
 
 
+push:issue:
+  stage: push
+  script:
+    - *apk-before-script
+    - *docker-script
+    - docker load -i docker_image.tar.gz
+    - ./docker-support/runner.sh -p latest
+  dependencies:
+    - build:issue
+    - test:issue
+  only:
+    - /^feature.*$/i
+    - /^hotfix.*$/i
+    - /^milestone.*$/i
+
+
+trigger:issue:
+  stage: deploy
+  image: public.registry.u-hopper.com/alpine:3.13
+  script:
+    - *apk-before-script
+    - *ansible-script
+    - export GIT_REF="develop"
+    - ansible-playbook ansible/trigger.yml
+  dependencies:
+    - build:issue
+    - test:issue
+    - push:issue
+  allow_failure: false
+  when: manual
+  only:
+    - /^feature.*$/i
+    - /^hotfix.*$/i
+    - /^milestone.*$/i
+
+
 #
 # Stages for staging.
 #
@@ -148,6 +219,8 @@ build:staging:
     paths:
       - docker_image.tar.gz
     expire_in: 1 day
+  when: manual
+  allow_failure: false
   only:
     - develop
 
@@ -174,6 +247,24 @@ push:staging:
   dependencies:
     - build:staging
     - test:staging
+  only:
+    - develop
+
+
+trigger:staging:
+  stage: deploy
+  image: public.registry.u-hopper.com/alpine:3.13
+  script:
+    - *apk-before-script
+    - *ansible-script
+    - export GIT_REF="develop"
+    - ansible-playbook ansible/trigger.yml
+  dependencies:
+    - build:staging
+    - test:staging
+    - push:staging
+  allow_failure: false
+  when: manual
   only:
     - develop
 

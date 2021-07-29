@@ -27,10 +27,12 @@ from wenet.interface.profile_manager import ProfileManagerInterface
 from wenet.interface.task_manager import TaskManagerInterface
 
 from memex_logging.common.log.logging import get_logging_configuration
-from memex_logging.common.model.analytic import UserAnalytic, MessageAnalytic
+from memex_logging.common.model.analytic.descriptor.count import UserCountDescriptor
+from memex_logging.common.model.analytic.descriptor.segmentation import MessageSegmentationDescriptor
+from memex_logging.common.model.analytic.result.count import CountResult
+from memex_logging.common.model.analytic.result.segmentation import SegmentationResult
 from memex_logging.common.model.message import Message
-from memex_logging.common.model.result import AnalyticResult, SegmentationAnalyticResult
-from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
+from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow
 from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
 from memex_logging.common.utils import Utils
 
@@ -107,30 +109,30 @@ if __name__ == '__main__':
     analytics_file_writer.writerow([])
     analytics_file_writer.writerow(["metric", "count", "description"])
 
-    total_users = UserAnalytic(time_range, args.project, "u:total")
-    total_users_result = AnalyticResult.from_repr(logger_operations.get_analytic(total_users))
+    total_users = UserCountDescriptor(time_range, args.project, "total")
+    total_users_result = CountResult.from_repr(logger_operations.get_analytic_result(total_users))
     analytics_file_writer.writerow(["total users", total_users_result.count, "The total number of users of the application"])
 
-    active_users = UserAnalytic(time_range, args.project, "u:active")
-    active_users_result = AnalyticResult.from_repr(logger_operations.get_analytic(active_users))
+    active_users = UserCountDescriptor(time_range, args.project, "active")
+    active_users_result = CountResult.from_repr(logger_operations.get_analytic_result(active_users))
     analytics_file_writer.writerow(["active users", active_users_result.count, "The number of users who used the application"])
 
-    engaged_users = UserAnalytic(time_range, args.project, "u:engaged")
-    engaged_users_result = AnalyticResult.from_repr(logger_operations.get_analytic(engaged_users))
+    engaged_users = UserCountDescriptor(time_range, args.project, "engaged")
+    engaged_users_result = CountResult.from_repr(logger_operations.get_analytic_result(engaged_users))
     analytics_file_writer.writerow(["engaged users", engaged_users_result.count, "The number of users who received a notification from the platform (incentive, prompt, badge, ..)"])
 
-    new_users = UserAnalytic(time_range, args.project, "u:new")
-    new_users_result = AnalyticResult.from_repr(logger_operations.get_analytic(new_users))
+    new_users = UserCountDescriptor(time_range, args.project, "new")
+    new_users_result = CountResult.from_repr(logger_operations.get_analytic_result(new_users))
     analytics_file_writer.writerow(["new users", new_users_result.count, "The number of new users who activated the application during the period of this analysis"])
 
-    segmentation_messages = MessageAnalytic(time_range, args.project, "m:segmentation")
-    segmentation_messages_result = SegmentationAnalyticResult.from_repr(logger_operations.get_analytic(segmentation_messages))
+    segmentation_messages = MessageSegmentationDescriptor(time_range, args.project, "all")
+    segmentation_messages_result = SegmentationResult.from_repr(logger_operations.get_analytic_result(segmentation_messages))
 
     total_messages = 0
     request_messages = 0
     response_messages = 0
     notification_messages = 0
-    for segmentation in segmentation_messages_result.counts:
+    for segmentation in segmentation_messages_result.segments:
         total_messages += segmentation.count
         if TYPE_REQUEST_MESSAGE == segmentation.segmentation_type:
             request_messages = segmentation.count
@@ -139,12 +141,12 @@ if __name__ == '__main__':
         if TYPE_NOTIFICATION_MESSAGE == segmentation.segmentation_type:
             notification_messages = segmentation.count
 
-    segmentation_requests = MessageAnalytic(time_range, args.project, "r:segmentation")
-    segmentation_requests_result = SegmentationAnalyticResult.from_repr(logger_operations.get_analytic(segmentation_requests))
+    segmentation_requests = MessageSegmentationDescriptor(time_range, args.project, "from_users")
+    segmentation_requests_result = SegmentationResult.from_repr(logger_operations.get_analytic_result(segmentation_requests))
 
     text_requests = 0
     action_requests = 0
-    for segmentation in segmentation_requests_result.counts:
+    for segmentation in segmentation_requests_result.segments:
         if TYPE_TEXT_CONTENT_REQUEST == segmentation.segmentation_type:
             text_requests = segmentation.count
         if TYPE_ACTION_CONTENT_REQUEST == segmentation.segmentation_type:

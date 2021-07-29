@@ -14,17 +14,18 @@
 
 from __future__ import absolute_import, annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 import logging
 import uuid
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import dateutil.parser
+from dateutil.relativedelta import relativedelta
 from elasticsearch import Elasticsearch
 from flask_restful import abort
 
 from memex_logging.common.model.message import RequestMessage, ResponseMessage, NotificationMessage
-from memex_logging.common.model.time import MovingTimeWindow, FixedTimeWindow
+from memex_logging.common.model.analytic.time import TimeWindow, MovingTimeWindow, FixedTimeWindow
 
 
 logger = logging.getLogger("logger.utils.utils")
@@ -59,38 +60,38 @@ class Utils:
         return index_name
 
     @staticmethod
-    def extract_range_timestamps(time_object: Union[MovingTimeWindow, FixedTimeWindow]) -> Tuple[datetime, datetime]:
-        if isinstance(time_object, MovingTimeWindow):
-            if str(time_object.value).upper() == "30D":
-                now = datetime.now()
-                delta = timedelta(days=30)
-                temp_old = now - delta
-                return temp_old, now
-            elif str(time_object.value).upper() == "10D":
-                now = datetime.now()
-                delta = timedelta(days=10)
-                temp_old = now - delta
-                return temp_old, now
-            elif str(time_object.value).upper() == "7D":
-                now = datetime.now()
-                delta = timedelta(days=7)
-                temp_old = now - delta
-                return temp_old, now
-            elif str(time_object.value).upper() == "1D":
-                now = datetime.now()
-                delta = timedelta(days=1)
-                temp_old = now - delta
-                return temp_old, now
-            elif str(time_object.value).upper() == "TODAY":
-                now = datetime.now()
-                temp_old = datetime(now.year, now.month, now.day)
-                return temp_old, now
+    def extract_range_timestamps(time_window: TimeWindow) -> Tuple[datetime, datetime]:
+        if isinstance(time_window, MovingTimeWindow):
+            now = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+            if time_window.descriptor.upper() == "D":
+                return now - relativedelta(days=time_window.value), now
+            elif time_window.descriptor.upper() == "W":
+                return now - relativedelta(weeks=time_window.value), now
+            elif time_window.descriptor.upper() == "M":
+                return now - relativedelta(months=time_window.value), now
+            elif time_window.descriptor.upper() == "Y":
+                return now - relativedelta(years=time_window.value), now
+            elif time_window.descriptor.upper() == "TODAY":
+                return now, now + relativedelta(days=1)
             else:
-                raise ValueError(f"Unable to handle the interval [{time_object.value}]")
-        elif isinstance(time_object, FixedTimeWindow):
-            return time_object.start, time_object.end
+                logger.info(f"Unable to handle the value [{time_window.value}{time_window.descriptor}]")
+                raise ValueError(f"Unable to handle the value [{time_window.value}{time_window.descriptor}]")
+        elif isinstance(time_window, FixedTimeWindow):
+            return time_window.start, time_window.end
         else:
-            raise ValueError("Unrecognized type for timespan")
+            logger.info(f"Unrecognized type [{type(time_window)}] for timespan")
+            raise ValueError(f"Unrecognized type [{type(time_window)}] for timespan")
+
+    @staticmethod
+    def compute_age(date_of_birth: datetime) -> int:
+        now = datetime.now()
+        years = now.year - date_of_birth.year
+        if now.month >= date_of_birth.month and now.day >= date_of_birth.day:
+            age = years
+        else:
+            age = years - 1
+        return age
 
     # TODO stop using this and remove!!!!!
     @staticmethod
@@ -103,8 +104,8 @@ class Utils:
             try:
                 positioned = dateutil.parser.parse(data['timestamp'])
                 return str(positioned.year) + "-" + str(positioned.month) + "-" + str(positioned.day)
-            except:
-                logging.error("`timestamp` of the message cannot be parsed")
+            except Exception as e:
+                logging.error("`timestamp` of the message cannot be parsed", exc_info=e)
                 logging.error(data)
         else:
             support_bound = datetime.now().isoformat()
@@ -130,7 +131,7 @@ class Utils:
         """
 
         if "project" in data.keys():
-            return str(data["project"]).lower()
+            return data["project"].lower()
         else:
             return "memex"
 
@@ -141,7 +142,7 @@ class Utils:
 
         if isinstance(message, RequestMessage) or isinstance(message, ResponseMessage) or isinstance(message, NotificationMessage):
             if message.conversation_id is None:
-                index = "message-" + str(message.project).lower() + "*"
+                index = "message-" + message.project.lower() + "*"
                 body = {
                     "query": {
                         "match": {

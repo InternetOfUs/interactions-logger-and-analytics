@@ -14,15 +14,17 @@
 
 from __future__ import absolute_import, annotations
 
-import json
 import logging
 
 from elasticsearch import Elasticsearch
-from flask import request, Response
+from flask import request
 from flask_restful import Resource
 
 from memex_logging.common.model.log import Log
 from memex_logging.common.utils import Utils
+
+
+logger = logging.getLogger("logger.resource.logging")
 
 
 class LoggingResourceBuilder(object):
@@ -49,7 +51,7 @@ class LogGeneralLog(Resource):
         """
         self._es = es
 
-    # TODO get log
+    # TODO get, update and delete log
 
 
 class LogGeneralLogs(Resource):
@@ -64,39 +66,31 @@ class LogGeneralLogs(Resource):
         """
         self._es = es
 
-    def post(self) -> Response:
+    def post(self):
         """
         Add a batch of log messages to the database. The logs must be passed in the request body.
         This method log the messages with index <project-name>-logging-<yyyy>-<mm>-<dd>
         :return: the HTTP response
         """
-        logging.warning("LOGGING.API Starting to log a new set of messages")
+        logger.info("Starting to log a new set of messages")
 
         logs_received = request.json
         log_ids = []
 
         for log in logs_received:
-            # push the message in the database
-            utils = Utils()
-
+            # store the message in the database
             try:
                 temp_log = Log.from_repr(log)
-                project_name = utils.extract_project_name(log)
-                date = utils.extract_date(log)
+                project_name = Utils.extract_project_name(log)
+                date = Utils.extract_date(log)
                 index_name = "logging-" + project_name + "-" + date
                 query = self._es.index(index=index_name, doc_type='_doc', body=temp_log.to_repr())
                 log_ids.append(query['_id'])
-            except:
-                logging.error("LOGGING.API Failed to log")
-                logging.error(log)
+            except Exception as e:
+                logger.error(f"Failed to log: {log}", exc_info=e)
 
-        json_response = {
-            "logId": log_ids,
-            "status": "ok",
-            "code": 200
-        }
-
-        resp = Response(json.dumps(json_response), mimetype='application/json')
-        resp.status_code = 200
-
-        return resp
+        return {
+            "traceIds": log_ids,
+            "status": "Created: logs stored",
+            "code": 201
+        }, 201

@@ -30,19 +30,37 @@
           - ${EL_HOST}
           - ${EL_PORT}
         custom_start_command: "exec celery beat -A memex_logging.celery.initialize.celery -s /celery/celerybeat-schedule"
+      - name: migrator
+        required_env_variables:
+          - ${EL_HOST}
+          - ${EL_PORT}
+        custom_start_command: "exec python -m memex_logging.migration.migration"
     docker_registry: docker.io
 
     ci_environments:
+      mr:
+        stages:
+          - name: build
+            manual: true
+          - name: test
       issue:
         stages:
           - name: build
             manual: true
           - name: test
+          - name: push
+          - name: trigger
+            manual: true
+            git_ref: develop
       staging:
         stages:
           - name: build
+            manual: true
           - name: test
           - name: push
+          - name: trigger
+            manual: true
+            git_ref: develop
       production:
         stages:
           - name: build
