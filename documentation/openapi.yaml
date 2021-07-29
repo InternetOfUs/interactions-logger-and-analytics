@@ -423,11 +423,15 @@ paths:
 
       * `total`: the number of total tasks in a certain time range.
 
+      * `new`: the number of new tasks created in a certain time range.
+
+      * `new_active`: the number of new tasks created in a certain time range that are active at the end of that time range.
+
       * `active`: the number of tasks active at the end of a certain time range.
 
-      * `closed`: the number of closed tasks in a certain time range.
+      * `new_closed`: the number of new tasks created in a certain time range that has been closed in that time range.
 
-      * `new`: the number of new tasks created in a certain time range.
+      * `closed`: the number of tasks closed up to the end of a certain time range.
 
 
       ## Transaction analytics
@@ -1180,7 +1184,7 @@ components:
           example: "task"
         metric:
           type: string
-          enum: [ "total", "active", "closed", "new" ]
+          enum: [ "total", "new", "new_active", "active", "new_closed", "closed" ]
           example: "active"
 
     TransactionCountDescriptor:
