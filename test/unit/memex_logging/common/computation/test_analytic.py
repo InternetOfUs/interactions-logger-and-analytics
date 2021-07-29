@@ -296,6 +296,49 @@ class TestAnalyticComputation(TestCase):
         self.assertIsInstance(total_tasks, CountResult)
         self.assertEqual(3, total_tasks.count)
 
+    def test_compute_new_tasks(self):
+        self.wenet_interface.task_manager.get_all_tasks = Mock(return_value=[])
+        new_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "new"))
+        self.assertIsInstance(new_tasks, CountResult)
+        self.assertEqual(0, new_tasks.count)
+
+        self.wenet_interface.task_manager.get_all_tasks = Mock(side_effect=[
+            [Task("task_id", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
+        ])
+        new_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "new"))
+        self.assertIsInstance(new_tasks, CountResult)
+        self.assertEqual(1, new_tasks.count)
+
+    def test_compute_new_active_tasks(self):
+        self.wenet_interface.task_manager.get_all_tasks = Mock(return_value=[])
+        new_active_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "new_active"))
+        self.assertIsInstance(new_active_tasks, CountResult)
+        self.assertEqual(0, new_active_tasks.count)
+
+        self.wenet_interface.task_manager.get_all_tasks = Mock(side_effect=[
+            [Task("task_id1", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
+            []
+        ])
+        new_active_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "new_active"))
+        self.assertIsInstance(new_active_tasks, CountResult)
+        self.assertEqual(1, new_active_tasks.count)
+
+        self.wenet_interface.task_manager.get_all_tasks = Mock(side_effect=[
+            [],
+            [Task("task_id2", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2022, 1, 1).timestamp())]
+        ])
+        new_active_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "new_active"))
+        self.assertIsInstance(new_active_tasks, CountResult)
+        self.assertEqual(1, new_active_tasks.count)
+
+        self.wenet_interface.task_manager.get_all_tasks = Mock(side_effect=[
+            [Task("task_id1", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
+            [Task("task_id2", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2022, 1, 1).timestamp())]
+        ])
+        new_active_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "new_active"))
+        self.assertIsInstance(new_active_tasks, CountResult)
+        self.assertEqual(2, new_active_tasks.count)
+
     def test_compute_active_tasks(self):
         self.wenet_interface.task_manager.get_all_tasks = Mock(return_value=[])
         active_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "active"))
@@ -303,7 +346,7 @@ class TestAnalyticComputation(TestCase):
         self.assertEqual(0, active_tasks.count)
 
         self.wenet_interface.task_manager.get_all_tasks = Mock(side_effect=[
-            [Task("task_id1", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
+            [Task("task_id1", datetime(2020, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
             []
         ])
         active_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "active"))
@@ -319,12 +362,23 @@ class TestAnalyticComputation(TestCase):
         self.assertEqual(1, active_tasks.count)
 
         self.wenet_interface.task_manager.get_all_tasks = Mock(side_effect=[
-            [Task("task_id1", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
+            [Task("task_id1", datetime(2020, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
             [Task("task_id2", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2022, 1, 1).timestamp())]
         ])
         active_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "active"))
         self.assertIsInstance(active_tasks, CountResult)
         self.assertEqual(2, active_tasks.count)
+
+    def test_compute_new_closed_tasks(self):
+        self.wenet_interface.task_manager.get_all_tasks = Mock(return_value=[])
+        new_closed_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "new_closed"))
+        self.assertIsInstance(new_closed_tasks, CountResult)
+        self.assertEqual(0, new_closed_tasks.count)
+
+        self.wenet_interface.task_manager.get_all_tasks = Mock(return_value=[Task("task_id", datetime(2021, 6, 12).timestamp(), datetime(2021, 9, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2021, 9, 12).timestamp())])
+        new_closed_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "new_closed"))
+        self.assertIsInstance(new_closed_tasks, CountResult)
+        self.assertEqual(1, new_closed_tasks.count)
 
     def test_compute_closed_tasks(self):
         self.wenet_interface.task_manager.get_all_tasks = Mock(return_value=[])
@@ -332,23 +386,10 @@ class TestAnalyticComputation(TestCase):
         self.assertIsInstance(closed_tasks, CountResult)
         self.assertEqual(0, closed_tasks.count)
 
-        self.wenet_interface.task_manager.get_all_tasks = Mock(return_value=[Task("task_id", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2021, 6, 12).timestamp())])
+        self.wenet_interface.task_manager.get_all_tasks = Mock(return_value=[Task("task_id", datetime(2020, 6, 12).timestamp(), datetime(2020, 9, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""), close_ts=datetime(2020, 9, 12).timestamp())])
         closed_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "closed"))
         self.assertIsInstance(closed_tasks, CountResult)
         self.assertEqual(1, closed_tasks.count)
-
-    def test_compute_new_tasks(self):
-        self.wenet_interface.task_manager.get_all_tasks = Mock(return_value=[])
-        new_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "new"))
-        self.assertIsInstance(new_tasks, CountResult)
-        self.assertEqual(0, new_tasks.count)
-
-        self.wenet_interface.task_manager.get_all_tasks = Mock(side_effect=[
-            [Task("task_id", datetime(2021, 6, 12).timestamp(), datetime(2021, 6, 12).timestamp(), "ask4help", "requester_id", "app_id", None, TaskGoal("goal", ""))],
-        ])
-        new_tasks = self.analytic_computation.get_result(TaskCountDescriptor(self.time_range, "app_id", "new"))
-        self.assertIsInstance(new_tasks, CountResult)
-        self.assertEqual(1, new_tasks.count)
 
     def test_compute_total_transactions(self):
         self.wenet_interface.task_manager.get_all_transactions = Mock(return_value=[])

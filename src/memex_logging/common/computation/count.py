@@ -68,12 +68,16 @@ class CountComputation:
         elif isinstance(analytic, TaskCountDescriptor):
             if analytic.metric.lower() == "total":
                 result = self._total_tasks(analytic)
-            elif analytic.metric.lower() == "active":
-                result = self._active_tasks(analytic)
-            elif analytic.metric.lower() == "closed":
-                result = self._closed_tasks(analytic)
             elif analytic.metric.lower() == "new":
                 result = self._new_tasks(analytic)
+            elif analytic.metric.lower() == "new_active":
+                result = self._new_active_tasks(analytic)
+            elif analytic.metric.lower() == "active":
+                result = self._active_tasks(analytic)
+            elif analytic.metric.lower() == "new_closed":
+                result = self._new_closed_tasks(analytic)
+            elif analytic.metric.lower() == "closed":
+                result = self._closed_tasks(analytic)
             else:
                 logger.info(f"Unknown value for metric [{analytic.metric}] for TaskCountDescriptor")
                 raise ValueError(f"Unknown value for metric [{analytic.metric}] for TaskCountDescriptor")
@@ -660,7 +664,7 @@ class CountComputation:
     def _total_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
         """
         Compute the number of total tasks of a given application (analytic.project) in a given time range (analytic.timespan).
-        The computation of that count is done summing up:
+        The computation of this count is done summing up:
         * the number of tasks created up to the end of the time range that are still open;
         * the number of tasks created up to the end of the time range that are closed after the end of the time range;
         * the number of tasks closed in the time range.
@@ -672,10 +676,32 @@ class CountComputation:
         tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound))
         return CountResult(len(tasks), datetime.now(), min_bound, max_bound)
 
+    def _new_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
+        """
+        Compute the number of new tasks of a given application (analytic.project) created in a given time range (analytic.timespan).
+        The computation of this count is the number of tasks created in the time range.
+        """
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
+        tasks = self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound)
+        return CountResult(len(tasks), datetime.now(), min_bound, max_bound)
+
+    def _new_active_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
+        """
+        Compute the number of new tasks of a given application (analytic.project) created in a given time range (analytic.timespan) that are active at the end of that time range.
+        The computation of this count is done summing up:
+        * the number of tasks created in the time range that are still open;
+        * the number of tasks created in the time range that has been closed after the end of the time range.
+        """
+        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
+        tasks = []
+        tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound, has_close_ts=False))
+        tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
+        return CountResult(len(tasks), datetime.now(), min_bound, max_bound)
+
     def _active_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
         """
         Compute the number of tasks of a given application (analytic.project) active at the end of a given time range (analytic.timespan).
-        The computation of that count is done summing up:
+        The computation of this count is done summing up:
         * the number of tasks created up to the end of the time range that are still open;
         * the number of tasks created up to the end of the time range that are closed after the end of the time range.
         """
@@ -685,22 +711,22 @@ class CountComputation:
         tasks.extend(self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_to=max_bound, has_close_ts=True, closed_from=max_bound))
         return CountResult(len(tasks), datetime.now(), min_bound, max_bound)
 
-    def _closed_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
+    def _new_closed_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
         """
-        Compute the number of tasks of a given application (analytic.project) closed in a given time range (analytic.timespan).
-        The computation of that count is the number of tasks closed in the time range.
+        Compute the number of new tasks of a given application (analytic.project) created in a given time range (analytic.timespan) that has been closed in that time range.
+        The computation of this count is the number of tasks created in the time range that has been closed in that time range.
         """
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
-        tasks = self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_from=min_bound, closed_to=max_bound)
+        tasks = self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound, has_close_ts=True, closed_to=max_bound)
         return CountResult(len(tasks), datetime.now(), min_bound, max_bound)
 
-    def _new_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
+    def _closed_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
         """
-        Compute the number of new tasks of a given application (analytic.project) created in a given time range (analytic.timespan).
-        The computation of that count is the number of tasks created in the time range.
+        Compute the number of tasks of a given application (analytic.project) closed up to the end of a certain time range (analytic.timespan).
+        The computation of this count is the number of tasks closed up to the end of a certain time range.
         """
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
-        tasks = self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound)
+        tasks = self.wenet_interface.task_manager.get_all_tasks(app_id=analytic.project, has_close_ts=True, closed_to=max_bound)
         return CountResult(len(tasks), datetime.now(), min_bound, max_bound)
 
     def _total_transactions(self, analytic: TransactionCountDescriptor) -> CountResult:

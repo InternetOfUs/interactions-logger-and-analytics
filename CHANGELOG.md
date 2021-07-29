@@ -28,12 +28,14 @@
   * removed the field items from the analytic result.
 * Removed older usercount and eventcount endpoints.
 * Added endpoint for computing the update of the analytics.
+* Added two new task metrics: `new_active` and `new_closed`.
+* Modified the `closed` task metric to get the number of tasks closed up to the end of a certain time range.
 
-* breaking changes:
-  * the parameter `staticId` of the Analytic has been renamed to `id`;
-  * the parameter `query` of the Analytic has been renamed to `descriptor`;
-  * for segmentation result `count` has been renamed into `segments`;
-  * Rename metric values to the new ones:
+* Breaking Changes:
+  * The parameter `staticId` of the Analytic has been renamed to `id`;
+  * The parameter `query` of the Analytic has been renamed to `descriptor`;
+  * For segmentation result `count` has been renamed into `segments`;
+  * Renamed metric values to the new ones:
     - `u:total` into `total`
     - `u:active` into `active`
     - `u:engaged` into `engaged`
@@ -58,7 +60,7 @@
     - `d:intents` into `intents`
     - `d:domains` into `domains`
     - `b:response` into `response`
-  * Remove from the analytic result the following keys:
+  * Removed from the analytic result the following keys:
     - `items`
     - `transactions`
   
