@@ -43,18 +43,18 @@ class Log:
         }
 
     @staticmethod
-    def from_repr(data: dict) -> Log:
+    def from_repr(raw_data: dict) -> Log:
         authority = None
-        if 'authority' in data:
-            authority = data['authority']
+        if 'authority' in raw_data:
+            authority = raw_data['authority']
 
         bot_version = None
-        if 'botVersion' in data:
-            bot_version = data['botVersion']
+        if 'botVersion' in raw_data:
+            bot_version = raw_data['botVersion']
 
         metadata = None
-        if 'metadata' in data:
-            metadata = data['metadata']
+        if 'metadata' in raw_data:
+            metadata = raw_data['metadata']
 
-        return Log(data['logId'], str(data['project']).lower(), str(data['component']).lower(), authority,
-                   str(data['severity']).upper(), data['logContent'], data['timestamp'], bot_version, metadata)
+        return Log(raw_data['logId'], raw_data['project'], raw_data['component'], authority,
+                   raw_data['severity'], raw_data['logContent'], raw_data['timestamp'], bot_version, metadata)

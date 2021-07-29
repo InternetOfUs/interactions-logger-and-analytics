@@ -500,8 +500,7 @@ class Message(ABC):
 
     @staticmethod
     def from_repr(raw_data: dict) -> Message:
-        message_type = raw_data.get("type").lower()
-
+        message_type = raw_data['type'].lower()
         if message_type == MessageType.REQUEST.value:
             return RequestMessage.from_repr(raw_data)
         elif message_type == MessageType.RESPONSE.value:
@@ -587,43 +586,44 @@ class RequestMessage(Message):
         }
 
     @staticmethod
-    def from_repr(data: dict) -> RequestMessage:
-        intent = data.get("intent", None)
+    def from_repr(raw_data: dict) -> RequestMessage:
+        intent = raw_data.get("intent", None)
         if intent:
             intent = Intent.from_repr(intent)
 
-        content = data.get("content", None)
+        content = raw_data.get("content", None)
         user_info_fields = ['firstName', 'lastName', 'profilePic', 'locale', 'timezone', 'gender', 'isPaymentEnable', 'userId']
         if content:
-            if str(content['type']).lower() == "text":
-                content = TextualRequest.from_repr(data['content'])
-            elif str(content['type']).lower() == "action":
-                content = ActionRequest.from_repr(data['content'])
-            elif str(content['type']).lower() == "attachment":
-                content = AttachmentRequest.from_repr(data['content'])
-            elif str(content['type']).lower() == "location":
-                content = LocationRequest.from_repr(data['content'])
-            elif str(content['type']).lower() in user_info_fields:
-                content = UserInfoRequest.from_repr(data['content'])
+            content_type = content['type'].lower()
+            if content_type == "text":
+                content = TextualRequest.from_repr(content)
+            elif content_type == "action":
+                content = ActionRequest.from_repr(content)
+            elif content_type == "attachment":
+                content = AttachmentRequest.from_repr(content)
+            elif content_type == "location":
+                content = LocationRequest.from_repr(content)
+            elif content_type in user_info_fields:
+                content = UserInfoRequest.from_repr(content)
             else:
                 raise ValueError(f"Unsupported content type {content['type']} was provided")
 
-        raw_entities = data.get("entities", [])
+        raw_entities = raw_data.get("entities", [])
         entities = [Entity.from_repr(raw_entity) for raw_entity in raw_entities]
 
         return RequestMessage(
-            data['messageId'],
-            data.get("conversationId", None),
-            data['channel'],
-            data['userId'],
-            Message.timestamp_str_to_datetime(data['timestamp']),
+            raw_data['messageId'],
+            raw_data.get("conversationId", None),
+            raw_data['channel'],
+            raw_data['userId'],
+            Message.timestamp_str_to_datetime(raw_data['timestamp']),
             content,
-            data.get("domain", None),
+            raw_data.get("domain", None),
             intent,
             entities,
-            data.get("language", None),
-            data.get("metadata", None),
-            data['project']
+            raw_data.get("language", None),
+            raw_data.get("metadata", None),
+            raw_data['project']
         )
 
 
@@ -667,32 +667,33 @@ class ResponseMessage(Message):
         }
 
     @staticmethod
-    def from_repr(data: dict) -> ResponseMessage:
-        content = data.get("content", None)
+    def from_repr(raw_data: dict) -> ResponseMessage:
+        content = raw_data.get("content", None)
         if content:
-            if str(content['type']).lower() == "text":
-                content = TextualResponse.from_repr(data['content'])
-            elif str(content['type']).lower() == "location":
-                content = LocationResponse.from_repr(data['content'])
-            elif str(content['type']).lower() == "multiaction":
-                content = MultiActionResponse.from_repr(data['content'])
-            elif str(content['type']).lower() == "attachment":
-                content = AttachmentResponse.from_repr(data['content'])
-            elif str(content['type']).lower() == "carousel":
-                content = CarouselResponse.from_repr(data['content'])
+            content_type = content['type'].lower()
+            if content_type == "text":
+                content = TextualResponse.from_repr(content)
+            elif content_type == "location":
+                content = LocationResponse.from_repr(content)
+            elif content_type == "multiaction":
+                content = MultiActionResponse.from_repr(content)
+            elif content_type == "attachment":
+                content = AttachmentResponse.from_repr(content)
+            elif content_type == "carousel":
+                content = CarouselResponse.from_repr(content)
             else:
-                raise ValueError(f"Unsupported content type {content['type']} was provided")
+                raise ValueError(f"Unsupported content type {content_type} was provided")
 
         return ResponseMessage(
-            data['messageId'],
-            data.get("conversationId", None),
-            data['channel'],
-            data['userId'],
-            data['responseTo'],
-            Message.timestamp_str_to_datetime(data['timestamp']),
+            raw_data['messageId'],
+            raw_data.get("conversationId", None),
+            raw_data['channel'],
+            raw_data['userId'],
+            raw_data['responseTo'],
+            Message.timestamp_str_to_datetime(raw_data['timestamp']),
             content,
-            data.get("metadata", None),
-            data['project']
+            raw_data.get("metadata", None),
+            raw_data['project']
         )
 
 
@@ -734,29 +735,30 @@ class NotificationMessage(Message):
         }
 
     @staticmethod
-    def from_repr(data: dict) -> NotificationMessage:
-        content = data.get("content", None)
+    def from_repr(raw_data: dict) -> NotificationMessage:
+        content = raw_data.get("content", None)
         if content:
-            if str(content['type']).lower() == "text":
-                content = TextualResponse.from_repr(data['content'])
-            elif str(content['type']).lower() == "location":
-                content = LocationResponse.from_repr(data['content'])
-            elif str(content['type']).lower() == "multiaction":
-                content = MultiActionResponse.from_repr(data['content'])
-            elif str(content['type']).lower() == "attachment":
-                content = AttachmentResponse.from_repr(data['content'])
-            elif str(content['type']).lower() == "carousel":
-                content = CarouselResponse.from_repr(data['content'])
+            content_type = content['type'].lower()
+            if content_type == "text":
+                content = TextualResponse.from_repr(content)
+            elif content_type == "location":
+                content = LocationResponse.from_repr(content)
+            elif content_type == "multiaction":
+                content = MultiActionResponse.from_repr(content)
+            elif content_type == "attachment":
+                content = AttachmentResponse.from_repr(content)
+            elif content_type == "carousel":
+                content = CarouselResponse.from_repr(content)
             else:
-                raise ValueError(f"Unsupported content type {content['type']} was provided")
+                raise ValueError(f"Unsupported content type {content_type} was provided")
 
         return NotificationMessage(
-            data['messageId'],
-            data.get("conversationId", None),
-            data['channel'],
-            data['userId'],
-            Message.timestamp_str_to_datetime(data['timestamp']),
+            raw_data['messageId'],
+            raw_data.get("conversationId", None),
+            raw_data['channel'],
+            raw_data['userId'],
+            Message.timestamp_str_to_datetime(raw_data['timestamp']),
             content,
-            data.get("metadata", None),
-            data['project']
+            raw_data.get("metadata", None),
+            raw_data['project']
         )

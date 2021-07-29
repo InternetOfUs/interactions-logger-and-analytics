@@ -38,11 +38,20 @@
     docker_registry: docker.io
 
     ci_environments:
+      mr:
+        stages:
+          - name: build
+            manual: true
+          - name: test
       issue:
         stages:
           - name: build
             manual: true
           - name: test
+          - name: push
+          - name: trigger
+            manual: true
+            git_ref: develop
       staging:
         stages:
           - name: build

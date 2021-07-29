@@ -14,22 +14,16 @@
 
 from __future__ import absolute_import, annotations
 
-from celery import Celery
-from celery.schedules import crontab
+from datetime import datetime
+from unittest import TestCase
 
-from memex_logging.celery import celery
-from memex_logging.celery.analytic import update_moving_time_window_analytics
-from memex_logging.ws.main import build_interface_from_env
-
-
-ws_interface = build_interface_from_env()
-ws_interface.init_celery(celery)
-celery.conf.timezone = 'Europe/Rome'
+from memex_logging.common.model.analytic.result.aggregation import AggregationResult
+from memex_logging.common.model.analytic.result.builder import AnalyticResultBuilder
 
 
-@celery.on_after_configure.connect
-def setup_periodic_tasks(sender: Celery, **kwargs):
-    sender.add_periodic_task(crontab(minute=0, hour=0), update_moving_time_window_analytics.s())
+class TestAggregationResult(TestCase):
 
-
-setup_periodic_tasks(celery)
+    def test_repr(self):
+        result = AggregationResult(0.1, datetime.now(), datetime.now(), datetime.now())
+        self.assertEqual(result, AggregationResult.from_repr(result.to_repr()))
+        self.assertEqual(result, AnalyticResultBuilder.build(result.to_repr()))
