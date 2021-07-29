@@ -24,7 +24,7 @@
 * Added user gender segmentation analytic.
 * Re-organised logic for handling analytics:
   * aligned analytic descriptor and result types. Now `count`, `segmentation` and `aggregation` are available ;
-  * metrics renamed into more meaningful ones and `c:path`, `c:length`, `m:unhandled` are removed;
+  * metrics renamed into more meaningful ones and `c:path`, `c:length`, `m:from_bot`, `m:unhandled` are removed;
   * removed the field items from the analytic result.
 * Removed older usercount and eventcount endpoints.
 * Added endpoint for computing the update of the analytics.
@@ -40,11 +40,10 @@
     - `u:new` into `new`
     - `a:segmentation` into `age`
     - `g:segmentation` into `gender`
-    - `m:from_users` into `from_users`
+    - `m:from_users` into `requests`
     - `m:segmentation` into `all`
-    - `r:segmentation` into `from_users`
-    - `u:segmentation` into `from_users`
-    - `m:from_bot` into `from_bot`
+    - `r:segmentation` into `requests`
+    - `u:segmentation` into `requests`
     - `m:responses` into `responses`
     - `m:notifications` into `notifications`
     - `t:total` into `total`

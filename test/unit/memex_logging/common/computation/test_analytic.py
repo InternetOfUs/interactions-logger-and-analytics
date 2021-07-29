@@ -167,14 +167,14 @@ class TestAnalyticComputation(TestCase):
             Segmentation("unavailable", 1)
         ], gender_segmentation.segments)
 
-    def test_compute_user_messages(self):
+    def test_compute_request_messages(self):
         self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}}})
-        request_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "from_users"))
+        request_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "requests"))
         self.assertIsInstance(request_messages, CountResult)
         self.assertEqual(0, request_messages.count)
 
         self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': [{'key': 'message_id', 'doc_count': 1}]}}})
-        request_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "from_users"))
+        request_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "requests"))
         self.assertIsInstance(request_messages, CountResult)
         self.assertEqual(1, request_messages.count)
 
@@ -190,14 +190,14 @@ class TestAnalyticComputation(TestCase):
         self.assertEqual(1, len(message_segmentation.segments))
         self.assertEqual([Segmentation("request", 1)], message_segmentation.segments)
 
-    def test_compute_user_messages_segmentation(self):
+    def test_compute_request_messages_segmentation(self):
         self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}}})
-        request_message_segmentation = self.analytic_computation.get_result(MessageSegmentationDescriptor(self.time_range, "project", "from_users"))
+        request_message_segmentation = self.analytic_computation.get_result(MessageSegmentationDescriptor(self.time_range, "project", "requests"))
         self.assertIsInstance(request_message_segmentation, SegmentationResult)
         self.assertEqual([], request_message_segmentation.segments)
 
         self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': [{'key': 'text', 'doc_count': 1}]}}})
-        request_message_segmentation = self.analytic_computation.get_result(MessageSegmentationDescriptor(self.time_range, "project", "from_users"))
+        request_message_segmentation = self.analytic_computation.get_result(MessageSegmentationDescriptor(self.time_range, "project", "requests"))
         self.assertIsInstance(request_message_segmentation, SegmentationResult)
         self.assertEqual(1, len(request_message_segmentation.segments))
         self.assertEqual([Segmentation("text", 1)], request_message_segmentation.segments)

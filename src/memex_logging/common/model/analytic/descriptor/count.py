@@ -97,7 +97,7 @@ class UserCountDescriptor(CountDescriptor):
 class MessageCountDescriptor(CountDescriptor):
 
     DIMENSION = "message"
-    ALLOWED_METRIC_VALUES = ["from_users", "from_bot", "responses", "notifications"]  # "unhandled"
+    ALLOWED_METRIC_VALUES = ["requests", "responses", "notifications"]  # "from_bot", "unhandled"
 
     def __init__(self, time_span: TimeWindow, project: str, metric: str):
         super().__init__(time_span, project, self.DIMENSION, metric)
