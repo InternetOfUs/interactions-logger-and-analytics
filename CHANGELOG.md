@@ -1,67 +1,60 @@
 # Changelog
 
+## Breaking changes from 1.* to 2.* 
 
-## Version 1.*
+* the parameter `staticId` of the Analytic has been renamed to `id`
+* the parameter `query` of the Analytic has been renamed to `descriptor`
+* the key of the _segmentation result_ `count` has been renamed into `segments`
+* The following metric values have been renamed 
+  - `u:total` into `total`
+  - `u:active` into `active`
+  - `u:engaged` into `engaged`
+  - `u:new` into `new`
+  - `a:segmentation` into `age`
+  - `g:segmentation` into `gender`
+  - `m:from_users` into `from_users`
+  - `m:segmentation` into `all`
+  - `r:segmentation` into `from_users`
+  - `u:segmentation` into `from_users`
+  - `m:from_bot` into `from_bot`
+  - `m:responses` into `responses`
+  - `m:notifications` into `notifications`
+  - `t:total` into `total`
+  - `t:active` into `active`
+  - `t:closed` into `closed`
+  - `t:new` into `new`
+  - `t:segmentation` into `label`
+  - `c:total` into `total`
+  - `c:new` into `new`
+  - `d:fallback` into `fallback`
+  - `d:intents` into `intents`
+  - `d:domains` into `domains`
+  - `b:response` into `response`
+* The keys `items` and `transactions` have been removed from the analytic result contents.
 
+## Version 2.*
 
-### NEXT
+### 2.0.0
 
-* Included timestamp details in analytic results.
-* The support for periodical (once a day, at midnight) re-computation of _moving time window_ analytic results have been added.
+* Included timestamp details among the analytic result data.
+* The support for periodical (currently the period is set to _once a day, at midnight_) re-computation of _moving time window_ analytic results have been added.
+* The computation of analytic results is now not triggered automatically upon creation. In order for the results to be computed, it is necessary to wait for the periodical recomputation. It is also possible to take advantage of a new endpoint allowing to explicitly request the result computation.
 * _Time window_ type values have been updated. In particular:
-  
   * `DEFAULT` has bene renamed to `moving`
   * `CUSTOM` has been renamed to `fixed`
-
-  Deprecated values are still supported in the creation step of analytics, they will be officially removed in the next major release.
-  The new values will be used for describing the requested data.
-* Supported an open range of values for days, weeks, months, and years in moving time window.
-* Making sure that analytic documents are stored in the same index they were read from, when they are updated in ElasticSearch.
-* Allowed nullable result values for analytics.
-* Supported the deletion of an analytic and its associated result.
-* Added user age segmentation analytic.
-* Removed the immediate computation of an analytic after its creation.
-* Added user gender segmentation analytic.
+  Deprecated values are still supported at this stage during the creation step of analytics. Their support will be removed in the upcoming versions.
+* An open range of values (previously limited to a small set of options) for days, weeks, months, and years in moving time window is now supported.
+* Elasticsearch documents are now stored in the same index they were read from. This was not granted in the previous versions and could cause problems in the data curation process.
+* Nullable result values for analytics are now allowed.
+* The deletion of an analytics and of the associated results is now supported.
+* Added user segmentation analytics for age and gender.
 * Re-organised logic for handling analytics:
   * aligned analytic descriptor and result types. Now `count`, `segmentation` and `aggregation` are available ;
   * metrics renamed into more meaningful ones and `c:path`, `c:length`, `m:unhandled` are removed;
   * removed the field items from the analytic result.
-* Removed older usercount and eventcount endpoints.
-* Added endpoint for computing the update of the analytics.
+* Removed deprecated _usercount_ and _eventcount_ endpoints.
 
-* breaking changes:
-  * the parameter `staticId` of the Analytic has been renamed to `id`;
-  * the parameter `query` of the Analytic has been renamed to `descriptor`;
-  * for segmentation result `count` has been renamed into `segments`;
-  * Rename metric values to the new ones:
-    - `u:total` into `total`
-    - `u:active` into `active`
-    - `u:engaged` into `engaged`
-    - `u:new` into `new`
-    - `a:segmentation` into `age`
-    - `g:segmentation` into `gender`
-    - `m:from_users` into `from_users`
-    - `m:segmentation` into `all`
-    - `r:segmentation` into `from_users`
-    - `u:segmentation` into `from_users`
-    - `m:from_bot` into `from_bot`
-    - `m:responses` into `responses`
-    - `m:notifications` into `notifications`
-    - `t:total` into `total`
-    - `t:active` into `active`
-    - `t:closed` into `closed`
-    - `t:new` into `new`
-    - `t:segmentation` into `label`
-    - `c:total` into `total`
-    - `c:new` into `new`
-    - `d:fallback` into `fallback`
-    - `d:intents` into `intents`
-    - `d:domains` into `domains`
-    - `b:response` into `response`
-  * Remove from the analytic result the following keys:
-    - `items`
-    - `transactions`
-  
+## Version 1.*  
 
 ### 1.4.0
 

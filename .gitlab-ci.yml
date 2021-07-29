@@ -330,6 +330,7 @@ build:badges:
     paths:
       - template.svg
       - deploy.svg
+      - wenet-common.svg
     expire_in: 1 day
   only:
     - master
