@@ -95,8 +95,8 @@ class CountComputation:
             # elif analytic.metric.lower() == "path":
             #     result = self._path_conversations(analytic)
             else:
-                logger.info(f"Unknown value for metric [{analytic.metric}] for ConversationAnalytic")
-                raise ValueError(f"Unknown value for metric [{analytic.metric}] for ConversationAnalytic")
+                logger.info(f"Unknown value for metric [{analytic.metric}] for ConversationCountDescriptor")
+                raise ValueError(f"Unknown value for metric [{analytic.metric}] for ConversationCountDescriptor")
 
         elif isinstance(analytic, DialogueCountDescriptor):
             if analytic.metric.lower() == "fallback":
