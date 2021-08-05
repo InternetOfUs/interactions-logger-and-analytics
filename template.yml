@@ -66,6 +66,8 @@
           - name: build
           - name: test
           - name: push
+    ci_additional_badges:
+      - wenet-common
 
   roles:
     - uh.project_template
