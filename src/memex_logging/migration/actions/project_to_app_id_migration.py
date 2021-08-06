@@ -85,10 +85,10 @@ class ProjectToAppIdMigration(MigrationAction):
         index_name = Utils.generate_index("analytic", project="wenet-ask-for-help-aalborg")
         analytics = scan(es, index=index_name, query={"query": {"match": {"descriptor.project.keyword": "wenet-ask-for-help-aalborg"}}})
         for analytic in analytics:
-            analytic['_source']['descriptor']['project'] = "cG37pczAJx" if datetime.fromisoformat(analytic['_source']['creationDt']) < datetime(2021, 3, 12) else "2kUw54aeVP"
+            analytic['_source']['descriptor']['project'] = "cG37pczAJx" if datetime.fromisoformat(analytic['_source']["result"]['creationDt']) < datetime(2021, 3, 12) else "2kUw54aeVP"
             index = analytic['_index']
             es.delete(index=index, id=analytic['_id'], doc_type=analytic['_type'])
-            index = index.replace("wenet-ask-for-help-aalborg", "cg37pczajx" if datetime.fromisoformat(analytic['_source']['creationDt']) < datetime(2021, 3, 12) else "2kuw54aevp")
+            index = index.replace("wenet-ask-for-help-aalborg", "cg37pczajx" if datetime.fromisoformat(analytic['_source']["result"]['creationDt']) < datetime(2021, 3, 12) else "2kuw54aevp")
             es.index(index=index, id=analytic['_id'], doc_type=analytic['_type'], body=analytic['_source'])
 
         index_name = Utils.generate_index("analytic", project="wenet-ask-for-help-london")
