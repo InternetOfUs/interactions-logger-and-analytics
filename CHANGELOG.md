@@ -56,7 +56,7 @@
 * Added user segmentation analytics for age and gender.
 * Re-organised logic for handling analytics:
   * aligned analytic descriptor and result types. Now `count`, `segmentation` and `aggregation` are available ;
-  * metrics renamed into more meaningful ones and `c:path`, `c:length`, `m:from_bot`, `m:unhandled` are removed;
+  * metrics renamed into more meaningful ones and `c:path`, `c:length`, `m:unhandled` are removed;
   * removed the field items from the analytic result.
 * Removed deprecated _usercount_ and _eventcount_ endpoints.
 
