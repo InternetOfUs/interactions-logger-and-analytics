@@ -26,6 +26,7 @@ from memex_logging.common.utils import Utils
 logger = logging.getLogger("logger.common.dao.common")
 
 
+# TODO rename: it is the EL document that may not be found, this should be named DocumentNotFound
 class EntryNotFound(Exception):
     pass
 
@@ -105,6 +106,7 @@ class CommonDao:
         )
         return query
 
+    # TODO should be renamed to `_add_document`
     def add(self, index: str, object_repr: dict, doc_type: str = "_doc") -> str:
         """
         Add a document to Elasticsearch
@@ -118,6 +120,7 @@ class CommonDao:
         query = self._es.index(index=index, body=object_repr, doc_type=doc_type)
         return query["_id"]
 
+    # TODO should be renamed to `_get_document`
     def get(self, index: str, query: dict) -> Tuple[dict, str]:
         """
         Retrieve a document from Elasticsearch
@@ -135,6 +138,7 @@ class CommonDao:
         else:
             return response['hits']['hits'][0]['_source'], response['hits']['hits'][0]['_id']
 
+    # TODO should be renamed to `_delete_document`
     def delete(self, index: str, query: dict) -> None:
         """
         Delete a document from Elasticsearch
@@ -145,13 +149,14 @@ class CommonDao:
 
         self._es.delete_by_query(index=index, body=query)
 
+    # TODO should be renamed to `_search_documents`
     def search(self, index: str, query: dict) -> List[dict]:
         """
         Search documents in Elasticsearch
 
-        :param str index: the index from which to search the documents
-        :param dict query: the query for searching the documents
-        :return: a list containing the representation of objects
+        :param str index: the target index for the search
+        :param dict query: the search query
+        :return: the list of documents matching the query
         """
 
         response = self._es.search(index=index, body=query)

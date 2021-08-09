@@ -23,6 +23,8 @@ from flask_restful import Resource
 
 from memex_logging.celery.analytic import update_moving_time_window_analytics, update_analytic, \
     update_fixed_time_window_analytics, update_all_analytics
+from memex_logging.common.dao.collector import DaoCollector
+from memex_logging.common.dao.common import EntryNotFound
 from memex_logging.common.model.analytic.analytic import Analytic
 from memex_logging.common.model.analytic.descriptor.aggregation import AggregationDescriptor
 from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
@@ -37,9 +39,9 @@ logger = logging.getLogger("logger.resource.analytic")
 
 class AnalyticsResourceBuilder:
     @staticmethod
-    def routes(es: Elasticsearch):
+    def routes(dao_collector: DaoCollector, es: Elasticsearch):
         return [
-            (AnalyticInterface, '/analytic', (es,)),
+            (AnalyticInterface, '/analytic', (dao_collector, es,)),
             (ComputeAnalyticInterface, '/analytic/compute', ()),
             # (GetNoClickPerUser, '/analytic/usercount', (es,)),
             # (GetNoClickPerEvent, '/analytic/eventcount', (es,))
@@ -48,8 +50,9 @@ class AnalyticsResourceBuilder:
 
 class AnalyticInterface(Resource):
 
-    def __init__(self, es: Elasticsearch):
+    def __init__(self, dao_collector: DaoCollector, es: Elasticsearch):
         self._es = es
+        self._dao_collector = dao_collector
 
     def get(self):
         analytic_id = request.args.get("id")
@@ -62,27 +65,22 @@ class AnalyticInterface(Resource):
             }, 400
 
         project = request.args.get("project", None)
-        index_name = Utils.generate_index("analytic", project=project)
-        try:
-            # TODO should be moved into a dedicated dao
-            response = self._es.search(index=index_name, body={"query": {"match": {"id.keyword": analytic_id}}})
-        except Exception as e:
-            logger.exception(f"Analytic with id [{analytic_id}] could not be retrieved", exc_info=e)
-            return {
-                "status": "Internal server error: could not retrieved the analytic",
-                "code": 500
-            }, 500
 
-        if response['hits']['total']['value'] == 0:
-            logger.debug(f"Analytic with id [{analytic_id}] not found")
+        try:
+            analytic = self._dao_collector.analytic_dao.get_analytic(analytic_id, project=project)
+            return analytic.to_repr(), 200
+        except EntryNotFound as e:
+            logger.debug(f"Analytic [{analytic_id}] not found", exc_info=e)
             return {
-                "status": f"Not found: analytic with id [{analytic_id}] not found",
+                "status": f"Analytic [{analytic_id}] does not exist",
                 "code": 404
             }, 404
-        else:
-            logger.debug(f"Analytic with id [{analytic_id}] retrieved")
-            analytic = Analytic.from_repr(response['hits']['hits'][0]['_source'])
-            return analytic.to_repr(), 200
+        except Exception as e:
+            logger.exception(f"Something went wrong while parsing analytic [{analytic_id}]", exc_info=e)
+            return {
+                "status": f"Something went wrong while parsing analytic [{analytic_id}]",
+                "code": 500
+            }, 500
 
     def post(self):
         body = request.json
