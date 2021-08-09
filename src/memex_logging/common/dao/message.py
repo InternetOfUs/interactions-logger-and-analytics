@@ -99,7 +99,7 @@ class MessageDao(CommonDao):
         :return: the trace_id of the added massage
         """
 
-        index = self._generate_index(project=message.project, dt=message.timestamp)
+        index = self._generate_index(dt=message.timestamp)
         return self.add(index, message.to_repr(), doc_type=doc_type)
 
     def _build_query_based_on_parameters(self, trace_id: Optional[str] = None, message_id: Optional[str] = None, user_id: Optional[str] = None) -> dict:
@@ -136,7 +136,7 @@ class MessageDao(CommonDao):
         :raise ValueError: when specified neither the `trace_id` or the `message_id` and the `user_id`
         """
 
-        index = self._generate_index(project=project)
+        index = self._generate_index()
         query = self._build_query_based_on_parameters(trace_id=trace_id, message_id=message_id, user_id=user_id)
         if project:
             query = self._add_project_to_query(query, project)
@@ -157,27 +157,11 @@ class MessageDao(CommonDao):
         :raise ValueError: when specified neither the `trace_id` or the `message_id` and the `user_id`
         """
 
-        index = self._generate_index(project=project)
+        index = self._generate_index()
         query = self._build_query_based_on_parameters(trace_id=trace_id, message_id=message_id, user_id=user_id)
         if project:
             query = self._add_project_to_query(query, project)
         self.delete(index, query)
-
-    def _generate_index_based_on_time_range(self, project: str, from_time: datetime, to_time: datetime) -> str:
-        """
-        Generate the Elasticsearch index associated to the message based on time range
-
-        :param str project: the project associated to the message
-        :param datetime from_time: the time from which to search for messages
-        :param datetime to_time: the time up to which to search for messages
-        :return: the generated Elasticsearch index
-        :raise ValueError: when `fromTime` is greater than `toTime`
-        """
-
-        if from_time > to_time:
-            raise ValueError("`fromTime` is greater than `toTime`: `fromTime` must be is smaller than `toTime`")
-        else:
-            return self._generate_index(project=project)
 
     def search_messages(self, project: str, from_time: datetime, to_time: datetime, max_size: int,
                         user_id: Optional[str] = None, channel: Optional[str] = None,
@@ -196,7 +180,10 @@ class MessageDao(CommonDao):
         :raise ValueError: when `fromTime` is greater than `toTime`
         """
 
-        index = self._generate_index_based_on_time_range(project, from_time, to_time)
+        if from_time > to_time:
+            raise ValueError("`fromTime` is greater than `toTime`: `fromTime` must be is smaller than `toTime`")
+
+        index = self._generate_index()
         query = self._build_time_range_query(from_time, to_time, max_size)
         query = self._add_project_to_query(query, project)
 

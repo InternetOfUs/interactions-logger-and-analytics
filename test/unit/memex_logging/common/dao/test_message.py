@@ -14,7 +14,6 @@
 
 from __future__ import absolute_import, annotations
 
-from datetime import datetime
 from unittest import TestCase
 
 from elasticsearch import Elasticsearch
@@ -72,12 +71,3 @@ class TestMessageDao(TestCase):
 
         with self.assertRaises(ValueError):
             message_dao._build_query_based_on_parameters(trace_id=None, message_id=None, user_id="user_id")
-
-    def test_generate_index_based_on_time_range(self):
-        message_dao = MessageDao(Elasticsearch())
-
-        with self.assertRaises(ValueError):
-            message_dao._generate_index_based_on_time_range("project", datetime(2021, 2, 6), datetime(2021, 2, 5))
-
-        index = message_dao._generate_index_based_on_time_range("project", datetime(2021, 2, 4), datetime(2021, 2, 5))
-        self.assertEqual(f"{MessageDao.BASE_INDEX}-project-*", index)

@@ -16,6 +16,7 @@ from __future__ import absolute_import, annotations
 
 import logging
 import uuid
+from datetime import datetime
 
 from elasticsearch import Elasticsearch
 from flask import request
@@ -24,10 +25,7 @@ from flask_restful import Resource
 from memex_logging.celery.analytic import update_moving_time_window_analytics, update_analytic, \
     update_fixed_time_window_analytics, update_all_analytics
 from memex_logging.common.model.analytic.analytic import Analytic
-from memex_logging.common.model.analytic.descriptor.aggregation import AggregationDescriptor
 from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
-from memex_logging.common.model.analytic.descriptor.count import CountDescriptor
-from memex_logging.common.model.analytic.descriptor.segmentation import SegmentationDescriptor
 from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow
 from memex_logging.common.utils import Utils
 
@@ -61,8 +59,7 @@ class AnalyticInterface(Resource):
                 "code": 400
             }, 400
 
-        project = request.args.get("project", None)
-        index_name = Utils.generate_index("analytic", project=project)
+        index_name = Utils.generate_index("analytic")
         try:
             # TODO should be moved into a dedicated dao
             response = self._es.search(index=index_name, body={"query": {"match": {"id.keyword": analytic_id}}})
@@ -109,20 +106,7 @@ class AnalyticInterface(Resource):
                 "code": 500
             }, 500
 
-        # TODO should we maybe using the Utils.generate_index() method?
-        if isinstance(descriptor, CountDescriptor):
-            index_name = "analytic-" + descriptor.project.lower() + "-" + descriptor.dimension.lower()  # TODO it should always be lowercase at this stage
-        elif isinstance(descriptor, AggregationDescriptor):
-            index_name = "analytic-" + descriptor.project.lower() + "-" + descriptor.aggregation.lower()  # TODO it should always be lowercase at this stage
-        elif isinstance(descriptor, SegmentationDescriptor):
-            index_name = "analytic-" + descriptor.project.lower() + "-" + descriptor.dimension.lower()  # TODO it should always be lowercase at this stage
-        else:
-            logger.error(f"Un-supported analytic descriptor of type [{type(descriptor)}]")
-            return {
-                "status": "Internal server error: something went wrong while building the new analytic",
-                "code": 500
-            }, 500
-
+        index_name = Utils.generate_index("analytic", datetime.now())
         new_analytic_id = str(uuid.uuid4())
         analytic = Analytic(new_analytic_id, descriptor, result=None)
 
@@ -151,8 +135,7 @@ class AnalyticInterface(Resource):
                 "code": 400
             }, 400
 
-        project = request.args.get("project", None)
-        index_name = Utils.generate_index("analytic", project=project)
+        index_name = Utils.generate_index("analytic")
         try:
             # TODO should be moved into a dedicated dao
             self._es.delete_by_query(index=index_name, body={"query": {"match": {"id.keyword": analytic_id}}})

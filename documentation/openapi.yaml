@@ -504,12 +504,6 @@ paths:
           example: "bcpg8XYBHD_pmQ1jA7b8"
           required: true
           description: the identifier of the analytic
-        - in: query
-          name: project
-          schema:
-            type: string
-          example: "wenet-ask-for-help"
-          description: "Optionally you can also specify the name of the project related to the analytic you want to retrieve. Note that: for the task, transaction and user segmentation based on age or gender analytics, the project is not related to the name used in the db. It is requested the id of the application"
 
       responses:
         '200':
@@ -544,12 +538,6 @@ paths:
           example: "bcpg8XYBHD_pmQ1jA7b8"
           required: true
           description: the identifier of the analytic
-        - in: query
-          name: project
-          schema:
-            type: string
-          example: "wenet-ask-for-help"
-          description: "Optionally you can also specify the name of the project related to the analytic you want to retrieve. Note that: for the task, transaction and user segmentation based on age or gender analytics, the project is not related to the name used in the db. It is requested the id of the application"
 
       responses:
         '200':
