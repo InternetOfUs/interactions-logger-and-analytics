@@ -52,4 +52,4 @@ class MessageAnalyticMigration(MigrationAction):
 
     @property
     def action_num(self) -> int:
-        return 4
+        return 5
