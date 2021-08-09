@@ -363,9 +363,9 @@ paths:
 
       Analytics are created by specifying the **descriptor**. Three types exists and they respectively allow to define:
 
-      1. `count` a counter analytic, able to compute the number of occurrences of a certain type of event
+      1. `count` a counter analytic, able to compute the number of occurrences of a certain type of event.
 
-      2. `segmentation` a segmentation analytic, able to create a segmentation map collecting all value occurrences of a certain event together with the associated occurrence counter
+      2. `segmentation` a segmentation analytic, able to create a segmentation map collecting all value occurrences of a certain event together with the associated occurrence counter.
 
       3. `aggregation` an aggregation analytic, it requires the specification of the *field* to aggregate over and the *type* of aggregation to be applied. The following are the supported types: *avg*, *min*, *max*, *sum*, *stats*, *extended_stats, *value_count*, *cardinality* and *percentiles*.
 
@@ -419,13 +419,17 @@ paths:
 
       ### Count
 
-      * `total`: the number of total tasks in a certain time range;
+      * `total`: the number of total tasks in a certain time range.
 
-      * `active`: the number of active/open tasks in a certain time range;
+      * `new`: the number of new tasks created in a certain time range.
 
-      * `closed`: the number of closed tasks in a certain time range;
+      * `new_active`: the number of new tasks created in a certain time range that are active at the end of that time range.
 
-      * `new`: the number of new tasks in a certain time range.
+      * `active`: the number of tasks active at the end of a certain time range.
+
+      * `new_closed`: the number of new tasks created in a certain time range that has been closed in that time range.
+
+      * `closed`: the number of tasks closed up to the end of a certain time range.
 
 
       ## Transaction analytics
@@ -1178,7 +1182,7 @@ components:
           example: "task"
         metric:
           type: string
-          enum: [ "total", "active", "closed", "new" ]
+          enum: [ "total", "new", "new_active", "active", "new_closed", "closed" ]
           example: "active"
 
     TransactionCountDescriptor:

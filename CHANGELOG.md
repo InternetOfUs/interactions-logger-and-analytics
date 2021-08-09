@@ -39,6 +39,9 @@
 * Message analytics have been updated
   * Renamed type *from_user* into *requests*
   * Removed analytic of type *from_bot*
+* Added two new task metrics: `new_active` and `new_closed`.
+* Modified the `closed` task metric to get the number of tasks closed up to the end of a certain time range.
+
 
 ### 2.0.0
 

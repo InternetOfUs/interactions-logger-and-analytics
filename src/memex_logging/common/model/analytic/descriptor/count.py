@@ -124,7 +124,7 @@ class MessageCountDescriptor(CountDescriptor):
 class TaskCountDescriptor(CountDescriptor):
 
     DIMENSION = "task"
-    ALLOWED_METRIC_VALUES = ["total", "active", "closed", "new"]
+    ALLOWED_METRIC_VALUES = "total", "new", "new_active", "active", "new_closed", "closed"
 
     def __init__(self, time_span: TimeWindow, project: str, metric: str):
         super().__init__(time_span, project, self.DIMENSION, metric)

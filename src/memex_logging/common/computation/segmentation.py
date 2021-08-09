@@ -205,6 +205,11 @@ class SegmentationComputation:
         return SegmentationResult(type_counter, datetime.now(), min_bound, max_bound)
 
     def _transactions_segmentation(self, analytic: TransactionSegmentationDescriptor) -> SegmentationResult:
+        """
+        Compute the segmentation of the transactions of a given application (analytic.project) in a given time range (analytic.timespan).
+        The computation of that count is done segmenting based on the labels of the transactions created in the time range.
+        Optionally if specified a task identifier the transactions are only relative to that task.
+        """
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         transactions = self.wenet_interface.task_manager.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
         transaction_labels = [transaction.label for transaction in transactions]
