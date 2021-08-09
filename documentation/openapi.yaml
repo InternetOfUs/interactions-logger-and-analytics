@@ -399,9 +399,7 @@ paths:
 
       ### Count
 
-      * `from_users`: the number of messages from the users in a certain time range.
-
-      * `from_bot`: the number of messages from the bot in a certain time range.
+      * `requests`: the number of request messages in a certain time range.
 
       * `responses`: the number of response messages in a certain time range.
 
@@ -411,7 +409,7 @@ paths:
 
       * `all`: the segmentation of the messages based on the type in a certain time range.
 
-      * `from_users`: the segmentation of the user messages based on the type in a certain time range.
+      * `requests`: the segmentation of the request messages based on the type in a certain time range.
 
 
       ## Task analytics
@@ -1167,8 +1165,8 @@ components:
           example: "message"
         metric:
           type: string
-          enum: [ "from_users", "from_bot", "responses", "notifications" ]  # removed "m:unhandled"
-          example: "from_users"
+          enum: [ "requests", "responses", "notifications" ]  # removed "from_bot", "m:unhandled"
+          example: "requests"
 
     TaskCountDescriptor:
       allOf:
@@ -1298,7 +1296,7 @@ components:
           example: "message"
         metric:
           type: string
-          enum: ["all", "from_users"]
+          enum: ["all", "requests"]
           example: "all"
 
     TransactionSegmentationDescriptor:

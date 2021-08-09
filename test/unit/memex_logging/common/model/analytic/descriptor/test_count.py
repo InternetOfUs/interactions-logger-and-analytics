@@ -34,7 +34,7 @@ class TestUserCountDescriptor(TestCase):
 class TestMessageCountDescriptor(TestCase):
 
     def test_repr(self):
-        descriptor = MessageCountDescriptor(TimeGenerator.generate_random(), "project", "from_users")
+        descriptor = MessageCountDescriptor(TimeGenerator.generate_random(), "project", "requests")
         self.assertEqual(descriptor, MessageCountDescriptor.from_repr(descriptor.to_repr()))
         self.assertEqual(descriptor, CountDescriptor.from_repr(descriptor.to_repr()))
         self.assertEqual(descriptor, AnalyticDescriptorBuilder.build(descriptor.to_repr()))

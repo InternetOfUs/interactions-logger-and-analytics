@@ -51,10 +51,10 @@ class CountComputation:
                 raise ValueError(f"Unknown value for metric [{analytic.metric}] for UserCountDescriptor")
 
         elif isinstance(analytic, MessageCountDescriptor):
-            if analytic.metric.lower() == "from_users":
-                result = self._user_messages(analytic)
-            elif analytic.metric.lower() == "from_bot":
-                result = self._bot_messages(analytic)
+            if analytic.metric.lower() == "requests":
+                result = self._request_messages(analytic)
+            # elif analytic.metric.lower() == "from_bot":
+            #     result = self._bot_messages(analytic)
             elif analytic.metric.lower() == "responses":
                 result = self._response_messages(analytic)
             elif analytic.metric.lower() == "notifications":
@@ -354,7 +354,7 @@ class CountComputation:
 
         return CountResult(len(final_users), datetime.now(), min_bound, max_bound)
 
-    def _user_messages(self, analytic: MessageCountDescriptor) -> CountResult:
+    def _request_messages(self, analytic: MessageCountDescriptor) -> CountResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
@@ -406,104 +406,104 @@ class CountComputation:
 
         return CountResult(total_counter, datetime.now(), min_bound, max_bound)
 
-    def _bot_messages(self, analytic: MessageCountDescriptor) -> CountResult:
-        min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
-        body = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "match": {
-                                "type.keyword": "response"
-                            }
-                        },
-                        {
-                            "match": {
-                                "project.keyword": analytic.project
-                            }
-                        }
-                    ],
-                    "filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound.isoformat(),
-                                    "lte": max_bound.isoformat()
-                                }
-                            }
-                        }
-                    ]
-                }
-            },
-            "aggs": {
-                "terms_count": {
-                    "terms": {
-                        "field": "messageId.keyword",
-                        "size": 65535
-                    }
-                }
-            }
-        }
-
-        index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = self.es.search(index=index, body=body, size=0)
-        total_len = 0
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-            for item in response['aggregations']['terms_count']['buckets']:
-                total_len = total_len + item['doc_count']
-
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-                logger.warning("The number of buckets is limited at `65535` but the number of response messages is higher")
-
-        body = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "match": {
-                                "type.keyword": "notification"
-                            }
-                        },
-                        {
-                            "match": {
-                                "project.keyword": analytic.project
-                            }
-                        }
-                    ],
-                    "filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "gte": min_bound.isoformat(),
-                                    "lte": max_bound.isoformat()
-                                }
-                            }
-                        }
-                    ]
-                }
-            },
-            "aggs": {
-                "terms_count": {
-                    "terms": {
-                        "field": "messageId.keyword",
-                        "size": 65535
-                    }
-                }
-            }
-        }
-
-        index = Utils.generate_index(data_type="message", project=analytic.project)
-        response = self.es.search(index=index, body=body, size=0)
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-            for item in response['aggregations']['terms_count']['buckets']:
-                total_len = total_len + item['doc_count']
-
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-                logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
-
-        return CountResult(total_len, datetime.now(), min_bound, max_bound)
+    # def _bot_messages(self, analytic: MessageCountDescriptor) -> CountResult:
+    #     min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
+    #     body = {
+    #         "query": {
+    #             "bool": {
+    #                 "must": [
+    #                     {
+    #                         "match": {
+    #                             "type.keyword": "response"
+    #                         }
+    #                     },
+    #                     {
+    #                         "match": {
+    #                             "project.keyword": analytic.project
+    #                         }
+    #                     }
+    #                 ],
+    #                 "filter": [
+    #                     {
+    #                         "range": {
+    #                             "timestamp": {
+    #                                 "gte": min_bound.isoformat(),
+    #                                 "lte": max_bound.isoformat()
+    #                             }
+    #                         }
+    #                     }
+    #                 ]
+    #             }
+    #         },
+    #         "aggs": {
+    #             "terms_count": {
+    #                 "terms": {
+    #                     "field": "messageId.keyword",
+    #                     "size": 65535
+    #                 }
+    #             }
+    #         }
+    #     }
+    #
+    #     index = Utils.generate_index(data_type="message", project=analytic.project)
+    #     response = self.es.search(index=index, body=body, size=0)
+    #     total_len = 0
+    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+    #         for item in response['aggregations']['terms_count']['buckets']:
+    #             total_len = total_len + item['doc_count']
+    #
+    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+    #         if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+    #             logger.warning("The number of buckets is limited at `65535` but the number of response messages is higher")
+    #
+    #     body = {
+    #         "query": {
+    #             "bool": {
+    #                 "must": [
+    #                     {
+    #                         "match": {
+    #                             "type.keyword": "notification"
+    #                         }
+    #                     },
+    #                     {
+    #                         "match": {
+    #                             "project.keyword": analytic.project
+    #                         }
+    #                     }
+    #                 ],
+    #                 "filter": [
+    #                     {
+    #                         "range": {
+    #                             "timestamp": {
+    #                                 "gte": min_bound.isoformat(),
+    #                                 "lte": max_bound.isoformat()
+    #                             }
+    #                         }
+    #                     }
+    #                 ]
+    #             }
+    #         },
+    #         "aggs": {
+    #             "terms_count": {
+    #                 "terms": {
+    #                     "field": "messageId.keyword",
+    #                     "size": 65535
+    #                 }
+    #             }
+    #         }
+    #     }
+    #
+    #     index = Utils.generate_index(data_type="message", project=analytic.project)
+    #     response = self.es.search(index=index, body=body, size=0)
+    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+    #         for item in response['aggregations']['terms_count']['buckets']:
+    #             total_len = total_len + item['doc_count']
+    #
+    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+    #         if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+    #             logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
+    #
+    #     return CountResult(total_len, datetime.now(), min_bound, max_bound)
 
     def _response_messages(self, analytic: MessageCountDescriptor) -> CountResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)

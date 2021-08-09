@@ -49,8 +49,8 @@ class SegmentationComputation:
         elif isinstance(analytic, MessageSegmentationDescriptor):
             if analytic.metric.lower() == "all":
                 result = self._messages_segmentation(analytic)
-            elif analytic.metric.lower() == "from_users":
-                result = self._user_messages_segmentation(analytic)
+            elif analytic.metric.lower() == "requests":
+                result = self._requests_segmentation(analytic)
             else:
                 logger.info(f"Unknown value for metric [{analytic.metric}] for MessageSegmentationDescriptor")
                 raise ValueError(f"Unknown value for metric [{analytic.metric}] for MessageSegmentationDescriptor")
@@ -152,7 +152,7 @@ class SegmentationComputation:
 
         return SegmentationResult(type_counter, datetime.now(), min_bound, max_bound)
 
-    def _user_messages_segmentation(self, analytic: MessageSegmentationDescriptor) -> SegmentationResult:
+    def _requests_segmentation(self, analytic: MessageSegmentationDescriptor) -> SegmentationResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {

@@ -93,6 +93,7 @@ stages:
   - test
   - push
   - deploy
+  - notify
 
 
 #
@@ -315,6 +316,26 @@ push:production:
     - tags
 
 
+notify:production:
+  stage: notify
+  image: public.registry.u-hopper.com/alpine:3.13
+  script:
+    - *apk-before-script
+    - *ansible-script
+    - export RELEASE_TAG="$CI_COMMIT_TAG"
+    - export BUILD_ENVIRONMENT="production"
+    - export WITH_DEPLOY="no"
+    - export DEPLOY_TRIGGERED="no"
+    - ansible-playbook ansible/notify.yml
+  dependencies:
+    - build:production
+    - test:production
+    - push:production
+  allow_failure: true
+  only:
+    - tags
+
+
 # 
 # Stages for master.
 # Allows to build badges and run the test coverage.
@@ -330,6 +351,7 @@ build:badges:
     paths:
       - template.svg
       - deploy.svg
+      - wenet-common.svg
     expire_in: 1 day
   only:
     - master
