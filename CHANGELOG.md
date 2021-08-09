@@ -14,8 +14,8 @@
   - `g:segmentation` into `gender`
   - `m:from_users` into `from_users`
   - `m:segmentation` into `all`
-  - `r:segmentation` into `from_users`
-  - `u:segmentation` into `from_users`
+  - `r:segmentation` into `requests`
+  - `u:segmentation` into `requests`
   - `m:from_bot` into `from_bot`
   - `m:responses` into `responses`
   - `m:notifications` into `notifications`
@@ -33,6 +33,12 @@
 * The keys `items` and `transactions` have been removed from the analytic result contents.
 
 ## Version 2.*
+
+### next
+
+* Message analytics have been updated
+  * Renamed type *from_user* into *requests*
+  * Removed analytic of type *from_bot*
 
 ### 2.0.0
 

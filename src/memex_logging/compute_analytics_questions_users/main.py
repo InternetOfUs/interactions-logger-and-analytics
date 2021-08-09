@@ -141,7 +141,7 @@ if __name__ == '__main__':
         if TYPE_NOTIFICATION_MESSAGE == segmentation.segmentation_type:
             notification_messages = segmentation.count
 
-    segmentation_requests = MessageSegmentationDescriptor(time_range, args.project, "from_users")
+    segmentation_requests = MessageSegmentationDescriptor(time_range, args.project, "requests")
     segmentation_requests_result = SegmentationResult.from_repr(logger_operations.get_analytic_result(segmentation_requests))
 
     text_requests = 0

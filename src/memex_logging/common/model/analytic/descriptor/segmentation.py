@@ -89,7 +89,7 @@ class UserSegmentationDescriptor(SegmentationDescriptor):
 class MessageSegmentationDescriptor(SegmentationDescriptor):
 
     DIMENSION = "message"
-    ALLOWED_METRIC_VALUES = ["all", "from_users"]
+    ALLOWED_METRIC_VALUES = ["all", "requests"]
 
     def __init__(self, time_span: TimeWindow, project: str, metric: str):
         super().__init__(time_span, project, self.DIMENSION, metric)
