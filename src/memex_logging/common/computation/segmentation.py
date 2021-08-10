@@ -139,7 +139,7 @@ class SegmentationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         type_counter = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -191,7 +191,7 @@ class SegmentationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         type_counter = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:

@@ -15,19 +15,17 @@
 from __future__ import absolute_import, annotations
 
 from copy import deepcopy
-from datetime import datetime
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 
-from memex_logging.common.utils import Utils
 from memex_logging.migration.migration import MigrationAction
 
 
 class MessageAnalyticMigration(MigrationAction):
 
     def apply(self, es: Elasticsearch) -> None:
-        index_name = Utils.generate_index("analytic")
+        index_name = "analytic-*"
         analytics = scan(es, index=index_name, query={"query": {"match_all": {}}})
 
         for analytic in analytics:
@@ -52,4 +50,4 @@ class MessageAnalyticMigration(MigrationAction):
 
     @property
     def action_num(self) -> int:
-        return 4
+        return 5

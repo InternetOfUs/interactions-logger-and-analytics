@@ -29,14 +29,8 @@ class TestUtils(TestCase):
         index = Utils.generate_index("data_type")
         self.assertEqual("data_type-*", index)
 
-        index = Utils.generate_index("data_type", project="project")
-        self.assertEqual("data_type-project-*", index)
-
-        with self.assertRaises(ValueError):
-            Utils.generate_index("data_type", dt=datetime(2021, 2, 5))
-
-        index = Utils.generate_index("data_type", project="project", dt=datetime(2021, 2, 5))
-        self.assertEqual("data_type-project-2021-02-05", index)
+        index = Utils.generate_index("data_type", dt=datetime(2021, 2, 5))
+        self.assertEqual("data_type-2021-02-05", index)
 
     def test_extract_range_timestamps(self):
         start = datetime(2021, 7, 24)
