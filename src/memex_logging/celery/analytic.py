@@ -24,7 +24,8 @@ from wenet.interface.wenet import WeNet
 
 from memex_logging.celery import celery
 from memex_logging.common.computation.analytic import AnalyticComputation
-from memex_logging.common.model.analytic.analytic import Analytic
+from memex_logging.common.dao.analytic import AnalyticDao
+from memex_logging.common.dao.collector import DaoCollector
 from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow
 from memex_logging.common.utils import Utils
 
@@ -37,24 +38,14 @@ def update_analytic(analytic_id: str):
     logger.info(f"Updating analytic with id [{analytic_id}]")
 
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
+    dao_collector = DaoCollector.build_dao_collector(es)
+    analytic, trace_id, index, doc_type = dao_collector.analytic.get_with_additional_information(analytic_id)
+
     client = ApikeyClient(os.getenv("APIKEY"))
     wenet_interface = WeNet.build(client, platform_url=os.getenv("INSTANCE"))
-
-    index_name = Utils.generate_index("analytic")
-    raw_response = es.search(index=index_name, body={"query": {"match": {"id.keyword": analytic_id}}})
-
-    if raw_response['hits']['total']['value'] == 0:
-        logger.warning(f"Analytic with id [{analytic_id}] not found")
-        raise ValueError(f"Analytic with id [{analytic_id}] not found")
-
-    index = raw_response['hits']['hits'][0]['_index']
-    trace_id = raw_response['hits']['hits'][0]['_id']
-    doc_type = raw_response['hits']['hits'][0]['_type']
-
-    response = Analytic.from_repr(raw_response['hits']['hits'][0]['_source'])
     analytic_computation = AnalyticComputation(es, wenet_interface)
-    response.result = analytic_computation.get_result(response.descriptor)
-    es.index(index=index, id=trace_id, doc_type=doc_type, body=response.to_repr())
+    analytic.result = analytic_computation.get_result(analytic.descriptor)
+    dao_collector.analytic.update(index, trace_id, analytic, doc_type)
     logger.info(f"Result of analytic with id [{analytic_id}] updated")
 
 
@@ -62,7 +53,7 @@ def update_analytic(analytic_id: str):
 def update_moving_time_window_analytics():
     logger.info("Updating moving time window analytics")
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
-    index_name = Utils.generate_index("analytic")
+    index_name = Utils.generate_index(AnalyticDao.BASE_INDEX)
     results = scan(es, index=index_name, query={"query": {"match": {"descriptor.timespan.type.keyword": MovingTimeWindow.type()}}})
 
     for result in results:
@@ -73,7 +64,7 @@ def update_moving_time_window_analytics():
 def update_fixed_time_window_analytics():
     logger.info("Updating fixed time window analytics")
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
-    index_name = Utils.generate_index("analytic")
+    index_name = Utils.generate_index(AnalyticDao.BASE_INDEX)
     results = scan(es, index=index_name, query={"query": {"match": {"descriptor.timespan.type.keyword": FixedTimeWindow.type()}}})
 
     for result in results:
@@ -84,7 +75,7 @@ def update_fixed_time_window_analytics():
 def update_all_analytics():
     logger.info("Updating all analytics")
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
-    index_name = Utils.generate_index("analytic")
+    index_name = Utils.generate_index(AnalyticDao.BASE_INDEX)
     results = scan(es, index=index_name, query={"query": {"match_all": {}}})
 
     for result in results:

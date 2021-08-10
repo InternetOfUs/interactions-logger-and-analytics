@@ -16,20 +16,17 @@ from __future__ import absolute_import, annotations
 
 import logging
 import uuid
-from datetime import datetime
 
-from elasticsearch import Elasticsearch
 from flask import request
 from flask_restful import Resource
 
 from memex_logging.celery.analytic import update_moving_time_window_analytics, update_analytic, \
     update_fixed_time_window_analytics, update_all_analytics
 from memex_logging.common.dao.collector import DaoCollector
-from memex_logging.common.dao.common import EntryNotFound
+from memex_logging.common.dao.common import DocumentNotFound
 from memex_logging.common.model.analytic.analytic import Analytic
 from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
 from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow
-from memex_logging.common.utils import Utils
 
 
 logger = logging.getLogger("logger.resource.analytic")
@@ -37,9 +34,9 @@ logger = logging.getLogger("logger.resource.analytic")
 
 class AnalyticsResourceBuilder:
     @staticmethod
-    def routes(dao_collector: DaoCollector, es: Elasticsearch):
+    def routes(dao_collector: DaoCollector):
         return [
-            (AnalyticInterface, '/analytic', (dao_collector, es,)),
+            (AnalyticInterface, '/analytic', (dao_collector,)),
             (ComputeAnalyticInterface, '/analytic/compute', ()),
             # (GetNoClickPerUser, '/analytic/usercount', (es,)),
             # (GetNoClickPerEvent, '/analytic/eventcount', (es,))
@@ -48,8 +45,7 @@ class AnalyticsResourceBuilder:
 
 class AnalyticInterface(Resource):
 
-    def __init__(self, dao_collector: DaoCollector, es: Elasticsearch):
-        self._es = es
+    def __init__(self, dao_collector: DaoCollector):
         self._dao_collector = dao_collector
 
     def get(self):
@@ -63,9 +59,9 @@ class AnalyticInterface(Resource):
             }, 400
 
         try:
-            analytic = self._dao_collector.analytic_dao.get_analytic(analytic_id)
+            analytic = self._dao_collector.analytic.get(analytic_id)
             return analytic.to_repr(), 200
-        except EntryNotFound as e:
+        except DocumentNotFound as e:
             logger.debug(f"Analytic [{analytic_id}] not found", exc_info=e)
             return {
                 "status": f"Analytic [{analytic_id}] does not exist",
@@ -103,14 +99,10 @@ class AnalyticInterface(Resource):
                 "code": 500
             }, 500
 
-        index_name = Utils.generate_index("analytic", datetime.now())
-        new_analytic_id = str(uuid.uuid4())
-        analytic = Analytic(new_analytic_id, descriptor, result=None)
-
+        analytic = Analytic(str(uuid.uuid4()), descriptor, result=None)
         try:
-            # TODO should be moved into a dedicated dao
-            self._es.index(index=index_name, doc_type='_doc', body=analytic.to_repr())
-            logger.debug(f"Analytic stored in index [{index_name}] with id [{analytic.analytic_id}]")
+            self._dao_collector.analytic.add(analytic)
+            logger.debug(f"Stored analytic with id [{analytic.analytic_id}]")
         except Exception as e:
             logger.exception(f"Analytic could not be stored [{analytic.to_repr()}]", exc_info=e)
             return {
@@ -119,7 +111,7 @@ class AnalyticInterface(Resource):
             }, 500
 
         return {
-            "id": new_analytic_id
+            "id": analytic.analytic_id
         }, 200
 
     def delete(self):
@@ -132,10 +124,8 @@ class AnalyticInterface(Resource):
                 "code": 400
             }, 400
 
-        index_name = Utils.generate_index("analytic")
         try:
-            # TODO should be moved into a dedicated dao
-            self._es.delete_by_query(index=index_name, body={"query": {"match": {"id.keyword": analytic_id}}})
+            self._dao_collector.analytic.delete(analytic_id)
             logger.debug(f"Analytic with id [{analytic_id}] deleted")
         except Exception as e:
             logger.exception(f"Analytic with id [{analytic_id}] could not be to be deleted", exc_info=e)
@@ -165,9 +155,9 @@ class ComputeAnalyticInterface(Resource):
             else:
                 logger.info(f"Unrecognized type [{time_window_type}] for TimeWindow")
                 return {
-                           "status": "Malformed request: unrecognized value for parameter `timeWindowType`",
-                           "code": 400
-                       }, 400
+                   "status": "Malformed request: unrecognized value for parameter `timeWindowType`",
+                   "code": 400
+               }, 400
         else:
             logger.info(f"Updating analytic with id {analytic_id}")
             update_analytic.delay(analytic_id)

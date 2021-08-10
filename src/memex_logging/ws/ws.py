@@ -52,7 +52,7 @@ class WsInterface(object):
             (MessageResourceBuilder.routes(dao_collector), ""),
             (LoggingResourceBuilder.routes(es), ""),
             (PerformancesResourceBuilder.routes(es), "/performance"),
-            (AnalyticsResourceBuilder.routes(dao_collector, es), ""),
+            (AnalyticsResourceBuilder.routes(dao_collector), ""),
             (DocumentationResourceBuilder.routes(), "")
         ]
 

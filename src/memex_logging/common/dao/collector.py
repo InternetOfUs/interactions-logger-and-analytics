@@ -31,8 +31,8 @@ class DaoCollector:
         :param AnalyticDao analytic_dao: the analytic dao
         """
 
-        self.message_dao = message_dao
-        self.analytic_dao = analytic_dao
+        self.message = message_dao
+        self.analytic = analytic_dao
 
     @staticmethod
     def build_dao_collector(es: Elasticsearch) -> DaoCollector:
