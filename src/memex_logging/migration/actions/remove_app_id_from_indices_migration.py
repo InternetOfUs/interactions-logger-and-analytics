@@ -33,15 +33,17 @@ class RemoveAppIdFromIndicesMigration(MigrationAction):
             except ValueError:
                 end_of_index = splits[-1]
 
-            es.reindex({
-                "source": {
-                    "index": index
-                },
-                "dest": {
-                    "index": f"message-{end_of_index}"
-                }
-            })
-            es.indices.delete(index)
+            new_index = f"message-{end_of_index}"
+            if index != new_index:
+                es.reindex({
+                    "source": {
+                        "index": index
+                    },
+                    "dest": {
+                        "index": new_index
+                    }
+                }, wait_for_completion=True)
+                es.indices.delete(index)
 
         for index in es.indices.get('analytic-*'):
             analytics = scan(es, index=index, query={"query": {"match_all": {}}})
