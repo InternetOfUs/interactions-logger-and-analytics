@@ -32,13 +32,13 @@ class MessageAnalyticMigration(MigrationAction):
             stored_analytic = deepcopy(analytic)
             # Remove analytics with metric value:
             # - from_bot
-            if analytic['_source']['descriptor']['metric'] == "from_bot":
+            if analytic['_source']['descriptor'].get('metric') == "from_bot":
                 es.delete(index=analytic['_index'], id=analytic['_id'], doc_type=analytic['_type'])
                 continue
 
             # Rename metric values to the new ones:
             # - from_users into requests
-            if analytic['_source']['descriptor']['metric'] == "from_users":
+            if analytic['_source']['descriptor'].get('metric') == "from_users" or analytic['_source']['descriptor'].get('metric') == "m:from_user":
                 analytic['_source']['descriptor']['metric'] = "requests"
 
             if analytic != stored_analytic:
