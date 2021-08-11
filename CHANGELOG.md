@@ -41,7 +41,7 @@
   * Removed analytic of type *from_bot*
 * Added two new task metrics: `new_active` and `new_closed`.
 * Modified the `closed` task metric to get the number of tasks closed up to the end of a certain time range.
-* Set aggregation result value to `None` if the field where we are performing the aggregation is not present on the message data.
+* Set aggregation result to `None` if the field where we are performing the aggregation is not present on the message data.
 
 
 ### 2.0.0

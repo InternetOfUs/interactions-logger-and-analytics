@@ -15,7 +15,7 @@
 from __future__ import absolute_import, annotations
 
 from datetime import datetime
-from typing import Union, Optional
+from typing import Union
 
 from memex_logging.common.model.analytic.result.common import CommonAnalyticResult
 
@@ -24,7 +24,7 @@ class AggregationResult(CommonAnalyticResult):
 
     TYPE = "aggregation"
 
-    def __init__(self, aggregation_result: Optional[Union[int, float, dict]],
+    def __init__(self, aggregation_result: Union[int, float, dict],
                  creation_datetime: datetime, from_datetime: datetime, to_datetime: datetime) -> None:
         super().__init__(creation_datetime, from_datetime, to_datetime)
         self.aggregation_result = aggregation_result
