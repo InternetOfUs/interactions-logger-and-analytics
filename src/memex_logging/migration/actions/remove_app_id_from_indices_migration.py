@@ -66,4 +66,4 @@ class RemoveAppIdFromIndicesMigration(MigrationAction):
 
     @property
     def action_num(self) -> int:
-        return 6
+        return 7
