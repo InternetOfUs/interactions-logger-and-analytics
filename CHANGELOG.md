@@ -12,7 +12,7 @@
   - `u:new` into `new`
   - `a:segmentation` into `age`
   - `g:segmentation` into `gender`
-  - `m:from_users` into `from_users`
+  - `m:from_users` into `requests`
   - `m:segmentation` into `all`
   - `r:segmentation` into `requests`
   - `u:segmentation` into `requests`
@@ -41,6 +41,7 @@
   * Removed analytic of type *from_bot*
 * Added two new task metrics: `new_active` and `new_closed`.
 * Modified the `closed` task metric to get the number of tasks closed up to the end of a certain time range.
+* Removed id of the application from indices of messages and analytics.
 
 
 ### 2.0.0

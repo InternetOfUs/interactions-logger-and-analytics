@@ -90,7 +90,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
 
@@ -127,7 +127,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
 
@@ -164,7 +164,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
 
@@ -201,7 +201,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
 
@@ -238,7 +238,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         return AggregationResult(response['aggregations']['type_count'], datetime.now(), min_bound, max_bound)
 
@@ -275,7 +275,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         return AggregationResult(response['aggregations']['type_count']['values'], datetime.now(), min_bound, max_bound)
 
@@ -312,7 +312,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         return AggregationResult(response['aggregations']['type_count'], datetime.now(), min_bound, max_bound)
 
@@ -349,7 +349,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
 
@@ -386,6 +386,6 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)

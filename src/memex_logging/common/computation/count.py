@@ -159,7 +159,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         number_of_users = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -205,7 +205,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         number_of_users = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -251,7 +251,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         number_of_users = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -293,7 +293,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         users_in_period = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -337,7 +337,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         users_out_period = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -393,7 +393,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         total_counter = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -445,7 +445,7 @@ class CountComputation:
     #         }
     #     }
     #
-    #     index = Utils.generate_index(data_type="message", project=analytic.project)
+    #     index = Utils.generate_index(data_type="message")
     #     response = self.es.search(index=index, body=body, size=0)
     #     total_len = 0
     #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -493,7 +493,7 @@ class CountComputation:
     #         }
     #     }
     #
-    #     index = Utils.generate_index(data_type="message", project=analytic.project)
+    #     index = Utils.generate_index(data_type="message")
     #     response = self.es.search(index=index, body=body, size=0)
     #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
     #         for item in response['aggregations']['terms_count']['buckets']:
@@ -544,7 +544,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         total_len = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -596,7 +596,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         total_len = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -648,7 +648,7 @@ class CountComputation:
     #         }
     #     }
     #
-    #     index = Utils.generate_index(data_type="message", project=analytic.project)
+    #     index = Utils.generate_index(data_type="message")
     #     response = self.es.search(index=index, body=body, size=0)
     #     total_len = 0
     #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -772,7 +772,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         total_len = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -814,7 +814,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         conv_in_period = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -858,7 +858,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         conv_out_period = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -909,7 +909,7 @@ class CountComputation:
     #         }
     #     }
     #
-    #     index = Utils.generate_index(data_type="message", project=analytic.project)
+    #     index = Utils.generate_index(data_type="message")
     #     response = self.es.search(index=index, body=body, size=0)
     #     conversation_list = []
     #     total_len = 0
@@ -958,7 +958,7 @@ class CountComputation:
     #         }
     #     }
     #
-    #     index = Utils.generate_index(data_type="message", project=analytic.project)
+    #     index = Utils.generate_index(data_type="message")
     #     response = self.es.search(index=index, body=body, size=0)
     #     conversation_list = []
     #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -1010,7 +1010,7 @@ class CountComputation:
     #             }
     #         }
     #
-    #         index = Utils.generate_index(data_type="message", project=analytic.project)
+    #         index = Utils.generate_index(data_type="message")
     #         response = self.es.search(index=index, body=body, size=0)
     #         message_list = []
     #         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -1063,7 +1063,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         total_missed = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -1104,7 +1104,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         value = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -1145,7 +1145,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         value = 0
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -1187,7 +1187,7 @@ class CountComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         total_not_working = 0
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
