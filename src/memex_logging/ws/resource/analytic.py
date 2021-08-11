@@ -20,8 +20,7 @@ import uuid
 from flask import request
 from flask_restful import Resource
 
-from memex_logging.celery.analytic import update_moving_time_window_analytics, update_analytic, \
-    update_fixed_time_window_analytics, update_all_analytics
+from memex_logging.celery.analytic import update_analytic, update_analytics
 from memex_logging.common.dao.collector import DaoCollector
 from memex_logging.common.dao.common import DocumentNotFound
 from memex_logging.common.model.analytic.analytic import Analytic
@@ -145,19 +144,19 @@ class ComputeAnalyticInterface(Resource):
         if analytic_id is None:
             if time_window_type is None:
                 logger.info("Updating all analytics")
-                update_all_analytics.delay()
+                update_analytics.delay()
             elif time_window_type == MovingTimeWindow.type() or time_window_type == MovingTimeWindow.deprecated_type():
                 logger.info("Updating moving time window analytics")
-                update_moving_time_window_analytics.delay()
+                update_analytics.delay(time_window_type=MovingTimeWindow.type())
             elif time_window_type == FixedTimeWindow.type() or time_window_type == FixedTimeWindow.deprecated_type():
                 logger.info("Updating fixed time window analytics")
-                update_fixed_time_window_analytics.delay()
+                update_analytics.delay(time_window_type=FixedTimeWindow.type())
             else:
                 logger.info(f"Unrecognized type [{time_window_type}] for TimeWindow")
                 return {
-                   "status": "Malformed request: unrecognized value for parameter `timeWindowType`",
-                   "code": 400
-               }, 400
+                    "status": "Malformed request: unrecognized value for parameter `timeWindowType`",
+                    "code": 400
+                }, 400
         else:
             logger.info(f"Updating analytic with id {analytic_id}")
             update_analytic.delay(analytic_id)

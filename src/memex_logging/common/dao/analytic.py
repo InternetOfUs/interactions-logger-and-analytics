@@ -16,12 +16,14 @@ from __future__ import absolute_import, annotations
 
 import logging
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, List, Optional
 
 from elasticsearch import Elasticsearch
+from elasticsearch.helpers import scan
 
 from memex_logging.common.dao.common import CommonDao, DocumentNotFound
 from memex_logging.common.model.analytic.analytic import Analytic
+from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow
 
 
 logger = logging.getLogger("logger.common.dao.analytic")
@@ -114,3 +116,24 @@ class AnalyticDao(CommonDao):
         index = self._generate_index()
         query = self._build_query_by_analytic_id(analytic_id)
         self._delete_document(index, query)
+
+    def list(self, time_window_type: Optional[str] = None) -> List[Analytic]:
+        """
+        List the analytics with a descriptor with a time window of a certain type, or if not specified all the analytics
+
+        :param str time_window_type: the type of the type window
+        :return: a list of analytics
+        """
+
+        index = self._generate_index()
+        if time_window_type is None:
+            results = scan(self._es, index=index, query={"query": {"match_all": {}}})
+        elif time_window_type == MovingTimeWindow.type() or time_window_type == MovingTimeWindow.deprecated_type():
+            results = scan(self._es, index=index, query={"query": {"match": {"descriptor.timespan.type.keyword": MovingTimeWindow.type()}}})
+        elif time_window_type == FixedTimeWindow.type() or time_window_type == FixedTimeWindow.deprecated_type():
+            results = scan(self._es, index=index, query={"query": {"match": {"descriptor.timespan.type.keyword": FixedTimeWindow.type()}}})
+        else:
+            logger.info(f"Unrecognized type [{time_window_type}] for TimeWindow")
+            raise ValueError(f"Unrecognized type [{time_window_type}] for TimeWindow")
+
+        return [Analytic.from_repr(result['_source']) for result in results]
