@@ -25,8 +25,7 @@ from memex_logging.common.dao.collector import DaoCollector
 from memex_logging.common.dao.common import DocumentNotFound
 from memex_logging.common.model.analytic.analytic import Analytic
 from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
-from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow
-
+from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow, TimeWindow
 
 logger = logging.getLogger("logger.resource.analytic")
 
@@ -88,24 +87,24 @@ class AnalyticInterface(Resource):
         except (KeyError, ValueError, TypeError, AttributeError) as e:
             logger.warning("Error while parsing input analytic data", exc_info=e)
             return {
-                "status": f"Malformed request: analytic not valid. Cause: {e.args[0]}",
+                "status": f"Malformed request: analytic not valid.",
                 "code": 400
             }, 400
         except Exception as e:
-            logger.exception("Something went wrong in parsing the analytic", exc_info=e)
+            logger.exception("Something went wrong while parsing the provided analytic description", exc_info=e)
             return {
-                "status": "Internal server error: something went wrong while parsing the posted analytic",
+                "status": "Something went wrong while parsing the posted analytic",
                 "code": 500
             }, 500
 
         analytic = Analytic(str(uuid.uuid4()), descriptor, result=None)
         try:
             self._dao_collector.analytic.add(analytic)
-            logger.debug(f"Stored analytic with id [{analytic.analytic_id}]")
+            logger.debug(f"Stored new analytic with id [{analytic.analytic_id}]")
         except Exception as e:
-            logger.exception(f"Analytic could not be stored [{analytic.to_repr()}]", exc_info=e)
+            logger.warning(f"Analytic could not be stored [{analytic.to_repr()}]", exc_info=e)
             return {
-                "status": "Internal server error: could not create the analytic",
+                "status": "Could not create the analytic",
                 "code": 500
             }, 500
 
@@ -129,7 +128,7 @@ class AnalyticInterface(Resource):
         except Exception as e:
             logger.exception(f"Analytic with id [{analytic_id}] could not be to be deleted", exc_info=e)
             return {
-                "status": "Internal server error: could not delete the requested analytic",
+                "status": "Could not delete the requested analytic",
                 "code": 500
             }, 500
 
@@ -142,23 +141,17 @@ class ComputeAnalyticInterface(Resource):
         analytic_id = request.args.get("id", None)
         time_window_type = request.args.get("timeWindowType", None)
         if analytic_id is None:
-            if time_window_type is None:
-                logger.info("Updating all analytics")
-                update_analytics.delay()
-            elif time_window_type == MovingTimeWindow.type() or time_window_type == MovingTimeWindow.deprecated_type():
-                logger.info("Updating moving time window analytics")
-                update_analytics.delay(time_window_type=MovingTimeWindow.type())
-            elif time_window_type == FixedTimeWindow.type() or time_window_type == FixedTimeWindow.deprecated_type():
-                logger.info("Updating fixed time window analytics")
-                update_analytics.delay(time_window_type=FixedTimeWindow.type())
-            else:
-                logger.info(f"Unrecognized type [{time_window_type}] for TimeWindow")
+            if not time_window_type and time_window_type not in TimeWindow.allowed_types():
+                logger.debug(f"Unrecognized type [{time_window_type}] for TimeWindow")
                 return {
                     "status": "Malformed request: unrecognized value for parameter `timeWindowType`",
                     "code": 400
                 }, 400
+            
+            logger.info(f"Re-computing analytics with window [{time_window_type}] ")
+            update_analytics.delay(time_window_type=time_window_type)
         else:
-            logger.info(f"Updating analytic with id {analytic_id}")
+            logger.info(f"Re-computing analytic [{analytic_id}]")
             update_analytic.delay(analytic_id)
         return {}, 200
 
