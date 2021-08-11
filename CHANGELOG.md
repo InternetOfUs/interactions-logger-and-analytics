@@ -42,6 +42,7 @@
 * Added two new task metrics: `new_active` and `new_closed`.
 * Modified the `closed` task metric to get the number of tasks closed up to the end of a certain time range.
 * Removed id of the application from indices of messages and analytics.
+* Created an analytic dao for handling the interactions with the database.
 
 
 ### 2.0.0
