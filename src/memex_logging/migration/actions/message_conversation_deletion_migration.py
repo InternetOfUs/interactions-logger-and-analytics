@@ -14,8 +14,6 @@
 
 from __future__ import absolute_import, annotations
 
-from copy import deepcopy
-
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 
@@ -23,32 +21,23 @@ from memex_logging.common.utils import Utils
 from memex_logging.migration.migration import MigrationAction
 
 
-class MessageAnalyticMigration(MigrationAction):
+class MessageConversationDeletionMigration(MigrationAction):
 
     def apply(self, es: Elasticsearch) -> None:
         index_name = Utils.generate_index("analytic")
         analytics = scan(es, index=index_name, query={"query": {"match_all": {}}})
 
         for analytic in analytics:
-            stored_analytic = deepcopy(analytic)
             # Remove analytics with metric value:
-            # - from_bot
-            if analytic['_source']['descriptor'].get('metric') == "from_bot":
+            # - m:conversation
+            if analytic['_source']['descriptor'].get('metric') == "m:conversation":
                 es.delete(index=analytic['_index'], id=analytic['_id'], doc_type=analytic['_type'])
                 continue
 
-            # Rename metric values to the new ones:
-            # - from_users into requests
-            if analytic['_source']['descriptor'].get('metric') == "from_users" or analytic['_source']['descriptor'].get('metric') == "m:from_user":
-                analytic['_source']['descriptor']['metric'] = "requests"
-
-            if analytic != stored_analytic:
-                es.index(index=analytic['_index'], id=analytic['_id'], doc_type=analytic['_type'], body=analytic['_source'])
-
     @property
     def action_name(self) -> str:
-        return "message_analytic"
+        return "message_conversation_deletion"
 
     @property
     def action_num(self) -> int:
-        return 5
+        return 6
