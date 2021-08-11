@@ -16,6 +16,7 @@ from __future__ import absolute_import, annotations
 
 import logging
 from datetime import datetime
+from typing import Optional
 
 from elasticsearch import Elasticsearch
 
@@ -32,7 +33,7 @@ class AggregationComputation:
     def __init__(self, es: Elasticsearch) -> None:
         self.es = es
 
-    def get_result(self, analytic: AggregationDescriptor) -> AggregationResult:
+    def get_result(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         if analytic.aggregation.lower() == "max":
             result = self._max(analytic)
         elif analytic.aggregation.lower() == "min":
@@ -57,7 +58,7 @@ class AggregationComputation:
 
         return result
 
-    def _max(self, analytic: AggregationDescriptor) -> AggregationResult:
+    def _max(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
@@ -92,9 +93,13 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
 
-    def _min(self, analytic: AggregationDescriptor) -> AggregationResult:
+        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+
+    def _min(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
@@ -129,9 +134,13 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
 
-    def _avg(self, analytic: AggregationDescriptor) -> AggregationResult:
+        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+
+    def _avg(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
@@ -166,9 +175,13 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
 
-    def _cardinality(self, analytic: AggregationDescriptor) -> AggregationResult:
+        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+
+    def _cardinality(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
@@ -203,9 +216,13 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
 
-    def _extended_stats(self, analytic: AggregationDescriptor) -> AggregationResult:
+        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+
+    def _extended_stats(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
@@ -240,9 +257,13 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations']:
+            value = response['aggregations']['type_count']
 
-    def _percentiles(self, analytic: AggregationDescriptor) -> AggregationResult:
+        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+
+    def _percentiles(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
@@ -277,9 +298,13 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['values'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'values' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['values']
 
-    def _stats(self, analytic: AggregationDescriptor) -> AggregationResult:
+        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+
+    def _stats(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
@@ -314,9 +339,13 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations']:
+            value = response['aggregations']['type_count']
 
-    def _sum(self, analytic: AggregationDescriptor) -> AggregationResult:
+        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+
+    def _sum(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
@@ -351,9 +380,13 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
 
-    def _value_count(self, analytic: AggregationDescriptor) -> AggregationResult:
+        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+
+    def _value_count(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
@@ -388,4 +421,8 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
+
+        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None

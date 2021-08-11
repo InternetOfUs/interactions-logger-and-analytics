@@ -15,6 +15,7 @@
 from __future__ import absolute_import, annotations
 
 import logging
+from typing import Optional
 
 from elasticsearch import Elasticsearch
 from wenet.interface.wenet import WeNet
@@ -38,7 +39,7 @@ class AnalyticComputation:
         self.es = es
         self.wenet_interface = wenet_interface
 
-    def get_result(self, analytic: CommonAnalyticDescriptor) -> CommonAnalyticResult:
+    def get_result(self, analytic: CommonAnalyticDescriptor) -> Optional[CommonAnalyticResult]:
         if isinstance(analytic, CountDescriptor):
             count_computation = CountComputation(self.es, self.wenet_interface)
             result = count_computation.get_result(analytic)

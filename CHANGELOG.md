@@ -43,7 +43,7 @@
 * Modified the `closed` task metric to get the number of tasks closed up to the end of a certain time range.
 * Removed id of the application from indices of messages and analytics.
 * Created an analytic dao for handling the interactions with the database.
-
+* Set aggregation result to `None` if the field where we are performing the aggregation is not present on the message data.
 
 ### 2.0.0
 
