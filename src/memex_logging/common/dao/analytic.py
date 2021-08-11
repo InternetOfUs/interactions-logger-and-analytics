@@ -49,27 +49,26 @@ class AnalyticDao(CommonDao):
             }
         }
 
-    def add(self, analytic: Analytic, doc_type: str = "_doc") -> None:
+    def add(self, analytic: Analytic) -> None:
         """
         Add an analytic to Elasticsearch
 
         :param Analytic analytic: the analytic to add
-        :param str doc_type: the type of the document
         """
 
         index = self._generate_index(dt=datetime.now())
-        self._add_document(index, analytic.to_repr(), doc_type=doc_type)
+        self._add_document(index, analytic.to_repr())
 
-    def update(self, index: str, trace_id: str, analytic: Analytic, doc_type: str = "_doc") -> None:
+    def update(self, analytic: Analytic) -> None:
         """
         Update an analytic in Elasticsearch
 
-        :param str index: the index where to add the document
-        :param str trace_id: the id of the document
         :param Analytic analytic: the updated analytic
-        :param str doc_type: the type of the document
         """
 
+        index = self._generate_index()
+        query = self._build_query_by_analytic_id(analytic.analytic_id)
+        raw_analytic, trace_id, index, doc_type = self._get_document(index, query)
         self._update_document(index, trace_id, analytic.to_repr(), doc_type=doc_type)
 
     def get(self, analytic_id: str) -> Analytic:
@@ -90,21 +89,6 @@ class AnalyticDao(CommonDao):
             logger.warning(f"More than one analytic with id [{analytic_id}] was found")
 
         return Analytic.from_repr(raw_documents[0])
-
-    def get_with_additional_information(self, analytic_id: str) -> Tuple[Analytic, str, str, str]:
-        """
-        Retrieve an analytic from Elasticsearch specifying the `analytic_id` and also trace id, index and doc type
-
-        :param str analytic_id: the id of the analytic to retrieve
-        :return: a tuple containing the analytic, trace_id, index and doc type
-        :raise EntryNotFound: when could not find any analytic
-        """
-
-        index = self._generate_index()
-        query = self._build_query_by_analytic_id(analytic_id)
-        raw_analytic, trace_id, index, doc_type = self._get_document(index, query)
-        analytic = Analytic.from_repr(raw_analytic)
-        return analytic, trace_id, index, doc_type
 
     def delete(self, analytic_id: str) -> None:
         """

@@ -36,13 +36,13 @@ def update_analytic(analytic_id: str):
 
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     dao_collector = DaoCollector.build_dao_collector(es)
-    analytic, trace_id, index, doc_type = dao_collector.analytic.get_with_additional_information(analytic_id)
+    analytic = dao_collector.analytic.get(analytic_id)
 
     client = ApikeyClient(os.getenv("APIKEY"))
     wenet_interface = WeNet.build(client, platform_url=os.getenv("INSTANCE"))
     analytic_computation = AnalyticComputation(es, wenet_interface)
     analytic.result = analytic_computation.get_result(analytic.descriptor)
-    dao_collector.analytic.update(index, trace_id, analytic, doc_type)
+    dao_collector.analytic.update(analytic)
     logger.info(f"Result of analytic with id [{analytic_id}] updated")
 
 

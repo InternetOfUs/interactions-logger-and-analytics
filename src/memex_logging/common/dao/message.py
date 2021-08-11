@@ -90,17 +90,16 @@ class MessageDao(CommonDao):
         )
         return query
 
-    def add(self, message: Message, doc_type: str = "_doc") -> str:
+    def add(self, message: Message) -> str:
         """
         Add a message to Elasticsearch
 
         :param Message message: the message to add
-        :param str doc_type: the type of the document
         :return: the trace_id of the added massage
         """
 
         index = self._generate_index(dt=message.timestamp)
-        return self._add_document(index, message.to_repr(), doc_type=doc_type)
+        return self._add_document(index, message.to_repr())
 
     def _build_query_based_on_parameters(self, trace_id: Optional[str] = None, message_id: Optional[str] = None, user_id: Optional[str] = None) -> dict:
         """
@@ -123,7 +122,7 @@ class MessageDao(CommonDao):
             raise ValueError("Missing required parameter: you have to specify only the `trace_id` or the `message_id` and the `user_id`")
 
     def get(self, project: Optional[str] = None, message_id: Optional[str] = None,
-            user_id: Optional[str] = None, trace_id: Optional[str] = None) -> Tuple[Message, str]:
+            user_id: Optional[str] = None, trace_id: Optional[str] = None) -> Tuple[Message, str]:  # TODO check the usage of trace_id in messages
         """
         Retrieve a message from Elasticsearch specifying only the `trace_id` or the `project`, the `message_id` and the `user_id`
 
