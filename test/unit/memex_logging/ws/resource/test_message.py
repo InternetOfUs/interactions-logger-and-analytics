@@ -19,7 +19,7 @@ from datetime import datetime
 
 from mock import Mock
 
-from memex_logging.common.dao.common import EntryNotFound
+from memex_logging.common.dao.common import DocumentNotFound
 from memex_logging.common.model.message import Message
 from test.unit.memex_logging.common_test.common_test_ws import CommonWsTestCase
 
@@ -51,7 +51,7 @@ class TestMessageInterface(CommonWsTestCase):
             "type": "request"
         })
 
-        self.dao_collector.message_dao.get_message = Mock(return_value=(message, trace_id))
+        self.dao_collector.message.get = Mock(return_value=(message, trace_id))
         response = self.client.get(f"/message?project={project}&messageId={message_id}&userId={user_id}")
         self.assertEqual(200, response.status_code)
         self.assertEqual({
@@ -96,15 +96,15 @@ class TestMessageInterface(CommonWsTestCase):
             "traceId": trace_id
         }, json.loads(response.data))
 
-        self.dao_collector.message_dao.get_message = Mock(side_effect=ValueError)
+        self.dao_collector.message.get = Mock(side_effect=ValueError)
         response = self.client.get("/message")
         self.assertEqual(400, response.status_code)
 
-        self.dao_collector.message_dao.get_message = Mock(side_effect=EntryNotFound)
+        self.dao_collector.message.get = Mock(side_effect=DocumentNotFound)
         response = self.client.get(f"/message?traceId={trace_id}")
         self.assertEqual(404, response.status_code)
 
-        self.dao_collector.message_dao.get_message = Mock(side_effect=Exception)
+        self.dao_collector.message.get = Mock(side_effect=Exception)
         response = self.client.get(f"/message?traceId={trace_id}")
         self.assertEqual(500, response.status_code)
 
@@ -114,7 +114,7 @@ class TestMessageInterface(CommonWsTestCase):
         user_id = "user_id"
         trace_id = "trace_id"
 
-        self.dao_collector.message_dao.delete_message = Mock(return_value=None)
+        self.dao_collector.message.delete = Mock(return_value=None)
         response = self.client.delete(f"/message?project={project}&messageId={message_id}&userId={user_id}")
         self.assertEqual(200, response.status_code)
         self.assertEqual({
@@ -129,11 +129,11 @@ class TestMessageInterface(CommonWsTestCase):
             "code": 200
         }, json.loads(response.data))
 
-        self.dao_collector.message_dao.delete_message = Mock(side_effect=ValueError)
+        self.dao_collector.message.delete = Mock(side_effect=ValueError)
         response = self.client.delete("/message")
         self.assertEqual(400, response.status_code)
 
-        self.dao_collector.message_dao.delete_message = Mock(side_effect=Exception)
+        self.dao_collector.message.delete = Mock(side_effect=Exception)
         response = self.client.delete(f"/message?traceId={trace_id}")
         self.assertEqual(500, response.status_code)
 
@@ -160,7 +160,7 @@ class TestMessagesInterface(CommonWsTestCase):
             "type": "request"
         }]
 
-        self.dao_collector.message_dao.add_messages = Mock(return_value="trace_id")
+        self.dao_collector.message.add = Mock(return_value="trace_id")
         response = self.client.post("/messages", json=raw_messages)
         self.assertEqual(201, response.status_code)
         self.assertEqual({
@@ -172,7 +172,7 @@ class TestMessagesInterface(CommonWsTestCase):
         response = self.client.post("/messages")
         self.assertEqual(400, response.status_code)
 
-        self.dao_collector.message_dao.add_messages = Mock(side_effect=Exception)
+        self.dao_collector.message.add = Mock(side_effect=Exception)
         response = self.client.post("/messages", json=raw_messages)
         self.assertEqual(500, response.status_code)
 
@@ -206,7 +206,7 @@ class TestMessagesInterface(CommonWsTestCase):
             "type": "request"
         })]
 
-        self.dao_collector.message_dao.search_messages = Mock(return_value=messages)
+        self.dao_collector.message.search = Mock(return_value=messages)
         response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}")
         self.assertEqual(200, response.status_code)
         self.assertEqual([message.to_repr() for message in messages], json.loads(response.data))
@@ -241,13 +241,13 @@ class TestMessagesInterface(CommonWsTestCase):
         response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}&maxSize=cinque")
         self.assertEqual(400, response.status_code)
 
-        self.dao_collector.message_dao.search_messages = Mock(side_effect=Exception)
+        self.dao_collector.message.search = Mock(side_effect=Exception)
         response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}")
         self.assertEqual(500, response.status_code)
 
         from_time = datetime(2021, 2, 6).isoformat()
         to_time = datetime(2021, 2, 5).isoformat()
-        self.dao_collector.message_dao.search_messages = Mock(side_effect=ValueError)
+        self.dao_collector.message.search = Mock(side_effect=ValueError)
         response = self.client.get(f"/messages?project={project}&fromTime={from_time}&toTime={to_time}")
         self.assertEqual(400, response.status_code)
 

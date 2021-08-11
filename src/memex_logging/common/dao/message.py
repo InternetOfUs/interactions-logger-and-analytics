@@ -90,17 +90,16 @@ class MessageDao(CommonDao):
         )
         return query
 
-    def add_messages(self, message: Message, doc_type: str = "_doc") -> str:
+    def add(self, message: Message) -> str:
         """
         Add a message to Elasticsearch
 
         :param Message message: the message to add
-        :param str doc_type: the type of the document
         :return: the trace_id of the added massage
         """
 
         index = self._generate_index(dt=message.timestamp)
-        return self.add(index, message.to_repr(), doc_type=doc_type)
+        return self._add_document(index, message.to_repr())
 
     def _build_query_based_on_parameters(self, trace_id: Optional[str] = None, message_id: Optional[str] = None, user_id: Optional[str] = None) -> dict:
         """
@@ -122,8 +121,8 @@ class MessageDao(CommonDao):
         else:
             raise ValueError("Missing required parameter: you have to specify only the `trace_id` or the `message_id` and the `user_id`")
 
-    def get_message(self, project: Optional[str] = None, message_id: Optional[str] = None,
-                    user_id: Optional[str] = None, trace_id: Optional[str] = None) -> Tuple[Message, str]:
+    def get(self, project: Optional[str] = None, message_id: Optional[str] = None,
+            user_id: Optional[str] = None, trace_id: Optional[str] = None) -> Tuple[Message, str]:  # TODO check the usage of trace_id in messages
         """
         Retrieve a message from Elasticsearch specifying only the `trace_id` or the `project`, the `message_id` and the `user_id`
 
@@ -140,13 +139,12 @@ class MessageDao(CommonDao):
         query = self._build_query_based_on_parameters(trace_id=trace_id, message_id=message_id, user_id=user_id)
         if project:
             query = self._add_project_to_query(query, project)
-        response = self.get(index, query)
-        message = Message.from_repr(response[0])
-        trace_id = response[1]
+        raw_message, trace_id, index, doc_type = self._get_document(index, query)
+        message = Message.from_repr(raw_message)
         return message, trace_id
 
-    def delete_message(self, project: Optional[str] = None, message_id: Optional[str] = None,
-                       user_id: Optional[str] = None, trace_id: Optional[str] = None) -> None:
+    def delete(self, project: Optional[str] = None, message_id: Optional[str] = None,
+               user_id: Optional[str] = None, trace_id: Optional[str] = None) -> None:
         """
         Delete a message from Elasticsearch specifying only the `trace_id` or the `project`, the `message_id` and the `user_id`
 
@@ -161,11 +159,10 @@ class MessageDao(CommonDao):
         query = self._build_query_based_on_parameters(trace_id=trace_id, message_id=message_id, user_id=user_id)
         if project:
             query = self._add_project_to_query(query, project)
-        self.delete(index, query)
+        self._delete_document(index, query)
 
-    def search_messages(self, project: str, from_time: datetime, to_time: datetime, max_size: int,
-                        user_id: Optional[str] = None, channel: Optional[str] = None,
-                        message_type: Optional[str] = None) -> List[Message]:
+    def search(self, project: str, from_time: datetime, to_time: datetime, max_size: int, user_id: Optional[str] = None,
+               channel: Optional[str] = None, message_type: Optional[str] = None) -> List[Message]:
         """
         Search messages in Elasticsearch
 
@@ -196,7 +193,7 @@ class MessageDao(CommonDao):
         if message_type:
             query = self._add_message_type_to_query(query, message_type)
 
-        messages_repr = self.search(index, query)
+        messages_repr = self._search_documents(index, query)
         if len(messages_repr) == max_size:
             logger.warning(f"The number of messages retrieved has reached the maximum size of `{max_size}`")
         return [Message.from_repr(message_repr) for message_repr in messages_repr]

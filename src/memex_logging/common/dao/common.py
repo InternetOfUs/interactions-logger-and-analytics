@@ -26,7 +26,7 @@ from memex_logging.common.utils import Utils
 logger = logging.getLogger("logger.common.dao.common")
 
 
-class EntryNotFound(Exception):
+class DocumentNotFound(Exception):
     pass
 
 
@@ -104,7 +104,7 @@ class CommonDao:
         )
         return query
 
-    def add(self, index: str, object_repr: dict, doc_type: str = "_doc") -> str:
+    def _add_document(self, index: str, object_repr: dict, doc_type: str = "_doc") -> str:
         """
         Add a document to Elasticsearch
 
@@ -117,7 +117,19 @@ class CommonDao:
         query = self._es.index(index=index, body=object_repr, doc_type=doc_type)
         return query["_id"]
 
-    def get(self, index: str, query: dict) -> Tuple[dict, str]:
+    def _update_document(self, index: str, trace_id: str, object_repr: dict, doc_type: str = "_doc") -> None:
+        """
+        Add a document to Elasticsearch
+
+        :param str index: the index where to add the document
+        :param str trace_id: the id of the document
+        :param dict object_repr: the document to add
+        :param str doc_type: the type of the document
+        """
+
+        self._es.index(index=index, id=trace_id, doc_type=doc_type, body=object_repr)
+
+    def _get_document(self, index: str, query: dict) -> Tuple[dict, str, str, str]:
         """
         Retrieve a document from Elasticsearch
 
@@ -130,11 +142,13 @@ class CommonDao:
         response = self._es.search(index=index, body=query)
         if len(response['hits']['hits']) == 0:
             logger.debug("Could not find any document")
-            raise EntryNotFound("Could not find any document")
-        else:
-            return response['hits']['hits'][0]['_source'], response['hits']['hits'][0]['_id']
+            raise DocumentNotFound(f"No document was found")
+        elif len(response['hits']['hits']) > 1:
+            logger.warning(f"More than one document was found")
 
-    def delete(self, index: str, query: dict) -> None:
+        return response['hits']['hits'][0]['_source'], response['hits']['hits'][0]['_id'], response['hits']['hits'][0]['_index'], response['hits']['hits'][0]['_type']
+
+    def _delete_document(self, index: str, query: dict) -> None:
         """
         Delete a document from Elasticsearch
 
@@ -144,13 +158,13 @@ class CommonDao:
 
         self._es.delete_by_query(index=index, body=query)
 
-    def search(self, index: str, query: dict) -> List[dict]:
+    def _search_documents(self, index: str, query: dict) -> List[dict]:
         """
         Search documents in Elasticsearch
 
-        :param str index: the index from which to search the documents
-        :param dict query: the query for searching the documents
-        :return: a list containing the representation of objects
+        :param str index: the target index for the search
+        :param dict query: the search query
+        :return: the list of documents matching the query
         """
 
         response = self._es.search(index=index, body=query)
