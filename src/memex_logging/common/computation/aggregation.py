@@ -92,7 +92,10 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
+        return AggregationResult(value, datetime.now(), min_bound, max_bound)
 
     def _min(self, analytic: AggregationDescriptor) -> AggregationResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -129,7 +132,10 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
+        return AggregationResult(value, datetime.now(), min_bound, max_bound)
 
     def _avg(self, analytic: AggregationDescriptor) -> AggregationResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -166,7 +172,10 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
+        return AggregationResult(value, datetime.now(), min_bound, max_bound)
 
     def _cardinality(self, analytic: AggregationDescriptor) -> AggregationResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -203,7 +212,10 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
+        return AggregationResult(value, datetime.now(), min_bound, max_bound)
 
     def _extended_stats(self, analytic: AggregationDescriptor) -> AggregationResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -240,7 +252,10 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations']:
+            value = response['aggregations']['type_count']
+        return AggregationResult(value, datetime.now(), min_bound, max_bound)
 
     def _percentiles(self, analytic: AggregationDescriptor) -> AggregationResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -277,7 +292,10 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['values'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'values' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['values']
+        return AggregationResult(value, datetime.now(), min_bound, max_bound)
 
     def _stats(self, analytic: AggregationDescriptor) -> AggregationResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -314,7 +332,10 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations']:
+            value = response['aggregations']['type_count']
+        return AggregationResult(value, datetime.now(), min_bound, max_bound)
 
     def _sum(self, analytic: AggregationDescriptor) -> AggregationResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -351,7 +372,10 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
+        return AggregationResult(value, datetime.now(), min_bound, max_bound)
 
     def _value_count(self, analytic: AggregationDescriptor) -> AggregationResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -388,4 +412,7 @@ class AggregationComputation:
 
         index = Utils.generate_index(data_type="message", project=analytic.project)
         response = self.es.search(index=index, body=body, size=0)
-        return AggregationResult(response['aggregations']['type_count']['value'], datetime.now(), min_bound, max_bound)
+        value = None
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            value = response['aggregations']['type_count']['value']
+        return AggregationResult(value, datetime.now(), min_bound, max_bound)
