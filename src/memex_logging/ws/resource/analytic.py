@@ -141,7 +141,7 @@ class ComputeAnalyticInterface(Resource):
         analytic_id = request.args.get("id", None)
         time_window_type = request.args.get("timeWindowType", None)
         if analytic_id is None:
-            if not time_window_type and time_window_type not in TimeWindow.allowed_types():
+            if time_window_type is not None and time_window_type not in TimeWindow.allowed_types():
                 logger.debug(f"Unrecognized type [{time_window_type}] for TimeWindow")
                 return {
                     "status": "Malformed request: unrecognized value for parameter `timeWindowType`",
