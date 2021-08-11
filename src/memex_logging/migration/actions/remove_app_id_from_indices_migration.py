@@ -17,7 +17,7 @@ from __future__ import absolute_import, annotations
 from datetime import datetime
 
 from elasticsearch import Elasticsearch
-from elasticsearch.helpers import scan
+from elasticsearch.helpers import scan, bulk
 
 from memex_logging.migration.migration import MigrationAction
 
@@ -33,22 +33,31 @@ class RemoveAppIdFromIndicesMigration(MigrationAction):
             except ValueError:
                 end_of_index = splits[-1]
 
-            es.reindex({
-                "source": {
-                    "index": index
-                },
-                "dest": {
-                    "index": f"message-{end_of_index}"
-                }
-            })
-            es.indices.delete(index)
+            new_index = f"message-{end_of_index}"
+            if index != new_index:
+                es.reindex({
+                    "source": {
+                        "index": index
+                    },
+                    "dest": {
+                        "index": new_index
+                    }
+                }, wait_for_completion=True)
+                es.indices.delete(index)
 
         for index in es.indices.get('analytic-*'):
             analytics = scan(es, index=index, query={"query": {"match_all": {}}})
+            actions = []
             for analytic in analytics:
                 creation_dt = datetime.fromisoformat(analytic['_source']['result']['creationDt']) if analytic['_source'].get('result') is not None else datetime.now()
                 new_index = f"analytic-{creation_dt.strftime('%Y-%m-%d')}"
-                es.index(index=new_index, doc_type=analytic['_type'], body=analytic['_source'])
+                if index != new_index:
+                    actions.append({**{
+                        '_op_type': 'index',
+                        '_index': new_index,
+                        '_type': analytic['_type']
+                    }, **analytic['_source']})
+            bulk(es, actions)
             es.indices.delete(index)
 
     @property

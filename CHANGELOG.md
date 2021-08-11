@@ -12,7 +12,7 @@
   - `u:new` into `new`
   - `a:segmentation` into `age`
   - `g:segmentation` into `gender`
-  - `m:from_users` into `from_users`
+  - `m:from_users` into `requests`
   - `m:segmentation` into `all`
   - `r:segmentation` into `requests`
   - `u:segmentation` into `requests`
