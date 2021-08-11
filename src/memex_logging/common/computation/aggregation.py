@@ -91,7 +91,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         value = None
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -132,7 +132,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         value = None
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -173,7 +173,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         value = None
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -214,7 +214,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         value = None
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -255,7 +255,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         value = None
         if 'aggregations' in response and 'type_count' in response['aggregations']:
@@ -296,7 +296,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         value = None
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'values' in response['aggregations']['type_count']:
@@ -337,7 +337,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         value = None
         if 'aggregations' in response and 'type_count' in response['aggregations']:
@@ -378,7 +378,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         value = None
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
@@ -419,7 +419,7 @@ class AggregationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         value = None
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:

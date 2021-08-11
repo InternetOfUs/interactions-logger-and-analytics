@@ -17,29 +17,24 @@ from __future__ import absolute_import, annotations
 import logging
 import uuid
 
-from elasticsearch import Elasticsearch
 from flask import request
 from flask_restful import Resource
 
-from memex_logging.celery.analytic import update_moving_time_window_analytics, update_analytic, \
-    update_fixed_time_window_analytics, update_all_analytics
+from memex_logging.celery.analytic import update_analytic, update_analytics
+from memex_logging.common.dao.collector import DaoCollector
+from memex_logging.common.dao.common import DocumentNotFound
 from memex_logging.common.model.analytic.analytic import Analytic
-from memex_logging.common.model.analytic.descriptor.aggregation import AggregationDescriptor
 from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
-from memex_logging.common.model.analytic.descriptor.count import CountDescriptor
-from memex_logging.common.model.analytic.descriptor.segmentation import SegmentationDescriptor
-from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow
-from memex_logging.common.utils import Utils
-
+from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow, TimeWindow
 
 logger = logging.getLogger("logger.resource.analytic")
 
 
 class AnalyticsResourceBuilder:
     @staticmethod
-    def routes(es: Elasticsearch):
+    def routes(dao_collector: DaoCollector):
         return [
-            (AnalyticInterface, '/analytic', (es,)),
+            (AnalyticInterface, '/analytic', (dao_collector,)),
             (ComputeAnalyticInterface, '/analytic/compute', ()),
             # (GetNoClickPerUser, '/analytic/usercount', (es,)),
             # (GetNoClickPerEvent, '/analytic/eventcount', (es,))
@@ -48,8 +43,8 @@ class AnalyticsResourceBuilder:
 
 class AnalyticInterface(Resource):
 
-    def __init__(self, es: Elasticsearch):
-        self._es = es
+    def __init__(self, dao_collector: DaoCollector):
+        self._dao_collector = dao_collector
 
     def get(self):
         analytic_id = request.args.get("id")
@@ -61,28 +56,21 @@ class AnalyticInterface(Resource):
                 "code": 400
             }, 400
 
-        project = request.args.get("project", None)
-        index_name = Utils.generate_index("analytic", project=project)
         try:
-            # TODO should be moved into a dedicated dao
-            response = self._es.search(index=index_name, body={"query": {"match": {"id.keyword": analytic_id}}})
-        except Exception as e:
-            logger.exception(f"Analytic with id [{analytic_id}] could not be retrieved", exc_info=e)
+            analytic = self._dao_collector.analytic.get(analytic_id)
+            return analytic.to_repr(), 200
+        except DocumentNotFound as e:
+            logger.debug(f"Analytic [{analytic_id}] not found", exc_info=e)
             return {
-                "status": "Internal server error: could not retrieved the analytic",
-                "code": 500
-            }, 500
-
-        if response['hits']['total']['value'] == 0:
-            logger.debug(f"Analytic with id [{analytic_id}] not found")
-            return {
-                "status": f"Not found: analytic with id [{analytic_id}] not found",
+                "status": f"Analytic [{analytic_id}] does not exist",
                 "code": 404
             }, 404
-        else:
-            logger.debug(f"Analytic with id [{analytic_id}] retrieved")
-            analytic = Analytic.from_repr(response['hits']['hits'][0]['_source'])
-            return analytic.to_repr(), 200
+        except Exception as e:
+            logger.exception(f"Something went wrong while parsing analytic [{analytic_id}]", exc_info=e)
+            return {
+                "status": f"Something went wrong while parsing analytic [{analytic_id}]",
+                "code": 500
+            }, 500
 
     def post(self):
         body = request.json
@@ -99,46 +87,29 @@ class AnalyticInterface(Resource):
         except (KeyError, ValueError, TypeError, AttributeError) as e:
             logger.warning("Error while parsing input analytic data", exc_info=e)
             return {
-                "status": f"Malformed request: analytic not valid. Cause: {e.args[0]}",
+                "status": f"Malformed request: analytic not valid.",
                 "code": 400
             }, 400
         except Exception as e:
-            logger.exception("Something went wrong in parsing the analytic", exc_info=e)
+            logger.exception("Something went wrong while parsing the provided analytic description", exc_info=e)
             return {
-                "status": "Internal server error: something went wrong while parsing the posted analytic",
+                "status": "Something went wrong while parsing the posted analytic",
                 "code": 500
             }, 500
 
-        # TODO should we maybe using the Utils.generate_index() method?
-        if isinstance(descriptor, CountDescriptor):
-            index_name = "analytic-" + descriptor.project.lower() + "-" + descriptor.dimension.lower()  # TODO it should always be lowercase at this stage
-        elif isinstance(descriptor, AggregationDescriptor):
-            index_name = "analytic-" + descriptor.project.lower() + "-" + descriptor.aggregation.lower()  # TODO it should always be lowercase at this stage
-        elif isinstance(descriptor, SegmentationDescriptor):
-            index_name = "analytic-" + descriptor.project.lower() + "-" + descriptor.dimension.lower()  # TODO it should always be lowercase at this stage
-        else:
-            logger.error(f"Un-supported analytic descriptor of type [{type(descriptor)}]")
-            return {
-                "status": "Internal server error: something went wrong while building the new analytic",
-                "code": 500
-            }, 500
-
-        new_analytic_id = str(uuid.uuid4())
-        analytic = Analytic(new_analytic_id, descriptor, result=None)
-
+        analytic = Analytic(str(uuid.uuid4()), descriptor, result=None)
         try:
-            # TODO should be moved into a dedicated dao
-            self._es.index(index=index_name, doc_type='_doc', body=analytic.to_repr())
-            logger.debug(f"Analytic stored in index [{index_name}] with id [{analytic.analytic_id}]")
+            self._dao_collector.analytic.add(analytic)
+            logger.debug(f"Stored new analytic with id [{analytic.analytic_id}]")
         except Exception as e:
-            logger.exception(f"Analytic could not be stored [{analytic.to_repr()}]", exc_info=e)
+            logger.warning(f"Analytic could not be stored [{analytic.to_repr()}]", exc_info=e)
             return {
-                "status": "Internal server error: could not create the analytic",
+                "status": "Could not create the analytic",
                 "code": 500
             }, 500
 
         return {
-            "id": new_analytic_id
+            "id": analytic.analytic_id
         }, 200
 
     def delete(self):
@@ -151,16 +122,13 @@ class AnalyticInterface(Resource):
                 "code": 400
             }, 400
 
-        project = request.args.get("project", None)
-        index_name = Utils.generate_index("analytic", project=project)
         try:
-            # TODO should be moved into a dedicated dao
-            self._es.delete_by_query(index=index_name, body={"query": {"match": {"id.keyword": analytic_id}}})
+            self._dao_collector.analytic.delete(analytic_id)
             logger.debug(f"Analytic with id [{analytic_id}] deleted")
         except Exception as e:
             logger.exception(f"Analytic with id [{analytic_id}] could not be to be deleted", exc_info=e)
             return {
-                "status": "Internal server error: could not delete the requested analytic",
+                "status": "Could not delete the requested analytic",
                 "code": 500
             }, 500
 
@@ -173,23 +141,17 @@ class ComputeAnalyticInterface(Resource):
         analytic_id = request.args.get("id", None)
         time_window_type = request.args.get("timeWindowType", None)
         if analytic_id is None:
-            if time_window_type is None:
-                logger.info("Updating all analytics")
-                update_all_analytics.delay()
-            elif time_window_type == MovingTimeWindow.type() or time_window_type == MovingTimeWindow.deprecated_type():
-                logger.info("Updating moving time window analytics")
-                update_moving_time_window_analytics.delay()
-            elif time_window_type == FixedTimeWindow.type() or time_window_type == FixedTimeWindow.deprecated_type():
-                logger.info("Updating fixed time window analytics")
-                update_fixed_time_window_analytics.delay()
-            else:
-                logger.info(f"Unrecognized type [{time_window_type}] for TimeWindow")
+            if time_window_type is not None and time_window_type not in TimeWindow.allowed_types():
+                logger.debug(f"Unrecognized type [{time_window_type}] for TimeWindow")
                 return {
-                           "status": "Malformed request: unrecognized value for parameter `timeWindowType`",
-                           "code": 400
-                       }, 400
+                    "status": "Malformed request: unrecognized value for parameter `timeWindowType`",
+                    "code": 400
+                }, 400
+            
+            logger.info(f"Re-computing analytics with window [{time_window_type}] ")
+            update_analytics.delay(time_window_type=time_window_type)
         else:
-            logger.info(f"Updating analytic with id {analytic_id}")
+            logger.info(f"Re-computing analytic [{analytic_id}]")
             update_analytic.delay(analytic_id)
         return {}, 200
 

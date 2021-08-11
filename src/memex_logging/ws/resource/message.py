@@ -21,7 +21,7 @@ from flask import request
 from flask_restful import Resource
 
 from memex_logging.common.dao.collector import DaoCollector
-from memex_logging.common.dao.common import EntryNotFound
+from memex_logging.common.dao.common import DocumentNotFound
 from memex_logging.common.model.message import Message
 
 
@@ -54,14 +54,14 @@ class MessageInterface(Resource):
         trace_id = request.args.get('traceId', None)
 
         try:
-            message, trace_id = self._dao_collector.message_dao.get_message(project=project, message_id=message_id, user_id=user_id, trace_id=trace_id)
+            message, trace_id = self._dao_collector.message.get(project=project, message_id=message_id, user_id=user_id, trace_id=trace_id)
         except ValueError as e:
             logger.debug("Missing required parameters", exc_info=e)
             return {
                 "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `project`, the `messageId` and the `userId`",
                 "code": 400
             }, 400
-        except EntryNotFound as e:
+        except DocumentNotFound as e:
             logger.debug("Resource not found", exc_info=e)
             return {
                 "status": "Not found: resource not found",
@@ -89,7 +89,7 @@ class MessageInterface(Resource):
         trace_id = request.args.get('traceId', None)
 
         try:
-            self._dao_collector.message_dao.delete_message(project=project, message_id=message_id, user_id=user_id, trace_id=trace_id)
+            self._dao_collector.message.delete(project=project, message_id=message_id, user_id=user_id, trace_id=trace_id)
         except ValueError as e:
             logger.debug("Missing required parameters", exc_info=e)
             return {
@@ -146,7 +146,7 @@ class MessagesInterface(Resource):
 
         for message in messages:
             try:
-                trace_id = self._dao_collector.message_dao.add_messages(message)
+                trace_id = self._dao_collector.message.add(message)
                 trace_ids.append(trace_id)
             except Exception as e:
                 logger.exception(f"Could not save message with id {message.message_id} could not be saved", exc_info=e)
@@ -206,7 +206,7 @@ class MessagesInterface(Resource):
             }, 400
 
         try:
-            messages = self._dao_collector.message_dao.search_messages(project, from_time, to_time, max_size, user_id=user_id, channel=channel, message_type=message_type)
+            messages = self._dao_collector.message.search(project, from_time, to_time, max_size, user_id=user_id, channel=channel, message_type=message_type)
         except ValueError as e:
             logger.debug("`fromTime` is greater than `toTime`", exc_info=e)
             return {

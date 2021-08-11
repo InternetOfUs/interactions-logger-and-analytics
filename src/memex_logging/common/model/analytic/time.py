@@ -28,8 +28,8 @@ class TimeWindow(ABC):
         return [
             MovingTimeWindow.type(),
             FixedTimeWindow.type(),
-            MovingTimeWindow.deprecated_type(),
-            FixedTimeWindow.deprecated_type()
+            # MovingTimeWindow.deprecated_type(),
+            # FixedTimeWindow.deprecated_type()
         ]
 
     @abstractmethod
