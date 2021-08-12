@@ -44,6 +44,7 @@
 * Removed id of the application from indices of messages and analytics.
 * Created an analytic dao for handling the interactions with the database.
 * Set aggregation result to `None` if the field where we are performing the aggregation is not present on the message data.
+* Added sentry integration in Migrator
 
 ### 2.0.0
 
