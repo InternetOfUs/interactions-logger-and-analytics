@@ -14,6 +14,7 @@
 
 from __future__ import absolute_import, annotations
 
+import re
 from datetime import datetime
 
 from elasticsearch import Elasticsearch
@@ -46,19 +47,20 @@ class RemoveAppIdFromIndicesMigration(MigrationAction):
                 es.indices.delete(index)
 
         for index in es.indices.get('analytic-*'):
-            analytics = scan(es, index=index, query={"query": {"match_all": {}}})
-            actions = []
-            for analytic in analytics:
-                creation_dt = datetime.fromisoformat(analytic['_source']['result']['creationDt']) if analytic['_source'].get('result') is not None else datetime.now()
-                new_index = f"analytic-{creation_dt.strftime('%Y-%m-%d')}"
-                if index != new_index:
-                    actions.append({**{
-                        '_op_type': 'index',
-                        '_index': new_index,
-                        '_type': analytic['_type']
-                    }, **analytic['_source']})
-            bulk(es, actions)
-            es.indices.delete(index)
+            if not re.match(r"^analytic-([0-9]+)-([0-9]+)-([0-9]+)$", index):
+                analytics = scan(es, index=index, query={"query": {"match_all": {}}})
+                actions = []
+                for analytic in analytics:
+                    creation_dt = datetime.fromisoformat(analytic['_source']['result']['creationDt']) if analytic['_source'].get('result') is not None else datetime.now()
+                    new_index = f"analytic-{creation_dt.strftime('%Y-%m-%d')}"
+                    if index != new_index:
+                        actions.append({**{
+                            '_op_type': 'index',
+                            '_index': new_index,
+                            '_type': analytic['_type']
+                        }, **analytic['_source']})
+                bulk(es, actions)
+                es.indices.delete(index)
 
     @property
     def action_name(self) -> str:
