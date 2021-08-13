@@ -28,12 +28,25 @@ class RemoveAppIdFromIndicesMigration(MigrationAction):
 
     def apply(self, es: Elasticsearch) -> None:
         for index in es.indices.get('message-*'):
+            # apply operations on indices like this:
+            # * message-project-2022-22-11
+            # * message-project-history
+            # * message-pro-ject-2022-22-11
+            # * message-pro-ject-history
+            # we don't have to apply them if they are already in the resulting format:
+            # * message-2022-22-11
+            # * message-history
             splits = index.split("-")
-            try:
-                index_datetime = datetime.strptime(f"{splits[-3]}-{splits[-2]}-{splits[-1]}", "%Y-%m-%d")
-                end_of_index = index_datetime.strftime("%Y-%m-%d")
-            except ValueError:
+            if len(splits) > 2 and splits[-1] == "history":
                 end_of_index = splits[-1]
+            elif len(splits) > 4:
+                try:
+                    index_datetime = datetime.strptime(f"{splits[-3]}-{splits[-2]}-{splits[-1]}", "%Y-%m-%d")
+                    end_of_index = index_datetime.strftime("%Y-%m-%d")
+                except ValueError:
+                    continue
+            else:
+                continue
 
             new_index = f"message-{end_of_index}"
             if index != new_index:
@@ -52,7 +65,13 @@ class RemoveAppIdFromIndicesMigration(MigrationAction):
                 es.indices.delete(index)
 
         for index in es.indices.get('analytic-*'):
-            if not re.match(r"^analytic-([0-9]+)-([0-9]+)-([0-9]+)$", index):
+            # apply operations on indices like this:
+            # * analytic-project-user
+            # * analytic-pro-ject-user
+            # we don't have to apply them if they are already in the resulting format:
+            # * analytic-2022-22-11
+            # * analytic-history
+            if not re.match(r"^analytic-([0-9]+)-([0-9]+)-([0-9]+)$", index) and not index == "analytic-history":
                 analytics = scan(es, index=index, query={"query": {"match_all": {}}})
                 actions = []
                 for analytic in analytics:
