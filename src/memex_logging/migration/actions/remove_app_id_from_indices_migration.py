@@ -15,6 +15,7 @@
 from __future__ import absolute_import, annotations
 
 import re
+import time
 from datetime import datetime
 
 from elasticsearch import Elasticsearch
@@ -36,14 +37,18 @@ class RemoveAppIdFromIndicesMigration(MigrationAction):
 
             new_index = f"message-{end_of_index}"
             if index != new_index:
-                es.reindex({
+                raw_task = es.reindex({
                     "source": {
                         "index": index
                     },
                     "dest": {
                         "index": new_index
                     }
-                }, wait_for_completion=True)
+                }, wait_for_completion=False)
+                task = es.tasks.get(task_id=raw_task["task"])
+                while not task["completed"]:
+                    time.sleep(10)
+                    task = es.tasks.get(task_id=raw_task["task"])
                 es.indices.delete(index)
 
         for index in es.indices.get('analytic-*'):
