@@ -34,9 +34,9 @@
 
 ## Version 2.*
 
-### next
+### 2.0.2
 
-* Message analytics have been updated
+* Message analytics have been updated.
   * Renamed type *from_user* into *requests*
   * Removed analytic of type *from_bot*
 * Added two new task metrics: `new_active` and `new_closed`.
@@ -44,7 +44,11 @@
 * Removed id of the application from indices of messages and analytics.
 * Created an analytic dao for handling the interactions with the database.
 * Set aggregation result to `None` if the field where we are performing the aggregation is not present on the message data.
-* Added sentry integration in Migrator
+* Added sentry integration in Migrator.
+
+### 2.0.1
+
+* Fixed to broken migration.
 
 ### 2.0.0
 
