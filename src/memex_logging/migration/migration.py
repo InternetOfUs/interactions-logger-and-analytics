@@ -23,11 +23,13 @@ from pkgutil import iter_modules
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 
+import sentry_sdk
 import argparse
 import os
 import logging
 from typing import Dict
 
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 logging.basicConfig(level=logging.INFO)
 
@@ -100,6 +102,17 @@ class MigrationManager:
 
 
 if __name__ == "__main__":
+
+    sentry_logging = LoggingIntegration(
+        level=logging.INFO,
+        event_level=logging.ERROR
+    )
+
+    sentry_sdk.init(
+        integrations=[sentry_logging],
+        traces_sample_rate=1.0
+    )
+
     arg_parser = argparse.ArgumentParser(description="Elasticsearch Migrator")
     arg_parser.add_argument("-f", "--folder", default=os.getenv("MIGRATION_FOLDER", "actions"), type=str, help="Migration folder")
     arg_parser.add_argument("-i", "--index", default=os.getenv("MIGRATION_MANAGER_INDEX", "migrations"), type=str, help="Migration manager index")

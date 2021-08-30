@@ -34,28 +34,21 @@ logger = logging.getLogger("logger.utils.utils")
 class Utils:
 
     @staticmethod
-    def generate_index(data_type: str, project: Optional[str] = None, dt: Optional[datetime] = None) -> str:
+    def generate_index(data_type: str, dt: Optional[datetime] = None) -> str:
         """
-        Generate the Elasticsearch index, the format is `data_type-project-%Y-%m-%d`.
+        Generate the Elasticsearch index, the format is `data_type-%Y-%m-%d`.
 
         :param str data_type: the type of data
-        :param Optional[str] project: the project associated to the data
         :param Optional[datetime] dt: the datetime of the data
         :return: the generated Elasticsearch index
         :raise ValueError: when there is a datetime but not a project
         """
 
-        if project:
-            if dt:
-                formatted_date = dt.strftime("%Y-%m-%d")
-                index_name = f"{data_type.lower()}-{project.lower()}-{formatted_date}"
-            else:
-                index_name = f"{data_type.lower()}-{project.lower()}-*"
+        if dt:
+            formatted_date = dt.strftime("%Y-%m-%d")
+            index_name = f"{data_type.lower()}-{formatted_date}"
         else:
-            if dt:
-                raise ValueError("There is a datetime but not a project")
-            else:
-                index_name = f"{data_type.lower()}-*"
+            index_name = f"{data_type.lower()}-*"
 
         return index_name
 

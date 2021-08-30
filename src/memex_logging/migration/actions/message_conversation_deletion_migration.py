@@ -17,23 +17,27 @@ from __future__ import absolute_import, annotations
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 
+from memex_logging.common.utils import Utils
 from memex_logging.migration.migration import MigrationAction
 
 
-class FixedTimeWindowMigration(MigrationAction):
+class MessageConversationDeletionMigration(MigrationAction):
 
     def apply(self, es: Elasticsearch) -> None:
-        index_name = "analytic-*"
-        results = scan(es, index=index_name, query={"query": {"match": {"query.timespan.type.keyword": "CUSTOM"}}})
+        index_name = Utils.generate_index("analytic")
+        analytics = scan(es, index=index_name, query={"query": {"match_all": {}}})
 
-        for result in results:
-            result['_source']["query"]["timespan"]["type"] = "FIXED"
-            es.index(index=result['_index'], id=result['_id'], doc_type=result['_type'], body=result['_source'])
+        for analytic in analytics:
+            # Remove analytics with metric value:
+            # - m:conversation
+            if analytic['_source']['descriptor'].get('metric') == "m:conversation":
+                es.delete(index=analytic['_index'], id=analytic['_id'], doc_type=analytic['_type'])
+                continue
 
     @property
     def action_name(self) -> str:
-        return "fixed_time_window_type_renamed"
+        return "message_conversation_deletion"
 
     @property
     def action_num(self) -> int:
-        return 2
+        return 6

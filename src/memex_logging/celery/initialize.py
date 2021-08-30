@@ -18,7 +18,8 @@ from celery import Celery
 from celery.schedules import crontab
 
 from memex_logging.celery import celery
-from memex_logging.celery.analytic import update_moving_time_window_analytics
+from memex_logging.celery.analytic import update_analytics
+from memex_logging.common.model.analytic.time import MovingTimeWindow
 from memex_logging.ws.main import build_interface_from_env
 
 
@@ -29,7 +30,7 @@ celery.conf.timezone = 'Europe/Rome'
 
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender: Celery, **kwargs):
-    sender.add_periodic_task(crontab(minute=0, hour=0), update_moving_time_window_analytics.s())
+    sender.add_periodic_task(crontab(minute=0, hour=0), update_analytics.s(time_window_type=MovingTimeWindow.type()))
 
 
 setup_periodic_tasks(celery)

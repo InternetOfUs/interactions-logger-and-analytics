@@ -16,6 +16,7 @@ from __future__ import absolute_import, annotations
 
 from elasticsearch import Elasticsearch
 
+from memex_logging.common.dao.analytic import AnalyticDao
 from memex_logging.common.dao.message import MessageDao
 
 
@@ -24,15 +25,18 @@ class DaoCollector:
     A collector of daos for the management of data
     """
 
-    def __init__(self, message_dao: MessageDao) -> None:
+    def __init__(self, message_dao: MessageDao, analytic_dao: AnalyticDao) -> None:
         """
-        :param MessageDao message_dao: a dao for the management of messages
+        :param MessageDao message_dao: the message dao
+        :param AnalyticDao analytic_dao: the analytic dao
         """
 
-        self.message_dao = message_dao
+        self.message = message_dao
+        self.analytic = analytic_dao
 
     @staticmethod
     def build_dao_collector(es: Elasticsearch) -> DaoCollector:
         return DaoCollector(
-            MessageDao(es)
+            MessageDao(es),
+            AnalyticDao(es)
         )

@@ -49,8 +49,8 @@ class SegmentationComputation:
         elif isinstance(analytic, MessageSegmentationDescriptor):
             if analytic.metric.lower() == "all":
                 result = self._messages_segmentation(analytic)
-            elif analytic.metric.lower() == "from_users":
-                result = self._user_messages_segmentation(analytic)
+            elif analytic.metric.lower() == "requests":
+                result = self._requests_segmentation(analytic)
             else:
                 logger.info(f"Unknown value for metric [{analytic.metric}] for MessageSegmentationDescriptor")
                 raise ValueError(f"Unknown value for metric [{analytic.metric}] for MessageSegmentationDescriptor")
@@ -139,7 +139,7 @@ class SegmentationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         type_counter = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -152,7 +152,7 @@ class SegmentationComputation:
 
         return SegmentationResult(type_counter, datetime.now(), min_bound, max_bound)
 
-    def _user_messages_segmentation(self, analytic: MessageSegmentationDescriptor) -> SegmentationResult:
+    def _requests_segmentation(self, analytic: MessageSegmentationDescriptor) -> SegmentationResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         body = {
             "query": {
@@ -191,7 +191,7 @@ class SegmentationComputation:
             }
         }
 
-        index = Utils.generate_index(data_type="message", project=analytic.project)
+        index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         type_counter = []
         if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
@@ -205,6 +205,11 @@ class SegmentationComputation:
         return SegmentationResult(type_counter, datetime.now(), min_bound, max_bound)
 
     def _transactions_segmentation(self, analytic: TransactionSegmentationDescriptor) -> SegmentationResult:
+        """
+        Compute the segmentation of the transactions of a given application (analytic.project) in a given time range (analytic.timespan).
+        The computation of that count is done segmenting based on the labels of the transactions created in the time range.
+        Optionally if specified a task identifier the transactions are only relative to that task.
+        """
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
         transactions = self.wenet_interface.task_manager.get_all_transactions(app_id=analytic.project, creation_from=min_bound, creation_to=max_bound,  task_id=analytic.task_id)
         transaction_labels = [transaction.label for transaction in transactions]

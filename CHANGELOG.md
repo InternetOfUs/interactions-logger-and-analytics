@@ -12,10 +12,10 @@
   - `u:new` into `new`
   - `a:segmentation` into `age`
   - `g:segmentation` into `gender`
-  - `m:from_users` into `from_users`
+  - `m:from_users` into `requests`
   - `m:segmentation` into `all`
-  - `r:segmentation` into `from_users`
-  - `u:segmentation` into `from_users`
+  - `r:segmentation` into `requests`
+  - `u:segmentation` into `requests`
   - `m:from_bot` into `from_bot`
   - `m:responses` into `responses`
   - `m:notifications` into `notifications`
@@ -34,6 +34,22 @@
 
 ## Version 2.*
 
+### 2.0.2
+
+* Message analytics have been updated.
+  * Renamed type *from_user* into *requests*
+  * Removed analytic of type *from_bot*
+* Added two new task metrics: `new_active` and `new_closed`.
+* Modified the `closed` task metric to get the number of tasks closed up to the end of a certain time range.
+* Removed id of the application from indices of messages and analytics.
+* Created an analytic dao for handling the interactions with the database.
+* Set aggregation result to `None` if the field where we are performing the aggregation is not present on the message data.
+* Added sentry integration in Migrator.
+
+### 2.0.1
+
+* Fixed to broken migration.
+
 ### 2.0.0
 
 * Included timestamp details among the analytic result data.
@@ -50,7 +66,7 @@
 * Added user segmentation analytics for age and gender.
 * Re-organised logic for handling analytics:
   * aligned analytic descriptor and result types. Now `count`, `segmentation` and `aggregation` are available ;
-  * metrics renamed into more meaningful ones and `c:path`, `c:length`, `m:unhandled` are removed;
+  * metrics renamed into more meaningful ones and `c:path`, `c:length`, `m:conversation`, `m:unhandled` are removed;
   * removed the field items from the analytic result.
 * Removed deprecated _usercount_ and _eventcount_ endpoints.
 
