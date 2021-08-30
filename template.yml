@@ -40,23 +40,24 @@
     ci_environments:
       mr:
         stages:
-          - name: build
-            manual: true
           - name: test
-      issue:
-        stages:
-          - name: build
-            manual: true
-          - name: test
-          - name: push
-          - name: trigger
-            manual: true
-            git_ref: develop
+            type: unit
+            in_docker: false
+            manual: false
       staging:
         stages:
           - name: build
             manual: true
+          - name: build
+            type: badge
+            manual: true
           - name: test
+            type: unit
+            in_docker: false
+          - name: test
+            type: coverage
+            in_docker: false
+            manual: true
           - name: push
           - name: trigger
             manual: true
@@ -64,9 +65,24 @@
       production:
         stages:
           - name: build
+          - name: build
+            type: badge
+            manual: true
           - name: test
+            type: unit
+            in_docker: false
+          - name: test
+            type: coverage
+            in_docker: false
+            manual: true
           - name: push
           - name: notify
+      default:
+        stages:
+          - name: test
+            type: coverage
+          - name: build
+            type: badge
     ci_additional_badges:
       - wenet-common
 
