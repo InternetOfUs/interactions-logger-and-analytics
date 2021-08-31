@@ -127,6 +127,36 @@ unit:mr:
     - merge_requests
 
 
+coverage:mr:
+  stage: test
+  image: public.registry.u-hopper.com/python:3.8
+  allow_failure: true
+  script:
+    - python -v
+    - mkdir -p ~/.config/pip
+    - echo "$PIP_CONF_DOCKER" > ~/.config/pip/pip.conf
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+    - pip install coverage pytest-cov anybadge PyYAML
+    - cp -r test src/
+    - cp docker-support/run_test_coverage.sh src/
+    - cd src
+    - ./run_test_coverage.sh test .
+  cache:
+    paths:
+      - .cache/pip
+      - venv/
+  artifacts:
+    when: always
+    reports:
+      junit: src/report.xml
+  needs: []
+  only:
+    - merge_requests
+
+
 #
 # Stages for staging.
 #
@@ -215,6 +245,10 @@ coverage:staging:
     paths:
       - .cache/pip
       - venv/
+  artifacts:
+    when: always
+    reports:
+      junit: src/report.xml
   needs: []
   only:
     - develop
@@ -338,6 +372,10 @@ coverage:production:
     paths:
       - .cache/pip
       - venv/
+  artifacts:
+    when: always
+    reports:
+      junit: src/report.xml
   needs: []
   only:
     - tags
@@ -405,6 +443,10 @@ coverage:default:
     paths:
       - .cache/pip
       - venv/
+  artifacts:
+    when: always
+    reports:
+      junit: src/report.xml
   needs: []
   only:
     - master

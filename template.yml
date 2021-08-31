@@ -44,6 +44,10 @@
             type: unit
             in_docker: false
             manual: false
+          - name: test
+            type: coverage
+            in_docker: false
+            manual: false
       staging:
         stages:
           - name: build
