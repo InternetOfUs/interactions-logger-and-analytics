@@ -74,7 +74,7 @@ class AggregationComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound.isoformat(),
+                                    "gte": min_bound.isoformat() if min_bound is not None else None,
                                     "lte": max_bound.isoformat()
                                 }
                             }
@@ -115,7 +115,7 @@ class AggregationComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound.isoformat(),
+                                    "gte": min_bound.isoformat() if min_bound is not None else None,
                                     "lte": max_bound.isoformat()
                                 }
                             }
@@ -156,7 +156,7 @@ class AggregationComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound.isoformat(),
+                                    "gte": min_bound.isoformat() if min_bound is not None else None,
                                     "lte": max_bound.isoformat()
                                 }
                             }
@@ -197,7 +197,7 @@ class AggregationComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound.isoformat(),
+                                    "gte": min_bound.isoformat() if min_bound is not None else None,
                                     "lte": max_bound.isoformat()
                                 }
                             }
@@ -238,7 +238,7 @@ class AggregationComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound.isoformat(),
+                                    "gte": min_bound.isoformat() if min_bound is not None else None,
                                     "lte": max_bound.isoformat()
                                 }
                             }
@@ -279,7 +279,7 @@ class AggregationComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound.isoformat(),
+                                    "gte": min_bound.isoformat() if min_bound is not None else None,
                                     "lte": max_bound.isoformat()
                                 }
                             }
@@ -320,7 +320,7 @@ class AggregationComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound.isoformat(),
+                                    "gte": min_bound.isoformat() if min_bound is not None else None,
                                     "lte": max_bound.isoformat()
                                 }
                             }
@@ -361,7 +361,7 @@ class AggregationComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound.isoformat(),
+                                    "gte": min_bound.isoformat() if min_bound is not None else None,
                                     "lte": max_bound.isoformat()
                                 }
                             }
@@ -402,7 +402,7 @@ class AggregationComputation:
                         {
                             "range": {
                                 "timestamp": {
-                                    "gte": min_bound.isoformat(),
+                                    "gte": min_bound.isoformat() if min_bound is not None else None,
                                     "lte": max_bound.isoformat()
                                 }
                             }
