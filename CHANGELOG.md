@@ -34,6 +34,10 @@
 
 ## Version 2.*
 
+### 2.1.0
+
+* The support for periodical (currently the period is set to _once a day, at midnight_) computation of not concluded _fixed time window_ analytic results have been added.
+
 ### 2.0.2
 
 * Message analytics have been updated.
