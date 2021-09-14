@@ -1499,7 +1499,7 @@ components:
       type: object
       properties:
         aggregation:
-          description: "The value is an object with key the aggregation and value the resulting number in the case of the simple aggregations. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
+          description: "The value is an object with key the aggregation and value the resulting number in the case of the simple aggregations. For `stats` it is an object with keys: [`count`, `min`, `max`, `avg`, `sum`]. For `extended_stats` it is an object with keys: [`count`, `min`, `max`, `avg`, `sum`, `sum_of_squares`, `variance`, `std_deviation` and `std_deviation_bounds` which is an object with keys `upper` and `lower`]. For `percentiles` it is an object with keys: [`1.0`, `5.0`, `25.0`, `50.0`, `75.0`, `95.0`, `99.0`]."
           type: object
           example: {"min": 3}
         type:
