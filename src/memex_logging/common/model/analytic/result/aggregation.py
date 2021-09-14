@@ -15,7 +15,6 @@
 from __future__ import absolute_import, annotations
 
 from datetime import datetime
-from typing import Union
 
 from memex_logging.common.model.analytic.result.common import CommonAnalyticResult
 
@@ -24,7 +23,7 @@ class AggregationResult(CommonAnalyticResult):
 
     TYPE = "aggregation"
 
-    def __init__(self, aggregation_result: Union[int, float, dict],
+    def __init__(self, aggregation_result: dict,
                  creation_datetime: datetime, from_datetime: datetime, to_datetime: datetime) -> None:
         super().__init__(creation_datetime, from_datetime, to_datetime)
         self.aggregation_result = aggregation_result
@@ -41,7 +40,7 @@ class AggregationResult(CommonAnalyticResult):
     @staticmethod
     def from_repr(raw_data: dict) -> AggregationResult:
         if raw_data['type'].lower() != AggregationResult.TYPE:
-            raise ValueError(f"Unrecognized type [{raw_data['type']}] for CountResult")
+            raise ValueError(f"Unrecognized type [{raw_data['type']}] for AggregationResult")
 
         return AggregationResult(
             raw_data['aggregation'],

@@ -62,7 +62,7 @@ class MovingTimeWindow(TimeWindow):
                 self.value = None
                 self.descriptor = "today"
             else:
-                raise ValueError("Incorrect format for MovingTimeWindow value")
+                raise ValueError(f"Incorrect format for MovingTimeWindow value [{value}]")
 
     @staticmethod
     def type():

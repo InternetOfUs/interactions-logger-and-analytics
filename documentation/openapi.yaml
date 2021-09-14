@@ -1499,8 +1499,9 @@ components:
       type: object
       properties:
         aggregation:
-          description: "The value is a number in the case of the simple stats. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
-          example: 3
+          description: "The value is an object with key the aggregation and value the resulting number in the case of the simple aggregations. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
+          type: object
+          example: {"min": 3}
         type:
           type: string
           enum: [ "aggregation" ]

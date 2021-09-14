@@ -34,6 +34,10 @@
 
 ## Version 2.*
 
+### 2.1.0
+
+* Solving an issue related to aggregations analytics changing aggregations results using always a dictionary
+
 ### 2.0.2
 
 * Message analytics have been updated.
