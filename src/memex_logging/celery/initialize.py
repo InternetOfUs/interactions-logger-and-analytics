@@ -30,8 +30,8 @@ celery.conf.timezone = 'Europe/Rome'
 
 @celery.on_after_configure.connect
 def setup_periodic_tasks(sender: Celery, **kwargs):
-    sender.add_periodic_task(crontab(minute=0, hour=0), update_analytics.s(time_window_type=MovingTimeWindow.type()))
-    sender.add_periodic_task(crontab(minute=0, hour=0), update_not_concluded_fixed_time_window_analytics.s())
+    sender.add_periodic_task(crontab(minute=0, hour=4), update_analytics.s(time_window_type=MovingTimeWindow.type()))
+    sender.add_periodic_task(crontab(minute=0, hour=4), update_not_concluded_fixed_time_window_analytics.s())
 
 
 setup_periodic_tasks(celery)

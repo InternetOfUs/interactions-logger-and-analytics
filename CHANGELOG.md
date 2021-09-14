@@ -36,7 +36,8 @@
 
 ### 2.1.0
 
-* The support for periodical (currently the period is set to _once a day, at midnight_) computation of not concluded _fixed time window_ analytic results have been added.
+* The support for periodical (currently the period is set to _once a day, at 4 a.m._) computation of not concluded _fixed time window_ analytic results have been added.
+* Changed periodical re-computation of _moving time window_ analytic results execution time to _once a day, at 4 a.m._
 
 ### 2.0.2
 
