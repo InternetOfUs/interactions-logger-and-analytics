@@ -15,7 +15,7 @@
 from __future__ import absolute_import, annotations
 
 from datetime import datetime
-from typing import Union
+from typing import Union, Optional
 
 from memex_logging.common.model.analytic.result.common import CommonAnalyticResult
 
@@ -25,7 +25,7 @@ class AggregationResult(CommonAnalyticResult):
     TYPE = "aggregation"
 
     def __init__(self, aggregation_result: Union[int, float, dict],
-                 creation_datetime: datetime, from_datetime: datetime, to_datetime: datetime) -> None:
+                 creation_datetime: datetime, from_datetime: Optional[datetime], to_datetime: datetime) -> None:
         super().__init__(creation_datetime, from_datetime, to_datetime)
         self.aggregation_result = aggregation_result
 
@@ -34,7 +34,7 @@ class AggregationResult(CommonAnalyticResult):
             'aggregation': self.aggregation_result,
             'type': self.TYPE,
             'creationDt': self.creation_datetime.isoformat(),
-            'fromDt': self.from_datetime.isoformat(),
+            'fromDt': self.from_datetime.isoformat() if self.from_datetime is not None else None,
             'toDt': self.to_datetime.isoformat()
         }
 
@@ -46,7 +46,7 @@ class AggregationResult(CommonAnalyticResult):
         return AggregationResult(
             raw_data['aggregation'],
             datetime.fromisoformat(raw_data['creationDt']),
-            datetime.fromisoformat(raw_data['fromDt']),
+            datetime.fromisoformat(raw_data['fromDt']) if raw_data['fromDt'] is not None else None,
             datetime.fromisoformat(raw_data['toDt'])
         )
 

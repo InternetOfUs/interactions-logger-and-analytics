@@ -53,7 +53,7 @@ class Utils:
         return index_name
 
     @staticmethod
-    def extract_range_timestamps(time_window: TimeWindow) -> Tuple[datetime, datetime]:
+    def extract_range_timestamps(time_window: TimeWindow) -> Tuple[Optional[datetime], datetime]:
         if isinstance(time_window, MovingTimeWindow):
             now = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -67,6 +67,8 @@ class Utils:
                 return now - relativedelta(years=time_window.value), now
             elif time_window.descriptor.upper() == "TODAY":
                 return now, now + relativedelta(days=1)
+            elif time_window.descriptor.upper() == "ALL":
+                return None, now
             else:
                 logger.info(f"Unable to handle the value [{time_window.value}{time_window.descriptor}]")
                 raise ValueError(f"Unable to handle the value [{time_window.value}{time_window.descriptor}]")
