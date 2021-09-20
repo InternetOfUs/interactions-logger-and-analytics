@@ -33,5 +33,5 @@ class TimeGenerator:
 
     @staticmethod
     def generate_moving() -> MovingTimeWindow:
-        choices = ["1d", "3d", "1w", "2w", "1m", "6m", "1y", "4y", "today"]
+        choices = ["1d", "3d", "1w", "2w", "1m", "6m", "1y", "4y", "today", "all"]
         return MovingTimeWindow(random.choice(choices))

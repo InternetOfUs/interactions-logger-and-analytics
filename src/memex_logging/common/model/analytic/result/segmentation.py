@@ -15,7 +15,7 @@
 from __future__ import absolute_import, annotations
 
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from memex_logging.common.model.analytic.result.common import CommonAnalyticResult
 
@@ -48,7 +48,7 @@ class SegmentationResult(CommonAnalyticResult):
     TYPE = "segmentation"
 
     def __init__(self, segments: List[Segmentation], creation_datetime: datetime,
-                 from_datetime: datetime, to_datetime: datetime) -> None:
+                 from_datetime: Optional[datetime], to_datetime: datetime) -> None:
         super().__init__(creation_datetime, from_datetime, to_datetime)
         self.segments = segments
 
@@ -57,7 +57,7 @@ class SegmentationResult(CommonAnalyticResult):
             'segments': [count.to_repr() for count in self.segments],
             'type': self.TYPE,
             'creationDt': self.creation_datetime.isoformat(),
-            'fromDt': self.from_datetime.isoformat(),
+            'fromDt': self.from_datetime.isoformat() if self.from_datetime is not None else None,
             'toDt': self.to_datetime.isoformat()
         }
 
@@ -70,7 +70,7 @@ class SegmentationResult(CommonAnalyticResult):
         return SegmentationResult(
             counts,
             datetime.fromisoformat(raw_data['creationDt']),
-            datetime.fromisoformat(raw_data['fromDt']),
+            datetime.fromisoformat(raw_data['fromDt']) if raw_data['fromDt'] is not None else None,
             datetime.fromisoformat(raw_data['toDt'])
         )
 

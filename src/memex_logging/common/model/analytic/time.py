@@ -61,6 +61,9 @@ class MovingTimeWindow(TimeWindow):
             if value.lower() == "today":
                 self.value = None
                 self.descriptor = "today"
+            elif value.lower() == "all":
+                self.value = None
+                self.descriptor = "all"
             else:
                 raise ValueError("Incorrect format for MovingTimeWindow value")
 

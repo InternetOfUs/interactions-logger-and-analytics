@@ -34,6 +34,10 @@
 
 ## Version 2.*
 
+### 2.1.0
+
+* Added a new `all` analytic window type allowing to analyze all available data up to now
+
 ### 2.0.2
 
 * Message analytics have been updated.

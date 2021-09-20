@@ -16,11 +16,12 @@ from __future__ import absolute_import, annotations
 
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Optional
 
 
 class CommonAnalyticResult(ABC):
 
-    def __init__(self, creation_datetime: datetime, from_datetime: datetime, to_datetime: datetime) -> None:
+    def __init__(self, creation_datetime: datetime, from_datetime: Optional[datetime], to_datetime: datetime) -> None:
         self.creation_datetime = creation_datetime
         self.from_datetime = from_datetime
         self.to_datetime = to_datetime
