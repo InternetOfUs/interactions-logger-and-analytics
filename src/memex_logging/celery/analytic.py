@@ -25,6 +25,7 @@ from wenet.interface.wenet import WeNet
 from memex_logging.celery import celery
 from memex_logging.common.computation.analytic import AnalyticComputation
 from memex_logging.common.dao.collector import DaoCollector
+from memex_logging.common.model.analytic.time import FixedTimeWindow
 
 
 logger = logging.getLogger("logger.celery.analytic")
@@ -48,10 +49,22 @@ def update_analytic(analytic_id: str):
 
 @celery.task(name='tasks.update_analytics')
 def update_analytics(time_window_type: Optional[str] = None):
-    logger.info("Updating all analytics")
+    logger.info(f"Updating {time_window_type if time_window_type is not None else 'all'} analytics")
     es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
     dao_collector = DaoCollector.build_dao_collector(es)
     analytics = dao_collector.analytic.list(time_window_type=time_window_type)
 
     for analytic in analytics:
         update_analytic.delay(analytic.analytic_id)
+
+
+@celery.task(name='tasks.update_not_concluded_fixed_time_window_analytics')
+def update_not_concluded_fixed_time_window_analytics():
+    logger.info(f"Updating not concluded fixed time window analytics")
+    es = Elasticsearch([{'host': os.getenv("EL_HOST", "localhost"), 'port': int(os.getenv("EL_PORT", 9200))}], http_auth=(os.getenv("EL_USERNAME", None), os.getenv("EL_PASSWORD", None)))
+    dao_collector = DaoCollector.build_dao_collector(es)
+    analytics = dao_collector.analytic.list(time_window_type=FixedTimeWindow.type())
+
+    for analytic in analytics:
+        if analytic.result is None or (isinstance(analytic.descriptor.time_span, FixedTimeWindow) and analytic.descriptor.time_span.end > analytic.result.creation_datetime):
+            update_analytic.delay(analytic.analytic_id)

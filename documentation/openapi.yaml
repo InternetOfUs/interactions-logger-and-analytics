@@ -1367,7 +1367,7 @@ components:
           example: "moving"
         value:
           type: string
-          description: "Arbitral time range, it supports any values for days (d), weeks (w), months (m), and years (y) in the format `<value><descriptor>` (the descriptor is case insensitive) or in alternative you can also use `today` for an analytic about the current day"
+          description: "Arbitrary time range, it supports any values for days (d), weeks (w), months (m), and years (y) in the format `<value><descriptor>` (the descriptor is case insensitive) or in alternative you can also use `today` for an analytic about the current day and `all` for an analytic moving in time but without considering any time limitation"
           example: "7d"
       required:
         - type
@@ -1434,6 +1434,7 @@ components:
           type: string
           format: date-time
           example: "2021-01-25T14:18:36.141378"
+          nullable: true
         toDt:
           type: string
           format: date-time

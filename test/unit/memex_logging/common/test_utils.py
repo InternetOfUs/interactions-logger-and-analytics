@@ -42,6 +42,8 @@ class TestUtils(TestCase):
             self.assertEqual((datetime(2021, 7, 24), datetime(2021, 7, 31)), Utils.extract_range_timestamps(MovingTimeWindow("1W")))
             self.assertEqual((datetime(2020, 9, 30), datetime(2021, 7, 31)), Utils.extract_range_timestamps(MovingTimeWindow("10M")))
             self.assertEqual((datetime(2019, 7, 31), datetime(2021, 7, 31)), Utils.extract_range_timestamps(MovingTimeWindow("2Y")))
+            self.assertEqual((datetime(2021, 7, 31), datetime(2021, 8, 1)), Utils.extract_range_timestamps(MovingTimeWindow("TODAY")))
+            self.assertEqual((None, datetime(2021, 7, 31)), Utils.extract_range_timestamps(MovingTimeWindow("ALL")))
 
     def test_compute_age(self):
         with freeze_time("2021-07-31"):
