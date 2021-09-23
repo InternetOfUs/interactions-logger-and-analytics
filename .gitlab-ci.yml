@@ -105,7 +105,6 @@ stages:
 unit:mr:
   stage: test
   image: public.registry.u-hopper.com/python:3.8
-  allow_failure: false
   script:
     - python -v
     - mkdir -p ~/.config/pip
@@ -139,11 +138,12 @@ coverage:mr:
     - source venv/bin/activate
     - pip install --upgrade pip
     - pip install -r requirements.txt
-    - pip install coverage pytest-cov anybadge PyYAML
+    - pip install coverage pytest-cov
     - cp -r test src/
     - cp docker-support/run_test_coverage.sh src/
+    - cp docker-support/.coveragerc src/
     - cd src
-    - ./run_test_coverage.sh test .
+    - PYTHONPATH=. ./run_test_coverage.sh test .
   cache:
     paths:
       - .cache/pip
@@ -155,6 +155,70 @@ coverage:mr:
   needs: []
   only:
     - merge_requests
+
+
+#
+# Stages for issue.
+#
+
+
+unit:issue:
+  stage: test
+  image: public.registry.u-hopper.com/python:3.8
+  script:
+    - python -v
+    - mkdir -p ~/.config/pip
+    - echo "$PIP_CONF_DOCKER" > ~/.config/pip/pip.conf
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+    - cp -r test src/
+    - cp docker-support/run_tests.sh src/
+    - cd src
+    - ./run_tests.sh
+  cache:
+    paths:
+      - .cache/pip
+      - venv/
+  needs: []
+  only:
+    - /^feature.*$/i
+    - /^hotfix.*$/i
+    - /^milestone.*$/i
+
+
+coverage:issue:
+  stage: test
+  image: public.registry.u-hopper.com/python:3.8
+  allow_failure: true
+  script:
+    - python -v
+    - mkdir -p ~/.config/pip
+    - echo "$PIP_CONF_DOCKER" > ~/.config/pip/pip.conf
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+    - pip install coverage pytest-cov
+    - cp -r test src/
+    - cp docker-support/run_test_coverage.sh src/
+    - cp docker-support/.coveragerc src/
+    - cd src
+    - PYTHONPATH=. ./run_test_coverage.sh test .
+  cache:
+    paths:
+      - .cache/pip
+      - venv/
+  artifacts:
+    when: always
+    reports:
+      junit: src/report.xml
+  needs: []
+  only:
+    - /^feature.*$/i
+    - /^hotfix.*$/i
+    - /^milestone.*$/i
 
 
 #
@@ -180,29 +244,9 @@ docker image:staging:
     - develop
 
 
-badges:staging:
-  stage: build
-  image: public.registry.u-hopper.com/python:3.8
-  script:
-    - pip install PyYAML anybadge
-    - python docker-support/badges.py
-  needs: []
-  allow_failure: true
-  when: manual
-  artifacts:
-    paths:
-      - template.svg
-      - deploy.svg
-      - wenet-common.svg
-    expire_in: 1 day
-  only:
-    - develop
-
-
 unit:staging:
   stage: test
   image: public.registry.u-hopper.com/python:3.8
-  allow_failure: false
   script:
     - python -v
     - mkdir -p ~/.config/pip
@@ -236,11 +280,12 @@ coverage:staging:
     - source venv/bin/activate
     - pip install --upgrade pip
     - pip install -r requirements.txt
-    - pip install coverage pytest-cov anybadge PyYAML
+    - pip install coverage pytest-cov
     - cp -r test src/
     - cp docker-support/run_test_coverage.sh src/
+    - cp docker-support/.coveragerc src/
     - cd src
-    - ./run_test_coverage.sh test .
+    - PYTHONPATH=. ./run_test_coverage.sh test .
   cache:
     paths:
       - .cache/pip
@@ -307,29 +352,9 @@ docker image:production:
     - tags
 
 
-badges:production:
-  stage: build
-  image: public.registry.u-hopper.com/python:3.8
-  script:
-    - pip install PyYAML anybadge
-    - python docker-support/badges.py
-  needs: []
-  allow_failure: true
-  when: manual
-  artifacts:
-    paths:
-      - template.svg
-      - deploy.svg
-      - wenet-common.svg
-    expire_in: 1 day
-  only:
-    - tags
-
-
 unit:production:
   stage: test
   image: public.registry.u-hopper.com/python:3.8
-  allow_failure: false
   script:
     - python -v
     - mkdir -p ~/.config/pip
@@ -363,11 +388,12 @@ coverage:production:
     - source venv/bin/activate
     - pip install --upgrade pip
     - pip install -r requirements.txt
-    - pip install coverage pytest-cov anybadge PyYAML
+    - pip install coverage pytest-cov
     - cp -r test src/
     - cp docker-support/run_test_coverage.sh src/
+    - cp docker-support/.coveragerc src/
     - cd src
-    - ./run_test_coverage.sh test .
+    - PYTHONPATH=. ./run_test_coverage.sh test .
   cache:
     paths:
       - .cache/pip
@@ -434,11 +460,12 @@ coverage:default:
     - source venv/bin/activate
     - pip install --upgrade pip
     - pip install -r requirements.txt
-    - pip install coverage pytest-cov anybadge PyYAML
+    - pip install coverage pytest-cov
     - cp -r test src/
     - cp docker-support/run_test_coverage.sh src/
+    - cp docker-support/.coveragerc src/
     - cd src
-    - ./run_test_coverage.sh test .
+    - PYTHONPATH=. ./run_test_coverage.sh test .
   cache:
     paths:
       - .cache/pip

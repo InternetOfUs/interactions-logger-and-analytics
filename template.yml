@@ -43,17 +43,20 @@
           - name: test
             type: unit
             in_docker: false
-            manual: false
           - name: test
             type: coverage
             in_docker: false
-            manual: false
+      issue:
+        stages:
+          - name: test
+            type: unit
+            in_docker: false
+          - name: test
+            type: coverage
+            in_docker: false
       staging:
         stages:
           - name: build
-            manual: true
-          - name: build
-            type: badge
             manual: true
           - name: test
             type: unit
@@ -61,7 +64,6 @@
           - name: test
             type: coverage
             in_docker: false
-            manual: true
           - name: push
           - name: trigger
             manual: true
@@ -69,16 +71,12 @@
       production:
         stages:
           - name: build
-          - name: build
-            type: badge
-            manual: true
           - name: test
             type: unit
             in_docker: false
           - name: test
             type: coverage
             in_docker: false
-            manual: true
           - name: push
           - name: notify
       default:
