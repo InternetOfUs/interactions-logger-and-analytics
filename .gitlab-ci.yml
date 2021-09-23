@@ -326,7 +326,6 @@ trigger:staging:
     - ansible-playbook ansible/trigger.yml
   needs: 
     - push:staging
-  when: manual
   only:
     - develop
 
