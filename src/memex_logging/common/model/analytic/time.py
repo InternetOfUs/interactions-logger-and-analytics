@@ -65,7 +65,7 @@ class MovingTimeWindow(TimeWindow):
                 self.value = None
                 self.descriptor = "all"
             else:
-                raise ValueError("Incorrect format for MovingTimeWindow value")
+                raise ValueError(f"Incorrect format for MovingTimeWindow value [{value}]")
 
     @staticmethod
     def type():

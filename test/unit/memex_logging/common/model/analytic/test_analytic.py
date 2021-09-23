@@ -35,7 +35,7 @@ class TestAnalytic(TestCase):
         self.assertEqual(response, Analytic.from_repr(response.to_repr()))
 
         response = Analytic("id", AggregationDescriptor(TimeGenerator.generate_random(), "project", "intent.confidence", "avg", None),
-                            result=AggregationResult(0.78, datetime.now(), datetime.now(), datetime.now()))
+                            result=AggregationResult({"max": 0.78}, datetime.now(), datetime.now(), datetime.now()))
         self.assertEqual(response, Analytic.from_repr(response.to_repr()))
 
         response = Analytic("id", MessageSegmentationDescriptor(TimeGenerator.generate_random(), "project", "all"),

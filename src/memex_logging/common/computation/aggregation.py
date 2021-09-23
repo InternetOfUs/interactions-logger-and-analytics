@@ -97,7 +97,7 @@ class AggregationComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+        return AggregationResult({"max": value}, datetime.now(), min_bound, max_bound) if value is not None else None
 
     def _min(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -138,7 +138,7 @@ class AggregationComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+        return AggregationResult({"min": value}, datetime.now(), min_bound, max_bound) if value is not None else None
 
     def _avg(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -179,7 +179,7 @@ class AggregationComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+        return AggregationResult({"avg": value}, datetime.now(), min_bound, max_bound) if value is not None else None
 
     def _cardinality(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -220,7 +220,7 @@ class AggregationComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+        return AggregationResult({"cardinality": value}, datetime.now(), min_bound, max_bound) if value is not None else None
 
     def _extended_stats(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -384,7 +384,7 @@ class AggregationComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+        return AggregationResult({"sum": value}, datetime.now(), min_bound, max_bound) if value is not None else None
 
     def _value_count(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -425,4 +425,4 @@ class AggregationComputation:
         if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
             value = response['aggregations']['type_count']['value']
 
-        return AggregationResult(value, datetime.now(), min_bound, max_bound) if value is not None else None
+        return AggregationResult({"value_count": value}, datetime.now(), min_bound, max_bound) if value is not None else None
