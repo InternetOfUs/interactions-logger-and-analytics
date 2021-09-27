@@ -306,47 +306,48 @@ class CountComputation:
 
         users_in_period = set(users_in_period)
 
-        body = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "match": {
-                                "project.keyword": analytic.project
-                            }
-                        }
-                    ],
-                    "filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "lt": min_bound.isoformat()
+        users_out_period = []
+        if min_bound is not None:
+            body = {
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "match": {
+                                    "project.keyword": analytic.project
                                 }
                             }
+                        ],
+                        "filter": [
+                            {
+                                "range": {
+                                    "timestamp": {
+                                        "lt": min_bound.isoformat()
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                "aggs": {
+                    "terms_count": {
+                        "terms": {
+                            "field": "userId.keyword",
+                            "size": 65535
                         }
-                    ]
-                }
-            },
-            "aggs": {
-                "terms_count": {
-                    "terms": {
-                        "field": "userId.keyword",
-                        "size": 65535
                     }
                 }
             }
-        }
 
-        index = Utils.generate_index(data_type="message")
-        response = self.es.search(index=index, body=body, size=0)
-        users_out_period = []
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-            for item in response['aggregations']['terms_count']['buckets']:
-                users_out_period.append(item['key'])
+            index = Utils.generate_index(data_type="message")
+            response = self.es.search(index=index, body=body, size=0)
+            if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+                for item in response['aggregations']['terms_count']['buckets']:
+                    users_out_period.append(item['key'])
 
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+            if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+                if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                    logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
 
         users_out_period = set(users_out_period)
 
@@ -827,47 +828,48 @@ class CountComputation:
 
         conv_in_period = set(conv_in_period)
 
-        body = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "match": {
-                                "project.keyword": analytic.project
-                            }
-                        }
-                    ],
-                    "filter": [
-                        {
-                            "range": {
-                                "timestamp": {
-                                    "lt": min_bound.isoformat()
+        conv_out_period = []
+        if min_bound is not None:
+            body = {
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "match": {
+                                    "project.keyword": analytic.project
                                 }
                             }
+                        ],
+                        "filter": [
+                            {
+                                "range": {
+                                    "timestamp": {
+                                        "lt": min_bound.isoformat()
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                },
+                "aggs": {
+                    "terms_count": {
+                        "terms": {
+                            "field": "conversationId.keyword",
+                            "size": 65535
                         }
-                    ]
-                }
-            },
-            "aggs": {
-                "terms_count": {
-                    "terms": {
-                        "field": "conversationId.keyword",
-                        "size": 65535
                     }
                 }
             }
-        }
 
-        index = Utils.generate_index(data_type="message")
-        response = self.es.search(index=index, body=body, size=0)
-        conv_out_period = []
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-            for item in response['aggregations']['terms_count']['buckets']:
-                conv_out_period.append(item['key'])
+            index = Utils.generate_index(data_type="message")
+            response = self.es.search(index=index, body=body, size=0)
+            if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
+                for item in response['aggregations']['terms_count']['buckets']:
+                    conv_out_period.append(item['key'])
 
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-                logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
+            if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
+                if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
+                    logger.warning("The number of buckets is limited at `65535` but the number of conversations is higher")
 
         conv_out_period = set(conv_out_period)
 
