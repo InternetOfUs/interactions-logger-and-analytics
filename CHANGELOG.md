@@ -34,6 +34,13 @@
 
 ## Version 2.*
 
+### 2.1.0
+
+* Added a new `all` analytic window type allowing to analyze all available data up to now
+* The support for periodical (currently the period is set to _once a day, at 4 a.m._) computation of not concluded _fixed time window_ analytic results have been added.
+* Changed periodical re-computation of _moving time window_ analytic results execution time to _once a day, at 4 a.m._
+* Solved an issue related to aggregations analytics changing aggregations results using always a dictionary
+
 ### 2.0.2
 
 * Message analytics have been updated.

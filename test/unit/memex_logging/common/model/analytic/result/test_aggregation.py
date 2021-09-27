@@ -24,6 +24,6 @@ from memex_logging.common.model.analytic.result.builder import AnalyticResultBui
 class TestAggregationResult(TestCase):
 
     def test_repr(self):
-        result = AggregationResult(0.1, datetime.now(), datetime.now(), datetime.now())
+        result = AggregationResult({"min": 0.1}, datetime.now(), datetime.now(), datetime.now())
         self.assertEqual(result, AggregationResult.from_repr(result.to_repr()))
         self.assertEqual(result, AnalyticResultBuilder.build(result.to_repr()))

@@ -1367,7 +1367,7 @@ components:
           example: "moving"
         value:
           type: string
-          description: "Arbitral time range, it supports any values for days (d), weeks (w), months (m), and years (y) in the format `<value><descriptor>` (the descriptor is case insensitive) or in alternative you can also use `today` for an analytic about the current day"
+          description: "Arbitrary time range, it supports any values for days (d), weeks (w), months (m), and years (y) in the format `<value><descriptor>` (the descriptor is case insensitive) or in alternative you can also use `today` for an analytic about the current day and `all` for an analytic moving in time but without considering any time limitation"
           example: "7d"
       required:
         - type
@@ -1434,6 +1434,7 @@ components:
           type: string
           format: date-time
           example: "2021-01-25T14:18:36.141378"
+          nullable: true
         toDt:
           type: string
           format: date-time
@@ -1499,8 +1500,9 @@ components:
       type: object
       properties:
         aggregation:
-          description: "The value is a number in the case of the simple stats. For `stats`, `extended_stats` and `percentiles` it is an object as returned from the db."
-          example: 3
+          description: "The value is an object with key the aggregation and value the resulting number in the case of the simple aggregations. For `stats` it is an object with keys: [`count`, `min`, `max`, `avg`, `sum`]. For `extended_stats` it is an object with keys: [`count`, `min`, `max`, `avg`, `sum`, `sum_of_squares`, `variance`, `std_deviation` and `std_deviation_bounds` which is an object with keys `upper` and `lower`]. For `percentiles` it is an object with keys: [`1.0`, `5.0`, `25.0`, `50.0`, `75.0`, `95.0`, `99.0`]."
+          type: object
+          example: {"min": 3}
         type:
           type: string
           enum: [ "aggregation" ]
