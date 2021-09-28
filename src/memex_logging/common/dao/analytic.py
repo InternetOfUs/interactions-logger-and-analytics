@@ -16,7 +16,7 @@ from __future__ import absolute_import, annotations
 
 import logging
 from datetime import datetime
-from typing import Tuple, List, Optional
+from typing import List, Optional
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan

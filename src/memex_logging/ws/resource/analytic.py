@@ -25,7 +25,7 @@ from memex_logging.common.dao.collector import DaoCollector
 from memex_logging.common.dao.common import DocumentNotFound
 from memex_logging.common.model.analytic.analytic import Analytic
 from memex_logging.common.model.analytic.descriptor.builder import AnalyticDescriptorBuilder
-from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow, TimeWindow
+from memex_logging.common.model.analytic.time import TimeWindow
 
 logger = logging.getLogger("logger.resource.analytic")
 
