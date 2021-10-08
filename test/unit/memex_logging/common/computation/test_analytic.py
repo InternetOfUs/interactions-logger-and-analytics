@@ -33,7 +33,7 @@ from memex_logging.common.model.analytic.descriptor.segmentation import UserSegm
     MessageSegmentationDescriptor, TransactionSegmentationDescriptor
 from memex_logging.common.model.analytic.result.count import CountResult
 from memex_logging.common.model.analytic.result.segmentation import SegmentationResult, Segmentation
-from memex_logging.common.model.analytic.time import FixedTimeWindow
+from memex_logging.common.model.analytic.time import FixedTimeWindow, MovingTimeWindow
 
 
 class TestAnalyticComputation(TestCase):
@@ -94,6 +94,12 @@ class TestAnalyticComputation(TestCase):
             {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}, 'type_count': {'value': 0}}},
         ])
         new_users = self.analytic_computation.get_result(UserCountDescriptor(self.time_range, "project", "new"))
+        self.assertIsInstance(new_users, CountResult)
+        self.assertEqual(1, new_users.count)
+
+    def test_compute_new_users_all_time_period(self):
+        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': [{'key': 'user-id-1', 'doc_count': 1}]}, 'type_count': {'value': 1}}})
+        new_users = self.analytic_computation.get_result(UserCountDescriptor(MovingTimeWindow("all"), "project", "new"))
         self.assertIsInstance(new_users, CountResult)
         self.assertEqual(1, new_users.count)
 
