@@ -152,6 +152,7 @@ coverage:mr:
     when: always
     reports:
       junit: src/report.xml
+      cobertura: src/coverage.xml
   needs: []
   only:
     - merge_requests
@@ -214,6 +215,7 @@ coverage:issue:
     when: always
     reports:
       junit: src/report.xml
+      cobertura: src/coverage.xml
   needs: []
   only:
     - /^feature.*$/i
@@ -294,6 +296,7 @@ coverage:staging:
     when: always
     reports:
       junit: src/report.xml
+      cobertura: src/coverage.xml
   needs: []
   only:
     - develop
@@ -401,6 +404,7 @@ coverage:production:
     when: always
     reports:
       junit: src/report.xml
+      cobertura: src/coverage.xml
   needs: []
   only:
     - tags
@@ -473,6 +477,7 @@ coverage:default:
     when: always
     reports:
       junit: src/report.xml
+      cobertura: src/coverage.xml
   needs: []
   only:
     - master
