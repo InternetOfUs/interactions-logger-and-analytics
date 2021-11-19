@@ -103,7 +103,7 @@ if __name__ == '__main__':
         raise ValueError(f"For the analytics, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     analytics_file_writer.writerow(["app id", args.app_id])
-    analytics_file_writer.writerow(["project", args.project])
+    # analytics_file_writer.writerow(["project", args.project])
     analytics_file_writer.writerow(["from", creation_from])
     analytics_file_writer.writerow(["to", creation_to])
     analytics_file_writer.writerow([])
@@ -200,7 +200,7 @@ if __name__ == '__main__':
         raise ValueError(f"For the questions, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     questions_file_writer.writerow(["app id", args.app_id])
-    questions_file_writer.writerow(["project", args.project])
+    # questions_file_writer.writerow(["project", args.project])
     questions_file_writer.writerow(["from", creation_from])
     questions_file_writer.writerow(["to", creation_to])
     questions_file_writer.writerow(["total questions", len(tasks)])
@@ -231,7 +231,7 @@ if __name__ == '__main__':
         raise ValueError(f"For the users, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     users_file_writer.writerow(["app id", args.app_id])
-    users_file_writer.writerow(["project", args.project])
+    # users_file_writer.writerow(["project", args.project])
     user_ids = hub_interface.get_user_ids_for_app(args.app_id)
     users_file_writer.writerow(["total users", len(user_ids)])
     users_file_writer.writerow([])
