@@ -70,8 +70,8 @@ if __name__ == '__main__':
     arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
     arg_parser.add_argument("-ai", "--app_id", type=str, default=os.getenv("APP_ID"), help="The id of the application in which compute the analytics")
-    arg_parser.add_argument("-il", "--ilog", type=str, default=os.getenv("ILOG"), help="The id of the ilog application to check if the user has enabled it or not")
-    arg_parser.add_argument("-p", "--project", type=str, default=os.getenv("PROJECT"), help="The project for which to compute the analytics")
+    arg_parser.add_argument("-ii", "--ilog_id", type=str, default=os.getenv("ILOG_ID"), help="The id of the ilog application to check if the user has enabled it or not")
+    arg_parser.add_argument("-si", "--survey_id", type=str, default=os.getenv("SURVEY_ID"), help="The id of the survey application to check if the user has enabled it or not")
     arg_parser.add_argument("-r", "--range", type=str, default=os.getenv("TIME_RANGE", "30D"), help="The temporal range in which compute the analytics")
     arg_parser.add_argument("-s", "--start", type=str, default=os.getenv("START_TIME"), help="The start time from which compute the analytics")
     arg_parser.add_argument("-e", "--end", type=str, default=os.getenv("END_TIME"), help="The end time up to which compute the analytics")
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     hub_interface = HubInterface(client, args.instance)
     profile_manager_interface = ProfileManagerInterface(client, args.instance)
     incentive_server_interface = IncentiveServerInterface(client, args.instance)
-    logger_operations = LoggingUtility(args.instance + "/logger", args.project, {"x-wenet-component-apikey": args.apikey})
+    logger_operations = LoggingUtility(args.instance + "/logger", args.app_id, {"x-wenet-component-apikey": args.apikey})
 
     if args.start and args.end:
         time_range = FixedTimeWindow.from_isoformat(args.start, args.end)
@@ -103,29 +103,28 @@ if __name__ == '__main__':
         raise ValueError(f"For the analytics, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     analytics_file_writer.writerow(["app id", args.app_id])
-    # analytics_file_writer.writerow(["project", args.project])
     analytics_file_writer.writerow(["from", creation_from])
     analytics_file_writer.writerow(["to", creation_to])
     analytics_file_writer.writerow([])
     analytics_file_writer.writerow(["metric", "count", "description"])
 
-    total_users = UserCountDescriptor(time_range, args.project, "total")
+    total_users = UserCountDescriptor(time_range, args.app_id, "total")
     total_users_result = CountResult.from_repr(logger_operations.get_analytic_result(total_users))
     analytics_file_writer.writerow(["total users", total_users_result.count, "The total number of users of the application"])
 
-    active_users = UserCountDescriptor(time_range, args.project, "active")
+    active_users = UserCountDescriptor(time_range, args.app_id, "active")
     active_users_result = CountResult.from_repr(logger_operations.get_analytic_result(active_users))
     analytics_file_writer.writerow(["active users", active_users_result.count, "The number of users who used the application"])
 
-    engaged_users = UserCountDescriptor(time_range, args.project, "engaged")
+    engaged_users = UserCountDescriptor(time_range, args.app_id, "engaged")
     engaged_users_result = CountResult.from_repr(logger_operations.get_analytic_result(engaged_users))
     analytics_file_writer.writerow(["engaged users", engaged_users_result.count, "The number of users who received a notification from the platform (incentive, prompt, badge, ..)"])
 
-    new_users = UserCountDescriptor(time_range, args.project, "new")
+    new_users = UserCountDescriptor(time_range, args.app_id, "new")
     new_users_result = CountResult.from_repr(logger_operations.get_analytic_result(new_users))
     analytics_file_writer.writerow(["new users", new_users_result.count, "The number of new users who activated the application during the period of this analysis"])
 
-    segmentation_messages = MessageSegmentationDescriptor(time_range, args.project, "all")
+    segmentation_messages = MessageSegmentationDescriptor(time_range, args.app_id, "all")
     segmentation_messages_result = SegmentationResult.from_repr(logger_operations.get_analytic_result(segmentation_messages))
 
     total_messages = 0
@@ -141,7 +140,7 @@ if __name__ == '__main__':
         if TYPE_NOTIFICATION_MESSAGE == segmentation.segmentation_type:
             notification_messages = segmentation.count
 
-    segmentation_requests = MessageSegmentationDescriptor(time_range, args.project, "requests")
+    segmentation_requests = MessageSegmentationDescriptor(time_range, args.app_id, "requests")
     segmentation_requests_result = SegmentationResult.from_repr(logger_operations.get_analytic_result(segmentation_requests))
 
     text_requests = 0
@@ -200,7 +199,6 @@ if __name__ == '__main__':
         raise ValueError(f"For the questions, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     questions_file_writer.writerow(["app id", args.app_id])
-    # questions_file_writer.writerow(["project", args.project])
     questions_file_writer.writerow(["from", creation_from])
     questions_file_writer.writerow(["to", creation_to])
     questions_file_writer.writerow(["total questions", len(tasks)])
@@ -231,14 +229,14 @@ if __name__ == '__main__':
         raise ValueError(f"For the users, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     users_file_writer.writerow(["app id", args.app_id])
-    # users_file_writer.writerow(["project", args.project])
     user_ids = hub_interface.get_user_ids_for_app(args.app_id)
     users_file_writer.writerow(["total users", len(user_ids)])
     users_file_writer.writerow([])
-    users_file_writer.writerow(["name", "surname", "email", "gender", "incentive cohort", "ilog"])
+    users_file_writer.writerow(["name", "surname", "email", "gender", "incentive cohort", "ilog", "survey"])
 
     cohorts = incentive_server_interface.get_cohorts()
-    ilog_user_ids = hub_interface.get_user_ids_for_app(args.ilog)
+    ilog_user_ids = hub_interface.get_user_ids_for_app(args.ilog_id)
+    survey_user_ids = hub_interface.get_user_ids_for_app(args.survey_id)
     for user_id in user_ids:
         user = profile_manager_interface.get_user_profile(user_id)
         user_cohort = None
@@ -251,13 +249,9 @@ if __name__ == '__main__':
                         user_cohort = "incentives and badges"
                     break
 
-        has_user_enabled_ilog = "no"
-        for ilog_user_id in ilog_user_ids:
-            if ilog_user_id == user_id:
-                has_user_enabled_ilog = "yes"
-                break
-
-        users_file_writer.writerow([user.name.first, user.name.last, user.email, user.gender.name.lower() if user.gender else None, user_cohort, has_user_enabled_ilog])
+        has_user_enabled_ilog = "yes" if user_id in ilog_user_ids else "no"
+        has_user_enabled_survey = "yes" if user_id in survey_user_ids else "no"
+        users_file_writer.writerow([user.name.first, user.name.last, user.email, user.gender.name.lower() if user.gender else None, user_cohort, has_user_enabled_ilog, has_user_enabled_survey])
         if not user.email:
             logger.warning(f"User [{user.profile_id}] does not have an associated email")
 

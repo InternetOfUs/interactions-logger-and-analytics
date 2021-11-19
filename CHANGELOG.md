@@ -1,5 +1,9 @@
 # Changelog
 
+### next
+
+- Updated scripts for extracting stats adding also the information whether the users have enabled the survey app
+
 ## Breaking changes from 1.* to 2.* 
 
 * the parameter `staticId` of the Analytic has been renamed to `id`

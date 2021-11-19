@@ -112,6 +112,8 @@ The script for computing the analytics, questions, users and for extracting the 
 * `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
 * `APP_ID`: the id of the application in which compute the analytics, it can also be set using the argument `-ai` or `--app_id` when manually running the Python service;
+* `ILOG_ID`: the id of the ilog application to check if the user has enabled it or not, it can also be set using the argument `-ii` or `--ilog_id` when manually running the Python service;
+* `SURVEY_ID`: the id of the survey application to check if the user has enabled it or not, it can also be set using the argument `-si` or `--survey_id` when manually running the Python service;
 * `PROJECT`: the project for which to compute the analytics, it can also be set using the argument `-p` or `--project` when manually running the Python service;
 * `TIME_RANGE` (optional, the default value is `30D`): The temporal range in which compute the analytics, the allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
 
