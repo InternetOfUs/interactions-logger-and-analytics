@@ -48,6 +48,7 @@ if __name__ == '__main__':
     elif extension == ".tsv":
         file_writer = csv.writer(file, delimiter="\t")
     else:
+        logger.warning(f"you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
         raise ValueError(f"you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     file_writer.writerow(["app id", args.app_id])
