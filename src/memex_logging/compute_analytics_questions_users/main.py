@@ -232,7 +232,7 @@ if __name__ == '__main__':
         else:
             answer = None
 
-        questions_file_writer.writerow([emojize(question, use_aliases=True), emojize(answer, use_aliases=True) if answer is not None else None])
+        questions_file_writer.writerow([emojize(str(question), use_aliases=True), emojize(str(answer), use_aliases=True) if answer is not None else None])
 
     questions_file.close()
 
