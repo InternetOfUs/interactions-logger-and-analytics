@@ -16,6 +16,7 @@ from __future__ import absolute_import, annotations
 
 import argparse
 import csv
+import logging.config
 import os
 
 import dateparser
@@ -24,8 +25,14 @@ from wenet.interface.client import ApikeyClient
 from wenet.interface.hub import HubInterface
 from wenet.interface.profile_manager import ProfileManagerInterface
 
+from memex_logging.common.log.logging import get_logging_configuration
 from memex_logging.common.model.analytic.time import FixedTimeWindow, MovingTimeWindow
 from memex_logging.common.utils import Utils
+
+
+logging.config.dictConfig(get_logging_configuration("apps_usage"))
+logger = logging.getLogger("compute_analytics_questions_users.apps_usage")
+
 
 if __name__ == '__main__':
 
@@ -65,6 +72,7 @@ if __name__ == '__main__':
     if extension == ".csv":
         dump_reader = csv.DictReader(dump)
     else:
+        logger.warning(f"you should pass the path of the following type of file [.csv], instead you pass [{extension}]")
         raise ValueError(f"you should pass the path of the following type of file [.csv], instead you pass [{extension}]")
 
     if args.start and args.end:

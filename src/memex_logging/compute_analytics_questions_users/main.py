@@ -38,7 +38,7 @@ from memex_logging.common.utils import Utils
 
 
 logging.config.dictConfig(get_logging_configuration("compute_analytics"))
-logger = logging.getLogger("compute_analytics.main")
+logger = logging.getLogger("compute_analytics_questions_users.main")
 
 # message types
 TYPE_REQUEST_MESSAGE = "request"

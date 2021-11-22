@@ -16,14 +16,21 @@ from __future__ import absolute_import, annotations
 
 import argparse
 import csv
+import logging.config
 import os
 
 from wenet.interface.client import ApikeyClient
 from wenet.interface.hub import HubInterface
 from wenet.interface.profile_manager import ProfileManagerInterface
 
+from memex_logging.common.log.logging import get_logging_configuration
 from memex_logging.common.model.analytic.time import FixedTimeWindow, MovingTimeWindow
 from memex_logging.common.utils import Utils
+
+
+logging.config.dictConfig(get_logging_configuration("id_email"))
+logger = logging.getLogger("compute_analytics_questions_users.id_email")
+
 
 if __name__ == '__main__':
 
