@@ -19,7 +19,9 @@ import csv
 import json
 import logging.config
 import os
+from json import JSONDecodeError
 
+from emoji import emojize
 from wenet.interface.client import ApikeyClient
 from wenet.interface.hub import HubInterface
 from wenet.interface.incentive_server import IncentiveServerInterface
@@ -163,7 +165,7 @@ if __name__ == '__main__':
 
     tasks = task_manager_interface.get_all_tasks(app_id=args.app_id, creation_from=creation_from, creation_to=creation_to)
     tasks_file = open(args.task_file, "w")
-    json.dump([task.to_repr() for task in tasks], tasks_file, ensure_ascii=False, indent=2)
+    json.dump([task.to_repr() for task in tasks], tasks_file, ensure_ascii=False, indent=2)  # TODO we should use json.loads and emojize where needed
     tasks_file.close()
     analytics_file_writer.writerow(["questions", len(tasks), "The number of questions asked by the users"])
 
@@ -216,7 +218,21 @@ if __name__ == '__main__':
                 id_answer_map[transaction.id] = transaction.attributes.get("answer")
             if transaction.label == LABEL_BEST_ANSWER_TRANSACTION:
                 chosen_answer_id = transaction.attributes.get("transactionId")
-        questions_file_writer.writerow([task.goal.name, id_answer_map[chosen_answer_id] if chosen_answer_id else None])
+
+        try:
+            question = json.loads(task.goal.name)
+        except JSONDecodeError:
+            question = task.goal.name
+
+        if chosen_answer_id:
+            try:
+                answer = json.loads(id_answer_map[chosen_answer_id])
+            except JSONDecodeError:
+                answer = id_answer_map[chosen_answer_id]
+        else:
+            answer = None
+
+        questions_file_writer.writerow([emojize(question, use_aliases=True), emojize(answer, use_aliases=True) if answer is not None else None])
 
     questions_file.close()
 
