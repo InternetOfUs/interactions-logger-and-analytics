@@ -3,6 +3,7 @@
 ### next
 
 - Updated scripts for extracting stats adding also the information whether the users have enabled the survey app
+- Added script for extracting information on app usage by the users
 
 ## Breaking changes from 1.* to 2.* 
 

@@ -31,7 +31,13 @@ if __name__ == '__main__':
     arg_parser.add_argument("-f", "--file", type=str, default=os.getenv("FILE"), help="The path of csv/tsv file where to store id-email associations")
     arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
-    arg_parser.add_argument("-ai", "--app_id", type=str, default=os.getenv("APP_ID"), help="The id of the application from which take the users")
+    arg_parser.add_argument("-aau", "--aau_id", type=str, default=os.getenv("AAU_BOT"), help="The id of the we@AAU chatbot from which take the users")
+    arg_parser.add_argument("-lse", "--lse_id", type=str, default=os.getenv("LSE_BOT"), help="The id of the we@LSE chatbot from which take the users")
+    arg_parser.add_argument("-num", "--num_id", type=str, default=os.getenv("NUM_BOT"), help="The id of the we@NUM chatbot from which take the users")
+    arg_parser.add_argument("-uc", "--uc_id", type=str, default=os.getenv("UC_BOT"), help="The id of the we@UC chatbot from which take the users")
+    arg_parser.add_argument("-unitn", "--unitn_id", type=str, default=os.getenv("UNITN_BOT"), help="The id of the we@UniTN chatbot from which take the users")
+    arg_parser.add_argument("-ii", "--ilog_id", type=str, default=os.getenv("ILOG_ID"), help="The id of the ilog application to check if the user has enabled it or not")
+    arg_parser.add_argument("-si", "--survey_id", type=str, default=os.getenv("SURVEY_ID"), help="The id of the survey application to check if the user has enabled it or not")
     arg_parser.add_argument("-r", "--range", type=str, default=os.getenv("TIME_RANGE", "30D"), help="The temporal range in which compute the analytics")
     arg_parser.add_argument("-s", "--start", type=str, default=os.getenv("START_TIME"), help="The start time from which compute the analytics")
     arg_parser.add_argument("-e", "--end", type=str, default=os.getenv("END_TIME"), help="The end time up to which compute the analytics")
@@ -50,8 +56,6 @@ if __name__ == '__main__':
     else:
         raise ValueError(f"you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
-    file_writer.writerow(["app id", args.app_id])
-
     if args.start and args.end:
         time_range = FixedTimeWindow.from_isoformat(args.start, args.end)
         creation_from, creation_to = Utils.extract_range_timestamps(time_range)
@@ -66,13 +70,38 @@ if __name__ == '__main__':
         creation_from = None
         creation_to = None
 
-    user_ids = hub_interface.get_user_ids_for_app(args.app_id, from_datetime=creation_from, to_datetime=creation_to)
+    aau_ids = hub_interface.get_user_ids_for_app(args.aau_id, from_datetime=creation_from, to_datetime=creation_to)
+    lse_ids = hub_interface.get_user_ids_for_app(args.lse_id, from_datetime=creation_from, to_datetime=creation_to)
+    num_ids = hub_interface.get_user_ids_for_app(args.num_id, from_datetime=creation_from, to_datetime=creation_to)
+    uc_ids = hub_interface.get_user_ids_for_app(args.uc_id, from_datetime=creation_from, to_datetime=creation_to)
+    unitn_ids = hub_interface.get_user_ids_for_app(args.unitn_id, from_datetime=creation_from, to_datetime=creation_to)
+    ilog_ids = hub_interface.get_user_ids_for_app(args.ilog_id, from_datetime=creation_from, to_datetime=creation_to)
+    survey_ids = hub_interface.get_user_ids_for_app(args.survey_id, from_datetime=creation_from, to_datetime=creation_to)
+    user_ids = set(aau_ids + lse_ids + num_ids + uc_ids + unitn_ids + ilog_ids + survey_ids)
+    user_ids = sorted(user_ids)
     file_writer.writerow(["total users", len(user_ids)])
     file_writer.writerow([])
-    file_writer.writerow(["id", "email"])
+    file_writer.writerow(["id", "email", "survey", "chatbot", "ilog"])
 
+    user_info = []
     for user_id in user_ids:
         user = profile_manager_interface.get_user_profile(user_id)
-        file_writer.writerow([user.profile_id, user.email])
+        chatbot = ""
+        if user_id in aau_ids:
+            chatbot = chatbot + ":" + "we@AAU" if chatbot else "we@AAU"
+        if user_id in lse_ids:
+            chatbot = chatbot + ":" + "we@LSE" if chatbot else "we@LSE"
+        if user_id in num_ids:
+            chatbot = chatbot + ":" + "we@NUM" if chatbot else "we@NUM"
+        if user_id in uc_ids:
+            chatbot = chatbot + ":" + "we@UC" if chatbot else "we@UC"
+        if user_id in unitn_ids:
+            chatbot = chatbot + ":" + "we@UniTN" if chatbot else "we@UniTN"
+
+        user_info.append({"id": user_id, "mail": user.email, "survey": "yes" if user_id in survey_ids else "no", "chatbot": chatbot, "ilog": "yes" if user_id in ilog_ids else "no"})
+
+    user_info = sorted(user_info, key=lambda x: x["chatbot"], reverse=True)
+    for user in user_info:
+        file_writer.writerow([user["id"], user["mail"], user["survey"], user["chatbot"], user["ilog"]])
 
     file.close()

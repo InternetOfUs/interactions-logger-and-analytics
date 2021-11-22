@@ -86,8 +86,11 @@ if __name__ == '__main__':
 
     if args.start and args.end:
         time_range = FixedTimeWindow.from_isoformat(args.start, args.end)
-    else:
+    elif args.range:
         time_range = MovingTimeWindow(args.range)
+    else:
+        logger.warning(f"Nor time range or start and end time are defined")
+        raise ValueError(f"Nor time range or start and end time are defined")
 
     creation_from, creation_to = Utils.extract_range_timestamps(time_range)
 
@@ -229,7 +232,9 @@ if __name__ == '__main__':
         raise ValueError(f"For the users, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     users_file_writer.writerow(["app id", args.app_id])
-    user_ids = hub_interface.get_user_ids_for_app(args.app_id)
+    users_file_writer.writerow(["from", creation_from])
+    users_file_writer.writerow(["to", creation_to])
+    user_ids = hub_interface.get_user_ids_for_app(args.app_id, from_datetime=creation_from, to_datetime=creation_to)
     users_file_writer.writerow(["total users", len(user_ids)])
     users_file_writer.writerow([])
     users_file_writer.writerow(["name", "surname", "email", "gender", "incentive cohort", "ilog", "survey"])
