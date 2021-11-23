@@ -1,10 +1,63 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**
+
+- [Changelog](#changelog)
+  - [Breaking changes from 1.* to 2.*](#breaking-changes-from-1-to-2)
+  - [Version 2.*](#version-2)
+    - [next](#next)
+    - [2.1.2](#212)
+    - [2.1.1](#211)
+    - [2.1.0](#210)
+    - [2.0.2](#202)
+    - [2.0.1](#201)
+    - [2.0.0](#200)
+  - [Version 1.*](#version-1)
+    - [1.4.0](#140)
+    - [1.3.0](#130)
+    - [1.2.1](#121)
+    - [1.2.0](#120)
+    - [1.1.0](#110)
+    - [1.0.0](#100)
+  - [Version 0.*](#version-0)
+    - [0.2.0](#020)
+    - [0.1.7](#017)
+    - [0.1.6](#016)
+    - [0.1.5](#015)
+    - [0.1.4](#014)
+    - [0.1.3](#013)
+    - [0.1.2](#012)
+    - [0.1.1](#011)
+    - [0.1.0](#010)
+    - [0.0.25](#0025)
+    - [0.0.24](#0024)
+    - [0.0.23](#0023)
+    - [0.0.22](#0022)
+    - [0.0.21](#0021)
+    - [0.0.20](#0020)
+    - [0.0.19](#0019)
+    - [0.0.18](#0018)
+    - [0.0.17](#0017)
+    - [0.0.16](#0016)
+    - [0.0.15](#0015)
+    - [0.0.14](#0014)
+    - [0.0.13](#0013)
+    - [0.0.12](#0012)
+    - [0.0.11](#0011)
+    - [0.0.10](#0010)
+    - [0.0.9](#009)
+    - [0.0.8](#008)
+    - [0.0.7](#007)
+    - [0.0.6](#006)
+    - [0.0.5](#005)
+    - [0.0.4](#004)
+    - [0.0.3](#003)
+    - [0.0.2](#002)
+    - [0.0.1](#001)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Changelog
-
-### next
-
-- Updated scripts for extracting stats adding also the information whether the users have enabled the survey app
-- Added script for extracting information on app usage by the users
-- Updated to Project template version `4.6.0`
 
 ## Breaking changes from 1.* to 2.* 
 
@@ -39,6 +92,12 @@
 * The keys `items` and `transactions` have been removed from the analytic result contents.
 
 ## Version 2.*
+
+### next
+
+- Updated scripts for extracting stats adding also the information whether the users have enabled the survey app
+- Added script for extracting information on app usage by the users
+- Updated to Project template version `4.6.0`
 
 ### 2.1.2
 
