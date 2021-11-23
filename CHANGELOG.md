@@ -4,6 +4,7 @@
 
 - Updated scripts for extracting stats adding also the information whether the users have enabled the survey app
 - Added script for extracting information on app usage by the users
+- Updated to Project template version `4.6.0`
 
 ## Breaking changes from 1.* to 2.* 
 
