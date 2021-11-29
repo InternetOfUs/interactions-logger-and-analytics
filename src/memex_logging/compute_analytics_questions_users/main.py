@@ -51,6 +51,11 @@ TYPE_NOTIFICATION_MESSAGE = "notification"
 TYPE_TEXT_CONTENT_REQUEST = "text"
 TYPE_ACTION_CONTENT_REQUEST = "action"
 
+# callback message types
+LABEL_QUESTION_TO_ANSWER_MESSAGE = "QuestionToAnswerMessage"
+LABEL_ANSWERED_QUESTION_MESSAGE = "AnsweredQuestionMessage"
+LABEL_ANSWERED_PICKED_MESSAGE = "AnsweredPickedMessage"
+
 # transaction labels
 LABEL_CREATE_TASK_TRANSACTION = "CREATE_TASK"
 LABEL_ANSWER_TRANSACTION = "answerTransaction"
@@ -59,6 +64,19 @@ LABEL_REPORT_QUESTION_TRANSACTION = "reportQuestionTransaction"
 LABEL_BEST_ANSWER_TRANSACTION = "bestAnswerTransaction"
 LABEL_MORE_ANSWER_TRANSACTION = "moreAnswerTransaction"
 LABEL_REPORT_ANSWER_TRANSACTION = "reportAnswerTransaction"
+
+
+def reconstruct_string(raw_text: str) -> str:
+    """
+    json.loads is used to reconstruct non-ascii characters previously encoded using json.dumps
+    emojize it used to reconstruct emojies previously encoded using demojize
+    """
+    try:
+        decoded_text = json.loads(raw_text)
+    except JSONDecodeError:
+        decoded_text = raw_text
+
+    return emojize(str(decoded_text), use_aliases=True)
 
 
 if __name__ == '__main__':
@@ -165,7 +183,21 @@ if __name__ == '__main__':
 
     tasks = task_manager_interface.get_all_tasks(app_id=args.app_id, creation_from=creation_from, creation_to=creation_to)
     tasks_file = open(args.task_file, "w")
-    json.dump([task.to_repr() for task in tasks], tasks_file, ensure_ascii=False, indent=2)  # TODO we should use json.loads and emojize where needed
+    raw_tasks = []
+    for task in tasks:
+        task.goal.name = reconstruct_string(task.goal.name)
+        for transaction in task.transactions:
+            if transaction.label == LABEL_ANSWER_TRANSACTION and transaction.attributes.get("answer"):
+                transaction.attributes["answer"] = reconstruct_string(transaction.attributes["answer"])
+            if transaction.label == LABEL_BEST_ANSWER_TRANSACTION and transaction.attributes.get("reason"):
+                transaction.attributes["reason"] = reconstruct_string(transaction.attributes["reason"])
+            for message in transaction.messages:
+                if message.label in [LABEL_QUESTION_TO_ANSWER_MESSAGE, LABEL_ANSWERED_QUESTION_MESSAGE, LABEL_ANSWERED_PICKED_MESSAGE] and message.attributes.get("question"):
+                    message.attributes["question"] = reconstruct_string(message.attributes["question"])
+                if message.label == LABEL_ANSWERED_QUESTION_MESSAGE and message.attributes.get("answer"):
+                    message.attributes["answer"] = reconstruct_string(message.attributes["answer"])
+        raw_tasks.append(task.to_repr())
+    json.dump(raw_tasks, tasks_file, ensure_ascii=False, indent=2)
     tasks_file.close()
     analytics_file_writer.writerow(["questions", len(tasks), "The number of questions asked by the users"])
 
@@ -219,20 +251,13 @@ if __name__ == '__main__':
             if transaction.label == LABEL_BEST_ANSWER_TRANSACTION:
                 chosen_answer_id = transaction.attributes.get("transactionId")
 
-        try:
-            question = json.loads(task.goal.name)
-        except JSONDecodeError:
-            question = task.goal.name
-
+        question = reconstruct_string(task.goal.name)
         if chosen_answer_id:
-            try:
-                answer = json.loads(id_answer_map[chosen_answer_id])
-            except JSONDecodeError:
-                answer = id_answer_map[chosen_answer_id]
+            answer = reconstruct_string(id_answer_map[chosen_answer_id])
         else:
             answer = None
 
-        questions_file_writer.writerow([emojize(str(question), use_aliases=True), emojize(str(answer), use_aliases=True) if answer is not None else None])
+        questions_file_writer.writerow([question, answer])
 
     questions_file.close()
 
@@ -285,5 +310,12 @@ if __name__ == '__main__':
         messages.extend([Message.from_repr(message) for message in logger_operations.get_messages(message.timestamp, creation_to, max_size=10000)])
 
     messages_file = open(args.message_file, "w")
-    json.dump([message.to_repr() for message in messages], messages_file, ensure_ascii=False, indent=2)
+    raw_messages = []
+    for message in messages:
+        if message.metadata.get("question"):
+            message.metadata["question"] = reconstruct_string(message.metadata["question"])
+        if message.metadata.get("answer"):
+            message.metadata["answer"] = reconstruct_string(message.metadata["answer"])
+        raw_messages.append(message.to_repr())
+    json.dump(raw_messages, messages_file, ensure_ascii=False, indent=2)
     messages_file.close()

@@ -95,13 +95,13 @@
 
 ### next
 
-- Updated scripts for extracting stats adding also the information whether the users have enabled the survey app
-- Added script for extracting information on app usage by the users
-- Updated to Project template version `4.6.1`
+- Updated scripts for extracting stats adding also the information whether the users have enabled the survey app.
+- Added script for extracting information on app usage by the users.
+- Updated to Project template version `4.6.1`.
 
 ### 2.1.2
 
-* Updated common models to version `3.1.0` in order to fix the representation errors due to the old Norm model used in the library
+* Updated common models to version `3.1.0` in order to fix the representation errors due to the old Norm model used in the library.
 
 ### 2.1.1
 
