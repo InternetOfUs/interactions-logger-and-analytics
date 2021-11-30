@@ -150,17 +150,14 @@ Alternatively to the `TIME_RANGE` arbitrary start and end time could be set usin
 
 The script for getting the association between the id and the email of users allows to set the following environment variables:
 
-* `FILE`: the path of the csv/tsv file where to store the id-email associations, it can also be set using the argument `-f` or `--file` when manually running the Python service;
+* `OUTPUT_FILE`: the path of csv/tsv file where to store the users apps usage, it can also be set using the argument `-o` or `--output` when manually running the Python service;
 * `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
-* `AAU_BOT`: the id of the we@AAU chatbot from which take the users, it can also be set using the argument `-aau` or `--aau_id` when manually running the Python service;
-* `LSE_BOT`: the id of the we@LSE chatbot from which take the users, it can also be set using the argument `-lse` or `--lse_id` when manually running the Python service;
-* `NUM_BOT`: the id of the we@NUM chatbot from which take the users, it can also be set using the argument `-num` or `--num_id` when manually running the Python service;
-* `UC_BOT`: the id of the we@UC chatbot from which take the users, it can also be set using the argument `-uc` or `--uc_id` when manually running the Python service;
-* `UNITN_BOT`: the id of the we@UniTN chatbot from which take the users, it can also be set using the argument `-unitn` or `--unitn_id` when manually running the Python service;
+* `APP_IDS`: the ids of the chatbots from which take the users. The ids should be separated by `;`, it can also be set using the argument `-ai` or `--app_ids` when manually running the Python service;
 * `ILOG_ID`: the id of the ilog application to check if the user has enabled it or not, it can also be set using the argument `-ii` or `--ilog_id` when manually running the Python service;
 * `SURVEY_ID`: the id of the survey application to check if the user has enabled it or not, it can also be set using the argument `-si` or `--survey_id` when manually running the Python service;
-* `DUMP`: the path of csv file with the dump of the updated user profiles, it can also be set using the argument `-d` or `--dump` when manually running the Python service;
+* `USER_UPDATES_DUMP`: the path of csv/tsv file with the dump of the user that updated the profile, it can also be set using the argument `-u` or `--updates` when manually running the Python service;
+* `USER_FAILURES_DUMP` (optional): the path of csv/tsv file with the dump of the user profiles that failed to update the profile, it can also be set using the argument `-f` or `--failures` when manually running the Python service;
 * `TIME_RANGE` (optional): the temporal range in which compute the analytics, example of allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
 
 Alternatively to the `TIME_RANGE` arbitrary start and end time could be set using the following environment variables:
