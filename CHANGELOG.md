@@ -34,6 +34,10 @@
 
 ## Version 2.*
 
+### next
+
+* Updated queries used in count computations
+
 ### 2.1.2
 
 * Updated common models to version `3.1.0` in order to fix the representation errors due to the old Norm model used in the library
