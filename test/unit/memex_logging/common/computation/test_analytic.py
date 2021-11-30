@@ -174,12 +174,12 @@ class TestAnalyticComputation(TestCase):
         ], gender_segmentation.segments)
 
     def test_compute_request_messages(self):
-        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}}})
+        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 0}}})
         request_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "requests"))
         self.assertIsInstance(request_messages, CountResult)
         self.assertEqual(0, request_messages.count)
 
-        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': [{'key': 'message_id', 'doc_count': 1}]}}})
+        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 1}}})
         request_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "requests"))
         self.assertIsInstance(request_messages, CountResult)
         self.assertEqual(1, request_messages.count)
@@ -209,53 +209,53 @@ class TestAnalyticComputation(TestCase):
         self.assertEqual([Segmentation("text", 1)], request_message_segmentation.segments)
 
     # def test_compute_bot_messages(self):
-    #     self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}}})
+    #     self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 0}}})
     #     bot_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "from_bot"))
     #     self.assertIsInstance(bot_messages, CountResult)
     #     self.assertEqual(0, bot_messages.count)
     #
     #     self.es.search = Mock(side_effect=[
-    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': [{'key': 'message_id', 'doc_count': 1}]}}},
-    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}}}
+    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 1}}},
+    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 0}}}
     #     ])
     #     bot_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "from_bot"), )
     #     self.assertIsInstance(bot_messages, CountResult)
     #     self.assertEqual(1, bot_messages.count)
     #
     #     self.es.search = Mock(side_effect=[
-    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}}},
-    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': [{'key': 'message_id', 'doc_count': 1}]}}}
+    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 0}}},
+    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 1}}}
     #     ])
     #     bot_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "from_bot"))
     #     self.assertIsInstance(bot_messages, CountResult)
     #     self.assertEqual(1, bot_messages.count)
     #
     #     self.es.search = Mock(side_effect=[
-    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': [{'key': 'message_id1', 'doc_count': 1}]}}},
-    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': [{'key': 'message_id2', 'doc_count': 1}]}}}
+    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 1}}},
+    #         {'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 1}}}
     #     ])
     #     bot_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "from_bot"))
     #     self.assertIsInstance(bot_messages, CountResult)
     #     self.assertEqual(2, bot_messages.count)
 
     def test_compute_response_messages(self):
-        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}}})
+        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 0}}})
         response_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "responses"))
         self.assertIsInstance(response_messages, CountResult)
         self.assertEqual(0, response_messages.count)
 
-        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': [{'key': 'message_id', 'doc_count': 1}]}}})
+        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 1}}})
         response_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "responses"))
         self.assertIsInstance(response_messages, CountResult)
         self.assertEqual(1, response_messages.count)
 
     def test_compute_notification_messages(self):
-        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': []}}})
+        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 0, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 0}}})
         notification_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "notifications"))
         self.assertIsInstance(notification_messages, CountResult)
         self.assertEqual(0, notification_messages.count)
 
-        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'terms_count': {'doc_count_error_upper_bound': 0, 'sum_other_doc_count': 0, 'buckets': [{'key': 'message_id', 'doc_count': 1}]}}})
+        self.es.search = Mock(return_value={'took': 1, 'timed_out': False, '_shards': {'total': 1, 'successful': 1, 'skipped': 0, 'failed': 0}, 'hits': {'total': {'value': 1, 'relation': 'eq'}, 'max_score': None, 'hits': []}, 'aggregations': {'type_count': {'value': 1}}})
         notification_messages = self.analytic_computation.get_result(MessageCountDescriptor(self.time_range, "project", "notifications"))
         self.assertIsInstance(notification_messages, CountResult)
         self.assertEqual(1, notification_messages.count)
