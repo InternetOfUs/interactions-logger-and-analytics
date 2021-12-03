@@ -8,6 +8,10 @@
   - [Required Python Packages](#required-python-packages)
   - [Elasticsearch Migrator](#elasticsearch-migrator)
   - [Environment variables](#environment-variables)
+    - [Web Service](#web-service)
+    - [Script main](#script-main)
+    - [Script id_email](#script-id_email)
+    - [Script apps_usage](#script-apps_usage)
 - [Usage](#usage)
   - [Web service](#web-service)
   - [Script for computing the analytics](#script-for-computing-the-analytics)
@@ -82,6 +86,8 @@ In order to execute the migrations, configure the following environment variable
 
 ### Environment variables
 
+#### Web Service
+
 The web service allows to set the following environment variables:
 
 * `WS_HOST` (optional, the default value is `0.0.0.0`): the host where the web service is going to be available;
@@ -102,6 +108,8 @@ Optionally is it possible to configure sentry in order to track any problem. Jus
 * `SENTRY_ENVIRONMENT` (optional) If set, sentry will associate the events to the given environment (ex. `production`, `staging`)
 
 
+#### Script main
+
 The script for computing the analytics, questions, users and for extracting the tasks and the messages allows to set the following environment variables:
 
 * `ANALYTIC_FILE`: the path of the csv/tsv file where to store the analytics, it can also be set using the argument `-af` or `--analytic_file` when manually running the Python service;
@@ -112,14 +120,17 @@ The script for computing the analytics, questions, users and for extracting the 
 * `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
 * `APP_ID`: the id of the application in which compute the analytics, it can also be set using the argument `-ai` or `--app_id` when manually running the Python service;
-* `PROJECT`: the project for which to compute the analytics, it can also be set using the argument `-p` or `--project` when manually running the Python service;
-* `TIME_RANGE` (optional, the default value is `30D`): The temporal range in which compute the analytics, the allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
+* `ILOG_ID`: the id of the ilog application to check if the user has enabled it or not, it can also be set using the argument `-ii` or `--ilog_id` when manually running the Python service;
+* `SURVEY_ID`: the id of the survey application to check if the user has enabled it or not, it can also be set using the argument `-si` or `--survey_id` when manually running the Python service;
+* `TIME_RANGE`: the temporal range in which compute the analytics, example of allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
 
 Alternatively to the `TIME_RANGE` arbitrary start and end time could be set using the following environment variables:
 
-* `START_TIME`: The start time from which compute the analytics, must be in iso format, it can also be set using the argument `-s` or `--start` when manually running the Python service;
-* `END_TIME`: The end time up to which compute the analytics, must be in iso format, it can also be set using the argument `-e` or `--end` when manually running the Python service.
+* `START_TIME`: the start time from which compute the analytics, must be in iso format, it can also be set using the argument `-s` or `--start` when manually running the Python service;
+* `END_TIME`: the end time up to which compute the analytics, must be in iso format, it can also be set using the argument `-e` or `--end` when manually running the Python service.
 
+
+#### Script id_email
 
 The script for getting the association between the id and the email of users allows to set the following environment variables:
 
@@ -127,6 +138,32 @@ The script for getting the association between the id and the email of users all
 * `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
 * `APP_ID`: the id of the application in which compute the analytics, it can also be set using the argument `-ai` or `--app_id` when manually running the Python service;
+* `TIME_RANGE` (optional): the temporal range in which compute the analytics, example of allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
+
+Alternatively to the `TIME_RANGE` arbitrary start and end time could be set using the following environment variables:
+
+* `START_TIME`: the start time from which compute the analytics, must be in iso format, it can also be set using the argument `-s` or `--start` when manually running the Python service;
+* `END_TIME`: the end time up to which compute the analytics, must be in iso format, it can also be set using the argument `-e` or `--end` when manually running the Python service.
+
+
+#### Script apps_usage
+
+The script for getting the association between the id and the email of users allows to set the following environment variables:
+
+* `OUTPUT_FILE`: the path of csv/tsv file where to store the users apps usage, it can also be set using the argument `-o` or `--output` when manually running the Python service;
+* `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
+* `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
+* `APP_IDS`: the ids of the chatbots from which take the users. The ids should be separated by `;`, it can also be set using the argument `-ai` or `--app_ids` when manually running the Python service;
+* `ILOG_ID`: the id of the ilog application to check if the user has enabled it or not, it can also be set using the argument `-ii` or `--ilog_id` when manually running the Python service;
+* `SURVEY_ID`: the id of the survey application to check if the user has enabled it or not, it can also be set using the argument `-si` or `--survey_id` when manually running the Python service;
+* `USER_UPDATES_DUMP`: the path of csv/tsv file with the dump of the user that updated the profile, it can also be set using the argument `-u` or `--updates` when manually running the Python service;
+* `USER_FAILURES_DUMP` (optional): the path of csv/tsv file with the dump of the user profiles that failed to update the profile, it can also be set using the argument `-f` or `--failures` when manually running the Python service;
+* `TIME_RANGE` (optional): the temporal range in which compute the analytics, example of allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
+
+Alternatively to the `TIME_RANGE` arbitrary start and end time could be set using the following environment variables:
+
+* `START_TIME`: the start time from which compute the analytics, must be in iso format, it can also be set using the argument `-s` or `--start` when manually running the Python service;
+* `END_TIME`: the end time up to which compute the analytics, must be in iso format, it can also be set using the argument `-e` or `--end` when manually running the Python service.
 
 
 ## Usage

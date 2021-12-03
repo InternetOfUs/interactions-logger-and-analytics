@@ -19,7 +19,9 @@ import csv
 import json
 import logging.config
 import os
+from json import JSONDecodeError
 
+from emoji import emojize
 from wenet.interface.client import ApikeyClient
 from wenet.interface.hub import HubInterface
 from wenet.interface.incentive_server import IncentiveServerInterface
@@ -38,7 +40,7 @@ from memex_logging.common.utils import Utils
 
 
 logging.config.dictConfig(get_logging_configuration("compute_analytics"))
-logger = logging.getLogger("compute_analytics.main")
+logger = logging.getLogger("compute_analytics_questions_users.main")
 
 # message types
 TYPE_REQUEST_MESSAGE = "request"
@@ -49,6 +51,11 @@ TYPE_NOTIFICATION_MESSAGE = "notification"
 TYPE_TEXT_CONTENT_REQUEST = "text"
 TYPE_ACTION_CONTENT_REQUEST = "action"
 
+# callback message types
+LABEL_QUESTION_TO_ANSWER_MESSAGE = "QuestionToAnswerMessage"
+LABEL_ANSWERED_QUESTION_MESSAGE = "AnsweredQuestionMessage"
+LABEL_ANSWERED_PICKED_MESSAGE = "AnsweredPickedMessage"
+
 # transaction labels
 LABEL_CREATE_TASK_TRANSACTION = "CREATE_TASK"
 LABEL_ANSWER_TRANSACTION = "answerTransaction"
@@ -57,6 +64,19 @@ LABEL_REPORT_QUESTION_TRANSACTION = "reportQuestionTransaction"
 LABEL_BEST_ANSWER_TRANSACTION = "bestAnswerTransaction"
 LABEL_MORE_ANSWER_TRANSACTION = "moreAnswerTransaction"
 LABEL_REPORT_ANSWER_TRANSACTION = "reportAnswerTransaction"
+
+
+def reconstruct_string(raw_text: str) -> str:
+    """
+    json.loads is used to reconstruct non-ascii characters previously encoded using json.dumps
+    emojize it used to reconstruct emojies previously encoded using demojize
+    """
+    try:
+        decoded_text = json.loads(raw_text)
+    except JSONDecodeError:
+        decoded_text = raw_text
+
+    return emojize(str(decoded_text), use_aliases=True)
 
 
 if __name__ == '__main__':
@@ -70,9 +90,9 @@ if __name__ == '__main__':
     arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
     arg_parser.add_argument("-ai", "--app_id", type=str, default=os.getenv("APP_ID"), help="The id of the application in which compute the analytics")
-    arg_parser.add_argument("-il", "--ilog", type=str, default=os.getenv("ILOG"), help="The id of the ilog application to check if the user has enabled it or not")
-    arg_parser.add_argument("-p", "--project", type=str, default=os.getenv("PROJECT"), help="The project for which to compute the analytics")
-    arg_parser.add_argument("-r", "--range", type=str, default=os.getenv("TIME_RANGE", "30D"), help="The temporal range in which compute the analytics")
+    arg_parser.add_argument("-ii", "--ilog_id", type=str, default=os.getenv("ILOG_ID"), help="The id of the ilog application to check if the user has enabled it or not")
+    arg_parser.add_argument("-si", "--survey_id", type=str, default=os.getenv("SURVEY_ID"), help="The id of the survey application to check if the user has enabled it or not")
+    arg_parser.add_argument("-r", "--range", type=str, default=os.getenv("TIME_RANGE"), help="The temporal range in which compute the analytics")
     arg_parser.add_argument("-s", "--start", type=str, default=os.getenv("START_TIME"), help="The start time from which compute the analytics")
     arg_parser.add_argument("-e", "--end", type=str, default=os.getenv("END_TIME"), help="The end time up to which compute the analytics")
     args = arg_parser.parse_args()
@@ -82,12 +102,15 @@ if __name__ == '__main__':
     hub_interface = HubInterface(client, args.instance)
     profile_manager_interface = ProfileManagerInterface(client, args.instance)
     incentive_server_interface = IncentiveServerInterface(client, args.instance)
-    logger_operations = LoggingUtility(args.instance + "/logger", args.project, {"x-wenet-component-apikey": args.apikey})
+    logger_operations = LoggingUtility(args.instance + "/logger", args.app_id, {"x-wenet-component-apikey": args.apikey})
 
     if args.start and args.end:
         time_range = FixedTimeWindow.from_isoformat(args.start, args.end)
-    else:
+    elif args.range:
         time_range = MovingTimeWindow(args.range)
+    else:
+        logger.warning(f"Nor time range or start and end time are defined")
+        raise ValueError(f"Nor time range or start and end time are defined")
 
     creation_from, creation_to = Utils.extract_range_timestamps(time_range)
 
@@ -103,29 +126,28 @@ if __name__ == '__main__':
         raise ValueError(f"For the analytics, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     analytics_file_writer.writerow(["app id", args.app_id])
-    analytics_file_writer.writerow(["project", args.project])
     analytics_file_writer.writerow(["from", creation_from])
     analytics_file_writer.writerow(["to", creation_to])
     analytics_file_writer.writerow([])
     analytics_file_writer.writerow(["metric", "count", "description"])
 
-    total_users = UserCountDescriptor(time_range, args.project, "total")
+    total_users = UserCountDescriptor(time_range, args.app_id, "total")
     total_users_result = CountResult.from_repr(logger_operations.get_analytic_result(total_users))
     analytics_file_writer.writerow(["total users", total_users_result.count, "The total number of users of the application"])
 
-    active_users = UserCountDescriptor(time_range, args.project, "active")
+    active_users = UserCountDescriptor(time_range, args.app_id, "active")
     active_users_result = CountResult.from_repr(logger_operations.get_analytic_result(active_users))
     analytics_file_writer.writerow(["active users", active_users_result.count, "The number of users who used the application"])
 
-    engaged_users = UserCountDescriptor(time_range, args.project, "engaged")
+    engaged_users = UserCountDescriptor(time_range, args.app_id, "engaged")
     engaged_users_result = CountResult.from_repr(logger_operations.get_analytic_result(engaged_users))
     analytics_file_writer.writerow(["engaged users", engaged_users_result.count, "The number of users who received a notification from the platform (incentive, prompt, badge, ..)"])
 
-    new_users = UserCountDescriptor(time_range, args.project, "new")
+    new_users = UserCountDescriptor(time_range, args.app_id, "new")
     new_users_result = CountResult.from_repr(logger_operations.get_analytic_result(new_users))
     analytics_file_writer.writerow(["new users", new_users_result.count, "The number of new users who activated the application during the period of this analysis"])
 
-    segmentation_messages = MessageSegmentationDescriptor(time_range, args.project, "all")
+    segmentation_messages = MessageSegmentationDescriptor(time_range, args.app_id, "all")
     segmentation_messages_result = SegmentationResult.from_repr(logger_operations.get_analytic_result(segmentation_messages))
 
     total_messages = 0
@@ -141,7 +163,7 @@ if __name__ == '__main__':
         if TYPE_NOTIFICATION_MESSAGE == segmentation.segmentation_type:
             notification_messages = segmentation.count
 
-    segmentation_requests = MessageSegmentationDescriptor(time_range, args.project, "requests")
+    segmentation_requests = MessageSegmentationDescriptor(time_range, args.app_id, "requests")
     segmentation_requests_result = SegmentationResult.from_repr(logger_operations.get_analytic_result(segmentation_requests))
 
     text_requests = 0
@@ -161,7 +183,21 @@ if __name__ == '__main__':
 
     tasks = task_manager_interface.get_all_tasks(app_id=args.app_id, creation_from=creation_from, creation_to=creation_to)
     tasks_file = open(args.task_file, "w")
-    json.dump([task.to_repr() for task in tasks], tasks_file, ensure_ascii=False, indent=2)
+    raw_tasks = []
+    for task in tasks:
+        task.goal.name = reconstruct_string(task.goal.name)
+        for transaction in task.transactions:
+            if transaction.label == LABEL_ANSWER_TRANSACTION and transaction.attributes.get("answer"):
+                transaction.attributes["answer"] = reconstruct_string(transaction.attributes["answer"])
+            if transaction.label == LABEL_BEST_ANSWER_TRANSACTION and transaction.attributes.get("reason"):
+                transaction.attributes["reason"] = reconstruct_string(transaction.attributes["reason"])
+            for message in transaction.messages:
+                if message.label in [LABEL_QUESTION_TO_ANSWER_MESSAGE, LABEL_ANSWERED_QUESTION_MESSAGE, LABEL_ANSWERED_PICKED_MESSAGE] and message.attributes.get("question"):
+                    message.attributes["question"] = reconstruct_string(message.attributes["question"])
+                if message.label == LABEL_ANSWERED_QUESTION_MESSAGE and message.attributes.get("answer"):
+                    message.attributes["answer"] = reconstruct_string(message.attributes["answer"])
+        raw_tasks.append(task.to_repr())
+    json.dump(raw_tasks, tasks_file, ensure_ascii=False, indent=2)
     tasks_file.close()
     analytics_file_writer.writerow(["questions", len(tasks), "The number of questions asked by the users"])
 
@@ -200,7 +236,6 @@ if __name__ == '__main__':
         raise ValueError(f"For the questions, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     questions_file_writer.writerow(["app id", args.app_id])
-    questions_file_writer.writerow(["project", args.project])
     questions_file_writer.writerow(["from", creation_from])
     questions_file_writer.writerow(["to", creation_to])
     questions_file_writer.writerow(["total questions", len(tasks)])
@@ -215,7 +250,14 @@ if __name__ == '__main__':
                 id_answer_map[transaction.id] = transaction.attributes.get("answer")
             if transaction.label == LABEL_BEST_ANSWER_TRANSACTION:
                 chosen_answer_id = transaction.attributes.get("transactionId")
-        questions_file_writer.writerow([task.goal.name, id_answer_map[chosen_answer_id] if chosen_answer_id else None])
+
+        question = reconstruct_string(task.goal.name)
+        if chosen_answer_id:
+            answer = reconstruct_string(id_answer_map[chosen_answer_id])
+        else:
+            answer = None
+
+        questions_file_writer.writerow([question, answer])
 
     questions_file.close()
 
@@ -231,14 +273,16 @@ if __name__ == '__main__':
         raise ValueError(f"For the users, you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     users_file_writer.writerow(["app id", args.app_id])
-    users_file_writer.writerow(["project", args.project])
-    user_ids = hub_interface.get_user_ids_for_app(args.app_id)
+    users_file_writer.writerow(["from", creation_from])
+    users_file_writer.writerow(["to", creation_to])
+    user_ids = hub_interface.get_user_ids_for_app(args.app_id, from_datetime=creation_from, to_datetime=creation_to)
     users_file_writer.writerow(["total users", len(user_ids)])
     users_file_writer.writerow([])
-    users_file_writer.writerow(["name", "surname", "email", "gender", "incentive cohort", "ilog"])
+    users_file_writer.writerow(["name", "surname", "email", "gender", "incentive cohort", "ilog", "survey"])
 
     cohorts = incentive_server_interface.get_cohorts()
-    ilog_user_ids = hub_interface.get_user_ids_for_app(args.ilog)
+    ilog_user_ids = hub_interface.get_user_ids_for_app(args.ilog_id)
+    survey_user_ids = hub_interface.get_user_ids_for_app(args.survey_id)
     for user_id in user_ids:
         user = profile_manager_interface.get_user_profile(user_id)
         user_cohort = None
@@ -251,13 +295,9 @@ if __name__ == '__main__':
                         user_cohort = "incentives and badges"
                     break
 
-        has_user_enabled_ilog = "no"
-        for ilog_user_id in ilog_user_ids:
-            if ilog_user_id == user_id:
-                has_user_enabled_ilog = "yes"
-                break
-
-        users_file_writer.writerow([user.name.first, user.name.last, user.email, user.gender.name.lower() if user.gender else None, user_cohort, has_user_enabled_ilog])
+        has_user_enabled_ilog = "yes" if user_id in ilog_user_ids else "no"
+        has_user_enabled_survey = "yes" if user_id in survey_user_ids else "no"
+        users_file_writer.writerow([user.name.first, user.name.last, user.email, user.gender.name.lower() if user.gender else None, user_cohort, has_user_enabled_ilog, has_user_enabled_survey])
         if not user.email:
             logger.warning(f"User [{user.profile_id}] does not have an associated email")
 
@@ -270,5 +310,12 @@ if __name__ == '__main__':
         messages.extend([Message.from_repr(message) for message in logger_operations.get_messages(message.timestamp, creation_to, max_size=10000)])
 
     messages_file = open(args.message_file, "w")
-    json.dump([message.to_repr() for message in messages], messages_file, ensure_ascii=False, indent=2)
+    raw_messages = []
+    for message in messages:
+        if message.metadata.get("question"):
+            message.metadata["question"] = reconstruct_string(message.metadata["question"])
+        if message.metadata.get("answer"):
+            message.metadata["answer"] = reconstruct_string(message.metadata["answer"])
+        raw_messages.append(message.to_repr())
+    json.dump(raw_messages, messages_file, ensure_ascii=False, indent=2)
     messages_file.close()
