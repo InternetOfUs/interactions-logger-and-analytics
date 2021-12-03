@@ -5,7 +5,7 @@
 - [Changelog](#changelog)
   - [Breaking changes from 1.* to 2.*](#breaking-changes-from-1-to-2)
   - [Version 2.*](#version-2)
-    - [next](#next)
+    - [2.2.0](#220)
     - [2.1.2](#212)
     - [2.1.1](#211)
     - [2.1.0](#210)
@@ -93,7 +93,7 @@
 
 ## Version 2.*
 
-### next
+### 2.2.0
 
 * Updated queries used in count computations.
 * Updated scripts for extracting stats adding also the information whether the users have enabled the survey app.
