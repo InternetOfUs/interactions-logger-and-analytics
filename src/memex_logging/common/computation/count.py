@@ -385,10 +385,9 @@ class CountComputation:
                 }
             },
             "aggs": {
-                "terms_count": {
-                    "terms": {
-                        "field": "messageId.keyword",
-                        "size": 65535
+                "type_count": {
+                    "cardinality": {
+                        "field": "messageId.keyword"
                     }
                 }
             }
@@ -397,13 +396,8 @@ class CountComputation:
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
         total_counter = 0
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-            for item in response['aggregations']['terms_count']['buckets']:
-                total_counter = total_counter + int(item['doc_count'])
-
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            total_counter = response['aggregations']['type_count']['value']
 
         return CountResult(total_counter, datetime.now(), min_bound, max_bound)
 
@@ -437,10 +431,9 @@ class CountComputation:
     #             }
     #         },
     #         "aggs": {
-    #             "terms_count": {
-    #                 "terms": {
-    #                     "field": "messageId.keyword",
-    #                     "size": 65535
+    #             "type_count": {
+    #                 "cardinality": {
+    #                     "field": "messageId.keyword"
     #                 }
     #             }
     #         }
@@ -449,13 +442,8 @@ class CountComputation:
     #     index = Utils.generate_index(data_type="message")
     #     response = self.es.search(index=index, body=body, size=0)
     #     total_len = 0
-    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-    #         for item in response['aggregations']['terms_count']['buckets']:
-    #             total_len = total_len + item['doc_count']
-    #
-    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-    #         if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-    #             logger.warning("The number of buckets is limited at `65535` but the number of response messages is higher")
+    #     if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+    #         total_len = total_len + response['aggregations']['type_count']['value']
     #
     #     body = {
     #         "query": {
@@ -485,10 +473,9 @@ class CountComputation:
     #             }
     #         },
     #         "aggs": {
-    #             "terms_count": {
-    #                 "terms": {
-    #                     "field": "messageId.keyword",
-    #                     "size": 65535
+    #             "type_count": {
+    #                 "cardinality": {
+    #                     "field": "messageId.keyword"
     #                 }
     #             }
     #         }
@@ -496,13 +483,8 @@ class CountComputation:
     #
     #     index = Utils.generate_index(data_type="message")
     #     response = self.es.search(index=index, body=body, size=0)
-    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-    #         for item in response['aggregations']['terms_count']['buckets']:
-    #             total_len = total_len + item['doc_count']
-    #
-    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-    #         if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-    #             logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
+    #     if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+    #         total_len = total_len + response['aggregations']['type_count']['value']
     #
     #     return CountResult(total_len, datetime.now(), min_bound, max_bound)
 
@@ -536,10 +518,9 @@ class CountComputation:
                 }
             },
             "aggs": {
-                "terms_count": {
-                    "terms": {
-                        "field": "messageId.keyword",
-                        "size": 65535
+                "type_count": {
+                    "cardinality": {
+                        "field": "messageId.keyword"
                     }
                 }
             }
@@ -547,16 +528,11 @@ class CountComputation:
 
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
-        total_len = 0
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-            for item in response['aggregations']['terms_count']['buckets']:
-                total_len = total_len + item['doc_count']
+        total_counter = 0
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            total_counter = response['aggregations']['type_count']['value']
 
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-                logger.warning("The number of buckets is limited at `65535` but the number of users is higher")
-
-        return CountResult(total_len, datetime.now(), min_bound, max_bound)
+        return CountResult(total_counter, datetime.now(), min_bound, max_bound)
 
     def _notification_messages(self, analytic: MessageCountDescriptor) -> CountResult:
         min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
@@ -588,10 +564,9 @@ class CountComputation:
                 }
             },
             "aggs": {
-                "terms_count": {
-                    "terms": {
-                        "field": "messageId.keyword",
-                        "size": 65535
+                "type_count": {
+                    "cardinality": {
+                        "field": "messageId.keyword"
                     }
                 }
             }
@@ -599,19 +574,14 @@ class CountComputation:
 
         index = Utils.generate_index(data_type="message")
         response = self.es.search(index=index, body=body, size=0)
-        total_len = 0
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-            for item in response['aggregations']['terms_count']['buckets']:
-                total_len = total_len + item['doc_count']
+        total_counter = 0
+        if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+            total_counter = response['aggregations']['type_count']['value']
 
-        if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-            if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-                logger.warning("The number of buckets is limited at `65535` but the number of notification messages is higher")
-
-        return CountResult(total_len, datetime.now(), min_bound, max_bound)
+        return CountResult(total_counter, datetime.now(), min_bound, max_bound)
 
     # def _unhandled_messages(self, analytic: MessageCountDescriptor) -> CountResult:
-    #     min_bound, max_bound = Utils.extract_range_timestamps(analytic.timespan)
+    #     min_bound, max_bound = Utils.extract_range_timestamps(analytic.time_span)
     #     body = {
     #         "query": {
     #             "bool": {
@@ -640,10 +610,9 @@ class CountComputation:
     #             }
     #         },
     #         "aggs": {
-    #             "terms_count": {
-    #                 "terms": {
-    #                     "field": "messageId.keyword",
-    #                     "size": 65535
+    #             "type_count": {
+    #                 "cardinality": {
+    #                     "field": "messageId.keyword"
     #                 }
     #             }
     #         }
@@ -651,16 +620,11 @@ class CountComputation:
     #
     #     index = Utils.generate_index(data_type="message")
     #     response = self.es.search(index=index, body=body, size=0)
-    #     total_len = 0
-    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'buckets' in response['aggregations']['terms_count']:
-    #         for item in response['aggregations']['terms_count']['buckets']:
-    #             total_len = total_len + item['doc_count']
+    #     total_counter = 0
+    #     if 'aggregations' in response and 'type_count' in response['aggregations'] and 'value' in response['aggregations']['type_count']:
+    #         total_counter = response['aggregations']['type_count']['value']
     #
-    #     if 'aggregations' in response and 'terms_count' in response['aggregations'] and 'sum_other_doc_count' in response['aggregations']['terms_count']:
-    #         if response['aggregations']['terms_count']['sum_other_doc_count'] != 0:
-    #             logger.warning("The number of buckets is limited at `65535` but the number of unhandled messages is higher")
-    #
-    #     return CountResult(total_len, datetime.now(), min_bound, max_bound)
+    #     return CountResult(total_counter, datetime.now(), min_bound, max_bound)
 
     def _total_tasks(self, analytic: TaskCountDescriptor) -> CountResult:
         """
