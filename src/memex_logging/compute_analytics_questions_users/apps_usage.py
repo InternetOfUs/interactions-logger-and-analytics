@@ -136,8 +136,11 @@ if __name__ == '__main__':
     app_ids = args.app_ids.split(";")
     apps = [hub_interface.get_app_details(app_id) for app_id in app_ids]
     apps_users = [hub_interface.get_user_ids_for_app(app_id, from_datetime=creation_from, to_datetime=creation_to) for app_id in app_ids]
+    apps_all_users = [hub_interface.get_user_ids_for_app(app_id) for app_id in app_ids]
     ilog_ids = hub_interface.get_user_ids_for_app(args.ilog_id, from_datetime=creation_from, to_datetime=creation_to)
+    ilog_all_ids = hub_interface.get_user_ids_for_app(args.ilog_id)
     survey_ids = hub_interface.get_user_ids_for_app(args.survey_id, from_datetime=creation_from, to_datetime=creation_to)
+    survey_all_ids = hub_interface.get_user_ids_for_app(args.survey_id)
 
     user_ids = []
     for app_users in apps_users:
@@ -151,16 +154,16 @@ if __name__ == '__main__':
     for user_id in user_ids:
         user = profile_manager_interface.get_user_profile(user_id)
         chatbots = ""
-        for i, app_users in enumerate(apps_users):
+        for i, app_users in enumerate(apps_all_users):
             if user_id in app_users:
                 chatbots = chatbots + ";" + apps[i].name if chatbots else apps[i].name
 
         user_info.append({
             "mail": user.email,
-            "survey": "yes" if user_id in survey_ids or user_id in user_profile_updates or user_id in user_profile_failures else "no",
+            "survey": "yes" if user_id in survey_all_ids or user_id in user_profile_updates or user_id in user_profile_failures else "no",
             "completed_survey": "yes" if user_id in user_profile_updates or user_id in user_profile_failures else "no",
             "chatbot": chatbots,
-            "ilog": "yes" if user_id in ilog_ids else "no"
+            "ilog": "yes" if user_id in ilog_all_ids else "no"
         })
 
     user_info = sorted(user_info, key=lambda x: x["chatbot"], reverse=True)
