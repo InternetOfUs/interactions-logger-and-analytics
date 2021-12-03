@@ -1139,7 +1139,7 @@ class LoggingUtility:
         else:
             raise ValueError("The log has not been logged")
 
-    def get_analytic_result(self, analytic: CommonAnalyticDescriptor, sleep_time: int = 1, number_of_trials: int = 10) -> dict:
+    def get_analytic_result(self, analytic: CommonAnalyticDescriptor, sleep_time: int = 1, number_of_trials: int = 10) -> Optional[dict]:
 
         json_payload = analytic.to_repr()
 
@@ -1155,9 +1155,13 @@ class LoggingUtility:
 
         for i in range(number_of_trials):
             sleep(sleep_time)
-            response = requests.get(api_point, headers=self._custom_headers, params={"id": analytic_id, "project": analytic.project})
-            if response.status_code == 200:
+            requests.post(api_point + "/compute", headers=self._custom_headers, params={"id": analytic_id})
+            sleep(sleep_time)
+            response = requests.get(api_point, headers=self._custom_headers, params={"id": analytic_id})
+            if response.status_code == 200 and json.loads(response.content)["result"] is not None:
                 break
+
+        requests.delete(api_point, headers={**headers, **self._custom_headers}, params={"id": analytic_id})
 
         if response.status_code == 200:
             return json.loads(response.content)["result"]
