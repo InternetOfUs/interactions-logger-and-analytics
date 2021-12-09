@@ -95,7 +95,8 @@
 
 ### next
 
-* Integrated information about the number of asked questions and given answers by the users and also the first and last usage of the bot
+* Integrated information about the number of asked questions and given answers by the users and also the first and last usage of the bot.
+* Updated to Project template version `4.6.2`.
 
 ### 2.2.0
 
