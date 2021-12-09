@@ -93,6 +93,10 @@
 
 ## Version 2.*
 
+### next
+
+* Integrated information about the number of asked questions and given answers by the users and also the first and last usage of the bot
+
 ### 2.2.0
 
 * Updated queries used in count computations.
