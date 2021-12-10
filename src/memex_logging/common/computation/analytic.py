@@ -35,13 +35,14 @@ logger = logging.getLogger("logger.common.analytic.analytic")
 
 class AnalyticComputation:
 
-    def __init__(self, es: Elasticsearch, wenet_interface: WeNet) -> None:
+    def __init__(self, es: Elasticsearch, wenet_interface: WeNet, cardinality_precision_threshold: int = 40000) -> None:
         self.es = es
         self.wenet_interface = wenet_interface
+        self.cardinality_precision_threshold = cardinality_precision_threshold
 
     def get_result(self, analytic: CommonAnalyticDescriptor) -> Optional[CommonAnalyticResult]:
         if isinstance(analytic, CountDescriptor):
-            count_computation = CountComputation(self.es, self.wenet_interface)
+            count_computation = CountComputation(self.es, self.wenet_interface, self.cardinality_precision_threshold)
             result = count_computation.get_result(analytic)
 
         elif isinstance(analytic, SegmentationDescriptor):
@@ -49,7 +50,7 @@ class AnalyticComputation:
             result = segmentation_computation.get_result(analytic)
 
         elif isinstance(analytic, AggregationDescriptor):
-            aggregation_computation = AggregationComputation(self.es)
+            aggregation_computation = AggregationComputation(self.es, self.cardinality_precision_threshold)
             result = aggregation_computation.get_result(analytic)
 
         else:

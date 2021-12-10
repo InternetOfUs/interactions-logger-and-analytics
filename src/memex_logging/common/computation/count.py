@@ -32,9 +32,10 @@ logger = logging.getLogger("logger.common.analytic.analytic")
 
 class CountComputation:
 
-    def __init__(self, es: Elasticsearch, wenet_interface: WeNet) -> None:
+    def __init__(self, es: Elasticsearch, wenet_interface: WeNet, cardinality_precision_threshold: int = 40000) -> None:
         self.es = es
         self.wenet_interface = wenet_interface
+        self.cardinality_precision_threshold = cardinality_precision_threshold
 
     def get_result(self, analytic: CountDescriptor) -> CountResult:
         if isinstance(analytic, UserCountDescriptor):
@@ -153,7 +154,8 @@ class CountComputation:
             "aggs": {
                 "type_count": {
                     "cardinality": {
-                        "field": "userId.keyword"
+                        "field": "userId.keyword",
+                        "precision_threshold": self.cardinality_precision_threshold
                     }
                 }
             }
@@ -199,7 +201,8 @@ class CountComputation:
             "aggs": {
                 "type_count": {
                     "cardinality": {
-                        "field": "userId.keyword"
+                        "field": "userId.keyword",
+                        "precision_threshold": self.cardinality_precision_threshold
                     }
                 }
             }
@@ -245,7 +248,8 @@ class CountComputation:
             "aggs": {
                 "type_count": {
                     "cardinality": {
-                        "field": "userId.keyword"
+                        "field": "userId.keyword",
+                        "precision_threshold": self.cardinality_precision_threshold
                     }
                 }
             }
@@ -387,7 +391,8 @@ class CountComputation:
             "aggs": {
                 "type_count": {
                     "cardinality": {
-                        "field": "messageId.keyword"
+                        "field": "messageId.keyword",
+                        "precision_threshold": self.cardinality_precision_threshold
                     }
                 }
             }
@@ -433,7 +438,8 @@ class CountComputation:
     #         "aggs": {
     #             "type_count": {
     #                 "cardinality": {
-    #                     "field": "messageId.keyword"
+    #                     "field": "messageId.keyword",
+    #                     "precision_threshold": self.cardinality_precision_threshold
     #                 }
     #             }
     #         }
@@ -475,7 +481,8 @@ class CountComputation:
     #         "aggs": {
     #             "type_count": {
     #                 "cardinality": {
-    #                     "field": "messageId.keyword"
+    #                     "field": "messageId.keyword",
+    #                     "precision_threshold": self.cardinality_precision_threshold
     #                 }
     #             }
     #         }
@@ -520,7 +527,8 @@ class CountComputation:
             "aggs": {
                 "type_count": {
                     "cardinality": {
-                        "field": "messageId.keyword"
+                        "field": "messageId.keyword",
+                        "precision_threshold": self.cardinality_precision_threshold
                     }
                 }
             }
@@ -566,7 +574,8 @@ class CountComputation:
             "aggs": {
                 "type_count": {
                     "cardinality": {
-                        "field": "messageId.keyword"
+                        "field": "messageId.keyword",
+                        "precision_threshold": self.cardinality_precision_threshold
                     }
                 }
             }
@@ -612,7 +621,8 @@ class CountComputation:
     #         "aggs": {
     #             "type_count": {
     #                 "cardinality": {
-    #                     "field": "messageId.keyword"
+    #                     "field": "messageId.keyword",
+    #                     "precision_threshold": self.cardinality_precision_threshold
     #                 }
     #             }
     #         }
@@ -731,7 +741,8 @@ class CountComputation:
             "aggs": {
                 "type_count": {
                     "cardinality": {
-                        "field": "conversationId.keyword"
+                        "field": "conversationId.keyword",
+                        "precision_threshold": self.cardinality_precision_threshold
                     }
                 }
             }
@@ -1023,7 +1034,8 @@ class CountComputation:
             "aggs": {
                 "type_count": {
                     "cardinality": {
-                        "field": "messageId.keyword"
+                        "field": "messageId.keyword",
+                        "precision_threshold": self.cardinality_precision_threshold
                     }
                 }
             }
@@ -1064,7 +1076,8 @@ class CountComputation:
             "aggs": {
                 "type_count": {
                     "cardinality": {
-                        "field": "intent.keyword"
+                        "field": "intent.keyword",
+                        "precision_threshold": self.cardinality_precision_threshold
                     }
                 }
             }
@@ -1105,7 +1118,8 @@ class CountComputation:
             "aggs": {
                 "type_count": {
                     "cardinality": {
-                        "field": "domain.keyword"
+                        "field": "domain.keyword",
+                        "precision_threshold": self.cardinality_precision_threshold
                     }
                 }
             }

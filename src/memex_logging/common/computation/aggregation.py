@@ -30,8 +30,9 @@ logger = logging.getLogger("logger.common.analytic.aggregation")
 
 class AggregationComputation:
 
-    def __init__(self, es: Elasticsearch) -> None:
+    def __init__(self, es: Elasticsearch, cardinality_precision_threshold: int = 40000) -> None:
         self.es = es
+        self.cardinality_precision_threshold = cardinality_precision_threshold
 
     def get_result(self, analytic: AggregationDescriptor) -> Optional[AggregationResult]:
         if analytic.aggregation.lower() == "max":
@@ -208,7 +209,8 @@ class AggregationComputation:
             "aggs": {
                 "type_count": {
                     "cardinality": {
-                        "field": analytic.field
+                        "field": analytic.field,
+                        "precision_threshold": self.cardinality_precision_threshold
                     }
                 }
             }
