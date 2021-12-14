@@ -17,6 +17,8 @@ venv.bak/
 *.tsv
 *.json
 
+*.zip
+
 .idea
 
 roles

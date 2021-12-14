@@ -5,6 +5,7 @@
 - [Changelog](#changelog)
   - [Breaking changes from 1.* to 2.*](#breaking-changes-from-1-to-2)
   - [Version 2.*](#version-2)
+    - [2.3.0](#230)
     - [2.2.0](#220)
     - [2.1.2](#212)
     - [2.1.1](#211)
@@ -92,6 +93,12 @@
 * The keys `items` and `transactions` have been removed from the analytic result contents.
 
 ## Version 2.*
+
+### 2.3.0
+
+* Integrated information about the number of asked questions and given answers by the users and also the first and last usage of the bot.
+* Updated to Project template version `4.6.2`.
+* Updated queries that use cardinality aggregation adding the precision threshold parameter.
 
 ### 2.2.0
 

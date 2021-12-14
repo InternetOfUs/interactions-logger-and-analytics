@@ -102,6 +102,7 @@ if __name__ == '__main__':
         creation_to = None
 
     user_profile_updates = []
+    all_user_profile_updates = []
     timezone = pytz.timezone("UTC")
     for row in user_updates_dump_reader:
         update_date = dateparser.parse(row["last_update"]).astimezone(timezone)
@@ -116,8 +117,10 @@ if __name__ == '__main__':
                 user_profile_updates.append(row["wenet_id"])
         else:
             user_profile_updates.append(row["wenet_id"])
+        all_user_profile_updates.append(row["wenet_id"])
 
     user_profile_failures = []
+    all_user_profile_failures = []
     if user_failures_dump_reader is not None:
         for row in user_failures_dump_reader:
             failure_date = dateparser.parse(row["failure_datetime"]).astimezone(timezone)
@@ -132,6 +135,7 @@ if __name__ == '__main__':
                     user_profile_failures.append(row["wenet_id"])
             else:
                 user_profile_failures.append(row["wenet_id"])
+            all_user_profile_failures.append(row["wenet_id"])
 
     app_ids = args.app_ids.split(";")
     apps = [hub_interface.get_app_details(app_id) for app_id in app_ids]
@@ -160,8 +164,8 @@ if __name__ == '__main__':
 
         user_info.append({
             "mail": user.email,
-            "survey": "yes" if user_id in survey_all_ids or user_id in user_profile_updates or user_id in user_profile_failures else "no",
-            "completed_survey": "yes" if user_id in user_profile_updates or user_id in user_profile_failures else "no",
+            "survey": "yes" if user_id in survey_all_ids or user_id in all_user_profile_updates or user_id in all_user_profile_failures else "no",
+            "completed_survey": "yes" if user_id in all_user_profile_updates or user_id in all_user_profile_failures else "no",
             "chatbot": chatbots,
             "ilog": "yes" if user_id in ilog_all_ids else "no"
         })

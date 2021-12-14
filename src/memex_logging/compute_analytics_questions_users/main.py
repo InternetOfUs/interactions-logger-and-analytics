@@ -33,7 +33,7 @@ from memex_logging.common.model.analytic.descriptor.count import UserCountDescri
 from memex_logging.common.model.analytic.descriptor.segmentation import MessageSegmentationDescriptor
 from memex_logging.common.model.analytic.result.count import CountResult
 from memex_logging.common.model.analytic.result.segmentation import SegmentationResult
-from memex_logging.common.model.message import Message
+from memex_logging.common.model.message import Message, RequestMessage
 from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow
 from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
 from memex_logging.common.utils import Utils
@@ -261,6 +261,33 @@ if __name__ == '__main__':
 
     questions_file.close()
 
+    # extracting messages dump
+    messages = [Message.from_repr(message) for message in logger_operations.get_messages(creation_from, creation_to, max_size=10000)]
+    while len(messages) < total_messages:
+        message = messages.pop(-1)
+        messages.extend([Message.from_repr(message) for message in logger_operations.get_messages(message.timestamp, creation_to, max_size=10000)])
+
+    messages_file = open(args.message_file, "w")
+    raw_messages = []
+    user_activity = {}
+    for message in messages:
+        if isinstance(message, RequestMessage):
+            if message.user_id not in user_activity:
+                user_activity[message.user_id] = {"first_message_timestamp": message.timestamp, "last_message_timestamp": message.timestamp}
+            else:
+                if user_activity[message.user_id]["first_message_timestamp"] > message.timestamp:
+                    user_activity[message.user_id]["first_message_timestamp"] = message.timestamp
+                if user_activity[message.user_id]["last_message_timestamp"] < message.timestamp:
+                    user_activity[message.user_id]["last_message_timestamp"] = message.timestamp
+
+        if message.metadata.get("question"):
+            message.metadata["question"] = reconstruct_string(message.metadata["question"])
+        if message.metadata.get("answer"):
+            message.metadata["answer"] = reconstruct_string(message.metadata["answer"])
+        raw_messages.append(message.to_repr())
+    json.dump(raw_messages, messages_file, ensure_ascii=False, indent=2)
+    messages_file.close()
+
     # pilot users and associated cohorts
     name, extension = os.path.splitext(args.user_file)
     users_file = open(args.user_file, "w")
@@ -278,7 +305,7 @@ if __name__ == '__main__':
     user_ids = hub_interface.get_user_ids_for_app(args.app_id, from_datetime=creation_from, to_datetime=creation_to)
     users_file_writer.writerow(["total users", len(user_ids)])
     users_file_writer.writerow([])
-    users_file_writer.writerow(["name", "surname", "email", "gender", "incentive cohort", "ilog", "survey"])
+    users_file_writer.writerow(["name", "surname", "email", "gender", "incentive cohort", "ilog", "survey", "questions", "answers", "first activity", "last activity"])
 
     cohorts = incentive_server_interface.get_cohorts()
     ilog_user_ids = hub_interface.get_user_ids_for_app(args.ilog_id)
@@ -295,27 +322,22 @@ if __name__ == '__main__':
                         user_cohort = "incentives and badges"
                     break
 
+        asked_questions = 0
+        for task in tasks:
+            if task.requester_id == user_id:
+                asked_questions += 1
+
+        given_answers = 0
+        for transaction in transactions:
+            if transaction.actioneer_id == user_id and transaction.label == LABEL_ANSWER_TRANSACTION:
+                given_answers += 1
+
         has_user_enabled_ilog = "yes" if user_id in ilog_user_ids else "no"
         has_user_enabled_survey = "yes" if user_id in survey_user_ids else "no"
-        users_file_writer.writerow([user.name.first, user.name.last, user.email, user.gender.name.lower() if user.gender else None, user_cohort, has_user_enabled_ilog, has_user_enabled_survey])
+        first_message_timestamp = user_activity[user_id]["first_message_timestamp"] if user_id in user_activity else None
+        last_message_timestamp = user_activity[user_id]["last_message_timestamp"] if user_id in user_activity else None
+        users_file_writer.writerow([user.name.first, user.name.last, user.email, user.gender.name.lower() if user.gender else None, user_cohort, has_user_enabled_ilog, has_user_enabled_survey, asked_questions, given_answers, first_message_timestamp, last_message_timestamp])
         if not user.email:
             logger.warning(f"User [{user.profile_id}] does not have an associated email")
 
     users_file.close()
-
-    # extracting messages dump
-    messages = [Message.from_repr(message) for message in logger_operations.get_messages(creation_from, creation_to, max_size=10000)]
-    while len(messages) < total_messages:
-        message = messages.pop(-1)
-        messages.extend([Message.from_repr(message) for message in logger_operations.get_messages(message.timestamp, creation_to, max_size=10000)])
-
-    messages_file = open(args.message_file, "w")
-    raw_messages = []
-    for message in messages:
-        if message.metadata.get("question"):
-            message.metadata["question"] = reconstruct_string(message.metadata["question"])
-        if message.metadata.get("answer"):
-            message.metadata["answer"] = reconstruct_string(message.metadata["answer"])
-        raw_messages.append(message.to_repr())
-    json.dump(raw_messages, messages_file, ensure_ascii=False, indent=2)
-    messages_file.close()
