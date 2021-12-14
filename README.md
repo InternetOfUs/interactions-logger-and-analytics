@@ -100,6 +100,7 @@ The web service allows to set the following environment variables:
 * `APIKEY`: the apikey for accessing the services;
 * `CELERY_BROKER_URL`: the information about the broker to use the Celery instance, it must be in the following format: `redis://:password@hostname:port/db_number`;
 * `CELERY_RESULT_BACKEND`: the information about the result backend to use the Celery instance, it must be in the following format: `redis://:password@hostname:port/db_number`.
+* `CARDINALITY_PRECISION_THRESHOLD` (optional, the default value is `40000`): the precision threshold parameter for cardinality aggregations (maximum supported value is `40000`).
 
 Optionally is it possible to configure sentry in order to track any problem. Just set the following environment variables:
 

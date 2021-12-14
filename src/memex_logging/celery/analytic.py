@@ -41,7 +41,7 @@ def update_analytic(analytic_id: str):
 
     client = ApikeyClient(os.getenv("APIKEY"))
     wenet_interface = WeNet.build(client, platform_url=os.getenv("INSTANCE"))
-    analytic_computation = AnalyticComputation(es, wenet_interface)
+    analytic_computation = AnalyticComputation(es, wenet_interface, cardinality_precision_threshold=int(os.getenv("CARDINALITY_PRECISION_THRESHOLD", 40000)))
     analytic.result = analytic_computation.get_result(analytic.descriptor)
     dao_collector.analytic.update(analytic)
     logger.info(f"Result of analytic with id [{analytic_id}] updated")
