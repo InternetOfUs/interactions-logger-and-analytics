@@ -5,6 +5,7 @@
 - [Changelog](#changelog)
   - [Breaking changes from 1.* to 2.*](#breaking-changes-from-1-to-2)
   - [Version 2.*](#version-2)
+    - [next](#next)
     - [2.3.0](#230)
     - [2.2.0](#220)
     - [2.1.2](#212)
@@ -93,6 +94,10 @@
 * The keys `items` and `transactions` have been removed from the analytic result contents.
 
 ## Version 2.*
+
+### next
+
+* Added user profiles extraction to the main script for extracting pilots stats.
 
 ### 2.3.0
 

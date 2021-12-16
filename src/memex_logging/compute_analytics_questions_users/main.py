@@ -85,6 +85,7 @@ if __name__ == '__main__':
     arg_parser.add_argument("-af", "--analytic_file", type=str, default=os.getenv("ANALYTIC_FILE"), help="The path of csv/tsv file where to store analytics")
     arg_parser.add_argument("-qf", "--question_file", type=str, default=os.getenv("QUESTION_FILE"), help="The path of csv/tsv file where to store questions")
     arg_parser.add_argument("-uf", "--user_file", type=str, default=os.getenv("USER_FILE"), help="The path of csv/tsv file where to store users")
+    arg_parser.add_argument("-pf", "--profile_file", type=str, default=os.getenv("PROFILE_FILE"), help="The path of json file where to store user profiles")
     arg_parser.add_argument("-tf", "--task_file", type=str, default=os.getenv("TASK_FILE"), help="The path of json file where to store the tasks")
     arg_parser.add_argument("-mf", "--message_file", type=str, default=os.getenv("MESSAGE_FILE"), help="The path of json file where to store the dump of messages")
     arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
@@ -310,8 +311,10 @@ if __name__ == '__main__':
     cohorts = incentive_server_interface.get_cohorts()
     ilog_user_ids = hub_interface.get_user_ids_for_app(args.ilog_id)
     survey_user_ids = hub_interface.get_user_ids_for_app(args.survey_id)
+    profiles = []
     for user_id in user_ids:
-        user = profile_manager_interface.get_user_profile(user_id)
+        peofile = profile_manager_interface.get_user_profile(user_id)
+        profiles.append(peofile)
         user_cohort = None
         for cohort in cohorts:
             if cohort.get("app_id") == args.app_id:
@@ -336,8 +339,17 @@ if __name__ == '__main__':
         has_user_enabled_survey = "yes" if user_id in survey_user_ids else "no"
         first_message_timestamp = user_activity[user_id]["first_message_timestamp"] if user_id in user_activity else None
         last_message_timestamp = user_activity[user_id]["last_message_timestamp"] if user_id in user_activity else None
-        users_file_writer.writerow([user.name.first, user.name.last, user.email, user.gender.name.lower() if user.gender else None, user_cohort, has_user_enabled_ilog, has_user_enabled_survey, asked_questions, given_answers, first_message_timestamp, last_message_timestamp])
-        if not user.email:
-            logger.warning(f"User [{user.profile_id}] does not have an associated email")
+        users_file_writer.writerow([peofile.name.first, peofile.name.last, peofile.email, peofile.gender.name.lower() if peofile.gender else None, user_cohort, has_user_enabled_ilog, has_user_enabled_survey, asked_questions, given_answers, first_message_timestamp, last_message_timestamp])
+        if not peofile.email:
+            logger.warning(f"User [{peofile.profile_id}] does not have an associated email")
 
     users_file.close()
+
+    profiles_file = open(args.profile_file, "w")
+    raw_profiles = []
+    for profile in profiles:
+        raw_profile = profile.to_repr()
+        raw_profile.pop("id")
+        raw_profiles.append(raw_profile)
+    json.dump(raw_profiles, profiles_file, ensure_ascii=False, indent=2)
+    profiles_file.close()

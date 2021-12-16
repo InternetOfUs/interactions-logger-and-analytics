@@ -116,6 +116,7 @@ The script for computing the analytics, questions, users and for extracting the 
 * `ANALYTIC_FILE`: the path of the csv/tsv file where to store the analytics, it can also be set using the argument `-af` or `--analytic_file` when manually running the Python service;
 * `QUESTION_FILE`: the path of the csv/tsv file where to store the questions, it can also be set using the argument `-qf` or `--question_file` when manually running the Python service;
 * `USER_FILE`: the path of the csv/tsv file where to store the users, it can also be set using the argument `-uf` or `--user_file` when manually running the Python service;
+* `PROFILE_FILE`: the path of the json file where to store user profiles, it can also be set using the argument `-of` or `--profile_file` when manually running the Python service;
 * `TASK_FILE`: the path of the json file where to store the tasks, it can also be set using the argument `-tf` or `--task_file` when manually running the Python service;
 * `MESSAGE_FILE`: the path of the json file where to store the dump of messages, it can also be set using the argument `-mf` or `--message_file` when manually running the Python service;
 * `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
