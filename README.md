@@ -48,10 +48,13 @@ Notes:
 - If you run the celery beat using the provided docker images, you need to set a volume un the `/celery` directory of the container. Otherwise, the container may fail to start
 
 
-There is also a script for computing the analytics, questions, users. Analytics, questions and users will be stored in dedicated .csv/.tsv files.
-It also extracts the tasks and a dump of the messages using the logger, the task manager, the hub, the profile manager and the incentive server. The tasks and the messages will be stored in dedicated .json files.
+There is a `main` script for computing the analytics, questions, users. Analytics, questions and users will be stored in dedicated .csv/.tsv files.
+It also extracts the tasks, the profiles and a dump of the messages using the logger, the task manager, the hub, the profile manager and the incentive server. The tasks, the profiles and the messages will be stored in dedicated .json files.
 
-Finally, there is a script for getting the association between the id and the email of users. This will be stored in a dedicated .csv/.tsv file.
+There is a `id_email` script for getting the association between the id and the email of users. This will be stored in a dedicated .csv/.tsv file.
+
+Finally, there is a `apps_usage` script for getting the app usage of the users and the dump of the profiles without personal information.
+The user app usage will be stored in a dedicated .csv/.tsv file. The dump of the profiles without personal information will be stored in dedicated .json file.
 
 
 ## Setup and configuration
@@ -111,7 +114,7 @@ Optionally is it possible to configure sentry in order to track any problem. Jus
 
 #### Script main
 
-The script for computing the analytics, questions, users and for extracting the tasks and the messages allows to set the following environment variables:
+The script for computing the analytics, questions, users and for extracting the tasks, the profiles and the messages allows to set the following environment variables:
 
 * `ANALYTIC_FILE`: the path of the csv/tsv file where to store the analytics, it can also be set using the argument `-af` or `--analytic_file` when manually running the Python service;
 * `QUESTION_FILE`: the path of the csv/tsv file where to store the questions, it can also be set using the argument `-qf` or `--question_file` when manually running the Python service;
@@ -150,9 +153,10 @@ Alternatively to the `TIME_RANGE` arbitrary start and end time could be set usin
 
 #### Script apps_usage
 
-The script for getting the association between the id and the email of users allows to set the following environment variables:
+The script for getting the app usage of the users and the dump of the profiles without personal information allows to set the following environment variables:
 
-* `OUTPUT_FILE`: the path of csv/tsv file where to store the users apps usage, it can also be set using the argument `-o` or `--output` when manually running the Python service;
+* `USER_FILE`: the path of csv/tsv file where to store the users apps usage, it can also be set using the argument `-uf` or `--user_file` when manually running the Python service;
+* `PROFILE_FILE`: the path of json file where to store the profiles without personal information, it can also be set using the argument `-o` or `--profile_file` when manually running the Python service;
 * `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
 * `APP_IDS`: the ids of the chatbots from which take the users. The ids should be separated by `;`, it can also be set using the argument `-ai` or `--app_ids` when manually running the Python service;
@@ -192,4 +196,12 @@ This service can be run with the command:
 
 ```bash
 python -m memex_logging.compute_analytics_questions_users.id_email
+```
+
+### Script for getting the apps usage
+
+This service can be run with the command:
+
+```bash
+python -m memex_logging.compute_analytics_questions_users.apps_usage
 ```

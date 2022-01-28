@@ -313,8 +313,8 @@ if __name__ == '__main__':
     survey_user_ids = hub_interface.get_user_ids_for_app(args.survey_id)
     profiles = []
     for user_id in user_ids:
-        peofile = profile_manager_interface.get_user_profile(user_id)
-        profiles.append(peofile)
+        profile = profile_manager_interface.get_user_profile(user_id)
+        profiles.append(profile)
         user_cohort = None
         for cohort in cohorts:
             if cohort.get("app_id") == args.app_id:
@@ -339,9 +339,9 @@ if __name__ == '__main__':
         has_user_enabled_survey = "yes" if user_id in survey_user_ids else "no"
         first_message_timestamp = user_activity[user_id]["first_message_timestamp"] if user_id in user_activity else None
         last_message_timestamp = user_activity[user_id]["last_message_timestamp"] if user_id in user_activity else None
-        users_file_writer.writerow([peofile.name.first, peofile.name.last, peofile.email, peofile.gender.name.lower() if peofile.gender else None, user_cohort, has_user_enabled_ilog, has_user_enabled_survey, asked_questions, given_answers, first_message_timestamp, last_message_timestamp])
-        if not peofile.email:
-            logger.warning(f"User [{peofile.profile_id}] does not have an associated email")
+        users_file_writer.writerow([profile.name.first, profile.name.last, profile.email, profile.gender.name.lower() if profile.gender else None, user_cohort, has_user_enabled_ilog, has_user_enabled_survey, asked_questions, given_answers, first_message_timestamp, last_message_timestamp])
+        if not profile.email:
+            logger.warning(f"User [{profile.profile_id}] does not have an associated email")
 
     users_file.close()
 

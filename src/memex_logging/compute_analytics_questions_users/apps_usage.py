@@ -16,6 +16,7 @@ from __future__ import absolute_import, annotations
 
 import argparse
 import csv
+import json
 import logging.config
 import os
 
@@ -37,7 +38,8 @@ logger = logging.getLogger("compute_analytics_questions_users.apps_usage")
 if __name__ == '__main__':
 
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-o", "--output", type=str, default=os.getenv("OUTPUT_FILE"), help="The path of csv/tsv file where to store the users apps usage")
+    arg_parser.add_argument("-uf", "--user_file", type=str, default=os.getenv("USER_FILE"), help="The path of csv/tsv file where to store the users apps usage")
+    arg_parser.add_argument("-pf", "--profile_file", type=str, default=os.getenv("PROFILE_FILE"), help="The path of json file where to store the profiles without personal information")
     arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
     arg_parser.add_argument("-ai", "--app_ids", type=str, default=os.getenv("APP_IDS"), help="The ids of the chatbots from which take the users. The ids should be separated by `;`")
@@ -54,15 +56,15 @@ if __name__ == '__main__':
     hub_interface = HubInterface(client, args.instance)
     profile_manager_interface = ProfileManagerInterface(client, args.instance)
 
-    name, extension = os.path.splitext(args.output)
-    output_file = open(args.output, "w")
+    name, extension = os.path.splitext(args.user_file)
+    user_file = open(args.user_file, "w")
     if extension == ".csv":
-        output_file_writer = csv.writer(output_file)
+        user_file_writer = csv.writer(user_file)
     elif extension == ".tsv":
-        output_file_writer = csv.writer(output_file, delimiter="\t")
+        user_file_writer = csv.writer(user_file, delimiter="\t")
     else:
-        logger.warning(f"For the output file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
-        raise ValueError(f"For the output file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
+        logger.warning(f"For the user file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
+        raise ValueError(f"For the user file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     name, extension = os.path.splitext(args.updates)
     user_updates_dump = open(args.updates, "r")
@@ -90,13 +92,13 @@ if __name__ == '__main__':
     if args.start and args.end:
         time_range = FixedTimeWindow.from_isoformat(args.start, args.end)
         creation_from, creation_to = Utils.extract_range_timestamps(time_range)
-        output_file_writer.writerow(["from", creation_from])
-        output_file_writer.writerow(["to", creation_to])
+        user_file_writer.writerow(["from", creation_from])
+        user_file_writer.writerow(["to", creation_to])
     elif args.range:
         time_range = MovingTimeWindow(args.range)
         creation_from, creation_to = Utils.extract_range_timestamps(time_range)
-        output_file_writer.writerow(["from", creation_from])
-        output_file_writer.writerow(["to", creation_to])
+        user_file_writer.writerow(["from", creation_from])
+        user_file_writer.writerow(["to", creation_to])
     else:
         creation_from = None
         creation_to = None
@@ -150,28 +152,46 @@ if __name__ == '__main__':
     for app_users in apps_users:
         user_ids += app_users
     user_ids = set(user_ids + ilog_ids + survey_ids + user_profile_updates + user_profile_failures)
-    output_file_writer.writerow(["total users", len(user_ids)])
-    output_file_writer.writerow([])
-    output_file_writer.writerow(["email", "registered to survey", "completed survey", "chatbot", "ilog"])
+    user_file_writer.writerow(["total users", len(user_ids)])
+    user_file_writer.writerow([])
+    user_file_writer.writerow(["email", "registered to survey", "completed survey", "chatbot", "ilog"])
 
-    user_info = []
+    users_info = []
     for user_id in user_ids:
-        user = profile_manager_interface.get_user_profile(user_id)
+        profile = profile_manager_interface.get_user_profile(user_id)
         chatbots = ""
+        chatbot_ids = ""
         for i, app_users in enumerate(apps_all_users):
             if user_id in app_users:
                 chatbots = chatbots + ";" + apps[i].name if chatbots else apps[i].name
+                chatbot_ids = chatbot_ids + ";" + apps[i].app_id if chatbot_ids else apps[i].app_id
 
-        user_info.append({
-            "mail": user.email,
+        users_info.append({
+            "profile": profile,
             "survey": "yes" if user_id in survey_all_ids or user_id in all_user_profile_updates or user_id in all_user_profile_failures else "no",
             "completed_survey": "yes" if user_id in all_user_profile_updates or user_id in all_user_profile_failures else "no",
-            "chatbot": chatbots,
-            "ilog": "yes" if user_id in ilog_all_ids else "no"
+            "chatbots": chatbots,
+            "chatbot_ids": chatbot_ids,
+            "ilog": "yes" if user_id in ilog_all_ids else "no",
         })
 
-    user_info = sorted(user_info, key=lambda x: x["chatbot"], reverse=True)
-    for user in user_info:
-        output_file_writer.writerow([user["mail"], user["survey"], user["completed_survey"], user["chatbot"], user["ilog"]])
+    users_info = sorted(users_info, key=lambda x: x["chatbots"], reverse=True)
+    raw_profiles = []
+    for user_info in users_info:
+        user_file_writer.writerow([user_info["profile"].email, user_info["survey"], user_info["completed_survey"], user_info["chatbots"], user_info["ilog"]])
+        if user_info["chatbot_ids"]:
+            raw_profile = user_info["profile"].to_repr()
+            raw_profile.pop("email")
+            raw_profile.pop("phoneNumber")
+            raw_profile.pop("relationships")
+            raw_profile.pop("name")
+            raw_profile["dateOfBirth"].pop("month")
+            raw_profile["dateOfBirth"].pop("day")
+            raw_profile["appId"] = user_info["chatbot_ids"]
+            raw_profiles.append(raw_profile)
 
-    output_file.close()
+    user_file.close()
+
+    profiles_file = open(args.profile_file, "w")
+    json.dump(raw_profiles, profiles_file, ensure_ascii=False, indent=2)
+    profiles_file.close()

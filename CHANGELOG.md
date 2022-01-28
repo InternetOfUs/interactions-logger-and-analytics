@@ -98,6 +98,7 @@
 ### next
 
 * Added user profiles extraction to the main script for extracting pilots stats.
+* Added user profiles extraction without personal information to the app_usage script.
 
 ### 2.3.0
 
