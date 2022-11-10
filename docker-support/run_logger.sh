@@ -23,6 +23,7 @@ echo "Running logger..."
 #
 
 
+
 DEFAULT_WORKERS=4
 if [[ -z "${GUNICORN_WORKERS}" ]]; then
     GUNICORN_WORKERS=${DEFAULT_WORKERS}
