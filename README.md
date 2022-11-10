@@ -153,10 +153,12 @@ Alternatively to the `TIME_RANGE` arbitrary start and end time could be set usin
 
 #### Script apps_usage
 
-The script for getting the app usage of the users and the dump of the profiles without personal information allows to set the following environment variables:
+The script for getting the app usage of the users, the dump of the profiles without personal information and profiles and task in the new format allows to set the following environment variables:
 
 * `USER_FILE`: the path of csv/tsv file where to store the users apps usage, it can also be set using the argument `-uf` or `--user_file` when manually running the Python service;
-* `PROFILE_FILE`: the path of json file where to store the profiles without personal information, it can also be set using the argument `-o` or `--profile_file` when manually running the Python service;
+* `PROFILE_FILE`: the path of json file where to store the profiles without personal information, it can also be set using the argument `-pf` or `--profile_file` when manually running the Python service;
+* `PROFILE_NEW_FILE`: the path of csv/tsv file where to store the profiles without personal information in the new format, it can also be set using the argument `-pnf` or `--profile_new_file` when manually running the Python service;
+* `TASK_NEW_FILE`: the path of csv/tsv file where to store the tasks in the new format, it can also be set using the argument `-tnf` or `--task_new_file` when manually running the Python service;
 * `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
 * `APP_IDS`: the ids of the chatbots from which take the users. The ids should be separated by `;`, it can also be set using the argument `-ai` or `--app_ids` when manually running the Python service;

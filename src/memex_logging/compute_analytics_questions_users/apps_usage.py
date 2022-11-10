@@ -21,10 +21,12 @@ import logging.config
 import os
 
 import dateparser
+import pandas as pd
 import pytz
 from wenet.interface.client import ApikeyClient
 from wenet.interface.hub import HubInterface
 from wenet.interface.profile_manager import ProfileManagerInterface
+from wenet.interface.task_manager import TaskManagerInterface
 
 from memex_logging.common.log.logging import get_logging_configuration
 from memex_logging.common.model.analytic.time import FixedTimeWindow, MovingTimeWindow
@@ -40,6 +42,8 @@ if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-uf", "--user_file", type=str, default=os.getenv("USER_FILE"), help="The path of csv/tsv file where to store the users apps usage")
     arg_parser.add_argument("-pf", "--profile_file", type=str, default=os.getenv("PROFILE_FILE"), help="The path of json file where to store the profiles without personal information")
+    arg_parser.add_argument("-pnf", "--profile_new_file", type=str, default=os.getenv("PROFILE_NEW_FILE"), help="The path of csv/tsv file where to store the profiles without personal information in the new format")
+    arg_parser.add_argument("-tnf", "--task_new_file", type=str, default=os.getenv("TASK_NEW_FILE"), help="The path of csv/tsv file where to store the tasks in the new format")
     arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
     arg_parser.add_argument("-ai", "--app_ids", type=str, default=os.getenv("APP_IDS"), help="The ids of the chatbots from which take the users. The ids should be separated by `;`")
@@ -53,6 +57,7 @@ if __name__ == '__main__':
     args = arg_parser.parse_args()
 
     client = ApikeyClient(args.apikey)
+    task_manager_interface = TaskManagerInterface(client, args.instance)  # TODO extract tasks information
     hub_interface = HubInterface(client, args.instance)
     profile_manager_interface = ProfileManagerInterface(client, args.instance)
 
@@ -65,6 +70,16 @@ if __name__ == '__main__':
     else:
         logger.warning(f"For the user file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
         raise ValueError(f"For the user file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
+
+    # name, extension = os.path.splitext(args.profile_new_file)
+    # profile_new_file = open(args.user_file, "w")
+    # if extension == ".csv":
+    #     profile_new_file_writer = csv.writer(profile_new_file)
+    # elif extension == ".tsv":
+    #     profile_new_file_writer = csv.writer(profile_new_file, delimiter="\t")
+    # else:
+    #     logger.warning(f"For the profile new file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
+    #     raise ValueError(f"For the profile new file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
     name, extension = os.path.splitext(args.updates)
     user_updates_dump = open(args.updates, "r")
@@ -147,6 +162,9 @@ if __name__ == '__main__':
     ilog_all_ids = hub_interface.get_user_ids_for_app(args.ilog_id)
     survey_ids = hub_interface.get_user_ids_for_app(args.survey_id, from_datetime=creation_from, to_datetime=creation_to)
     survey_all_ids = hub_interface.get_user_ids_for_app(args.survey_id)
+    tasks = []
+    for app_id in app_ids:
+        tasks.extend(task_manager_interface.get_all_tasks(app_id=app_id, creation_from=creation_from, creation_to=creation_to))  # TODO we need the different creations for each pilot?
 
     user_ids = []
     for app_users in apps_users:
@@ -175,10 +193,28 @@ if __name__ == '__main__':
             "ilog": "yes" if user_id in ilog_all_ids else "no",
         })
 
+    # profile_new_file_writer.writerow([
+    #     "userid", "gender", "locale", "nationality", "creationTs", "lastUpdateTs", "appId", "dateOfBirth - year",
+    #     "department", "degree_programme", "university", "accommodation", "excitement", "promotion", "existence",
+    #     "suprapersonal", "interactive", "normative", "extraversion", "agreeableness", "conscientiousness",
+    #     "neuroticism", "openness", "c_food", "c_eating", "c_lit", "c_creatlit", "c_perf_mus", "c_plays", "c_perf_plays",
+    #     "c_musgall", "c_perf_art", "c_watch_sp", "c_ind_sp", "c_team_sp", "c_accom", "c_locfac", "u_active", "u_read",
+    #     "u_essay", "u_org", "u_balance", "u_assess", "u_theory", "u_pract",
+    #     # TODO before are related to profile, after related to tasks
+    #     "answers_count", "arts_and_crafts_Q", "cinema_theatre_Q", "cultural_interests_Q", "food_and_cooking_Q",
+    #     "life_ponders_Q", "local_things_Q", "local_university_Q", "music_Q", "physical_activity_Q", "studying_career_Q",
+    #     "varia_misc_Q", "questions_count", "clicked_moreanswers", "count_Q+A"
+    # ])
+
     users_info = sorted(users_info, key=lambda x: x["chatbots"], reverse=True)
     raw_profiles = []
     for user_info in users_info:
         user_file_writer.writerow([user_info["profile"].email, user_info["survey"], user_info["completed_survey"], user_info["chatbots"], user_info["ilog"]])
+        # profile_new_file_writer.writerow([user_info["profile"].profile_id, user_info["profile"].gender.value, user_info["profile"].locale, user_info["profile"].nationality, user_info["profile"].creation_ts, user_info["profile"].last_update_ts, user_info["chatbot_ids"], user_info["profile"].date_of_birth.year,
+        #                                   # TODO extract from competences/meanings/materials
+        #                                   "department", "degree_programme", "university", "accommodation", "excitement", "promotion", "existence", "suprapersonal", "interactive", "normative", "extraversion", "agreeableness", "conscientiousness", "neuroticism", "openness", "c_food", "c_eating", "c_lit", "c_creatlit", "c_perf_mus", "c_plays", "c_perf_plays", "c_musgall", "c_perf_art", "c_watch_sp", "c_ind_sp", "c_team_sp", "c_accom", "c_locfac", "u_active", "u_read", "u_essay", "u_org", "u_balance", "u_assess", "u_theory", "u_pract",
+        #                                   # TODO extract from tasks
+        #                                   "answers_count", "arts_and_crafts_Q", "cinema_theatre_Q", "cultural_interests_Q", "food_and_cooking_Q", "life_ponders_Q", "local_things_Q", "local_university_Q", "music_Q", "physical_activity_Q", "studying_career_Q", "varia_misc_Q", "questions_count", "clicked_moreanswers", "count_Q+A"])
         if user_info["chatbot_ids"]:
             raw_profile = user_info["profile"].to_repr()
             raw_profile.pop("email")
@@ -190,7 +226,12 @@ if __name__ == '__main__':
             raw_profile["appId"] = user_info["chatbot_ids"]
             raw_profiles.append(raw_profile)
 
+    data_frame = pd.DataFrame(data=raw_profiles)  # TODO handle nested keys if we want to use pandas
+    data_frame = data_frame.rename(columns={})
+    data_frame.to_csv(args.profile_new_file, index=False)
+
     user_file.close()
+    # profile_new_file.close()
 
     profiles_file = open(args.profile_file, "w")
     json.dump(raw_profiles, profiles_file, ensure_ascii=False, indent=2)
