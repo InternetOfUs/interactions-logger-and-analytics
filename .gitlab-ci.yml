@@ -1,8 +1,7 @@
 ---
 image: docker:20.10.2
 
-services:
-  - docker:20.10.2-dind
+services: ['docker:20.10.2-dind']
 
 #
 # Pipeline cache is based on CI_COMMIT_REF_SLUG.
@@ -21,18 +20,10 @@ variables:
 
 #
 # Workflow defining rules for running the pipeline.
-# In the following cases the pipeline is not run when:
-#  - the associated commit includes the work-in-progress tag `-wip`
-#  - the associated commit message includes the pattern `Merge tag`: the commit resulting when
-#    a release branch is closed and merged into `develop`
 #
 workflow:
-  rules:
-    - if: $CI_COMMIT_MESSAGE =~ /-wip/
-      when: never
-    - if: $CI_COMMIT_MESSAGE =~ /Merge tag/
-      when: never
-    - when: always
+  rules: [{'if': '$CI_COMMIT_MESSAGE =~ /-wip/', 'when': 'never'}, {'when': 'always'}]
+
 
 #
 # Static script to be reused by the enabled stages.
@@ -128,6 +119,7 @@ unit:mr:
 
 coverage:mr:
   stage: test
+  coverage: '/^TOTAL.+?(\d+\%)$/'
   image: public.registry.u-hopper.com/python:3.8
   allow_failure: true
   script:
@@ -152,7 +144,9 @@ coverage:mr:
     when: always
     reports:
       junit: src/report.xml
-      cobertura: src/coverage.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: src/coverage.xml
   needs: []
   only:
     - merge_requests
@@ -191,6 +185,7 @@ unit:issue:
 
 coverage:issue:
   stage: test
+  coverage: '/^TOTAL.+?(\d+\%)$/'
   image: public.registry.u-hopper.com/python:3.8
   allow_failure: true
   script:
@@ -215,7 +210,9 @@ coverage:issue:
     when: always
     reports:
       junit: src/report.xml
-      cobertura: src/coverage.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: src/coverage.xml
   needs: []
   only:
     - /^feature.*$/i
@@ -272,6 +269,7 @@ unit:staging:
 
 coverage:staging:
   stage: test
+  coverage: '/^TOTAL.+?(\d+\%)$/'
   image: public.registry.u-hopper.com/python:3.8
   allow_failure: true
   script:
@@ -296,7 +294,9 @@ coverage:staging:
     when: always
     reports:
       junit: src/report.xml
-      cobertura: src/coverage.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: src/coverage.xml
   needs: []
   only:
     - develop
@@ -380,6 +380,7 @@ unit:production:
 
 coverage:production:
   stage: test
+  coverage: '/^TOTAL.+?(\d+\%)$/'
   image: public.registry.u-hopper.com/python:3.8
   allow_failure: true
   script:
@@ -404,7 +405,9 @@ coverage:production:
     when: always
     reports:
       junit: src/report.xml
-      cobertura: src/coverage.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: src/coverage.xml
   needs: []
   only:
     - tags
@@ -428,7 +431,7 @@ push:production:
 
 notify:production:
   stage: notify
-  image: public.registry.u-hopper.com/alpine:3.13
+  image: public.registry.u-hopper.com/alpine:3.13 
   script:
     - *apk-before-script
     - *ansible-script
@@ -453,6 +456,7 @@ notify:production:
 
 coverage:default:
   stage: test
+  coverage: '/^TOTAL.+?(\d+\%)$/'
   image: public.registry.u-hopper.com/python:3.8
   allow_failure: true
   script:
@@ -477,7 +481,9 @@ coverage:default:
     when: always
     reports:
       junit: src/report.xml
-      cobertura: src/coverage.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: src/coverage.xml
   needs: []
   only:
     - master

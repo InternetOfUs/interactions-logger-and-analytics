@@ -24,5 +24,6 @@ echo "Running migrator..."
 
 
 
+
 exec python -m memex_logging.migration.migration
 

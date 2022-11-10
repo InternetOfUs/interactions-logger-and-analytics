@@ -97,8 +97,10 @@
 
 ### next
 
+:house: Internal
 * Added user profiles extraction to the main script for extracting pilots stats.
 * Added user profiles extraction without personal information to the app_usage script.
+* Updated to Project template version `4.12.5`.
 
 ### 2.3.0
 

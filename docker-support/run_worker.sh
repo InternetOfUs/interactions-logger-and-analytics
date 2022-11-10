@@ -24,5 +24,6 @@ echo "Running worker..."
 
 
 
+
 exec celery worker -A memex_logging.celery.initialize.celery
 
