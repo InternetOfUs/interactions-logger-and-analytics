@@ -222,3 +222,11 @@ This service can be run with the command:
 ```bash
 python -m memex_logging.compute_analytics_questions_users.apps_usage
 ```
+
+### Script for getting the profiles and tasks (m46 format)
+
+This service can be run with the command:
+
+```bash
+python -m memex_logging.compute_analytics_questions_users.profiles_and_tasks_m46
+```
