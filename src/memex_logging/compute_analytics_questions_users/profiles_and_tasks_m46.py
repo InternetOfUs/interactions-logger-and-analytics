@@ -53,8 +53,8 @@ LABEL_MORE_ANSWER_TRANSACTION = "moreAnswerTransaction"
 if __name__ == '__main__':
 
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-pnf", "--profile_new_file", type=str, default=os.getenv("PROFILE_NEW_FILE"), help="The path of csv/tsv file where to store the profiles without personal information in the new format")
-    arg_parser.add_argument("-tnf", "--task_new_file", type=str, default=os.getenv("TASK_NEW_FILE"), help="The path of csv/tsv file where to store the tasks in the new format")
+    arg_parser.add_argument("-pf", "--profile_file", type=str, default=os.getenv("PROFILE_FILE"), help="The path of csv/tsv file where to store the profiles without personal information in the newly requested format for M46 pilots")
+    arg_parser.add_argument("-tf", "--task_file", type=str, default=os.getenv("TASK_FILE"), help="The path of csv/tsv file where to store the tasks in the newly requested format for M46 pilots")
     arg_parser.add_argument("-i", "--instance", type=str, default=os.getenv("INSTANCE", "https://wenet.u-hopper.com/dev"), help="The target WeNet instance")
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
     arg_parser.add_argument("-ai", "--app_ids", type=str, default=os.getenv("APP_IDS"), help="The ids of the chatbots from which take the users. The ids should be separated by `;`")
@@ -68,22 +68,22 @@ if __name__ == '__main__':
     hub_interface = HubInterface(client, args.instance)
     profile_manager_interface = ProfileManagerInterface(client, args.instance)
 
-    name, extension = os.path.splitext(args.profile_new_file)
-    profile_new_file = open(args.profile_new_file, "w")
+    name, extension = os.path.splitext(args.profile_file)
+    profile_file = open(args.profile_file, "w")
     if extension == ".csv":
-        profile_new_file_writer = csv.writer(profile_new_file)
+        profile_file_writer = csv.writer(profile_file)
     elif extension == ".tsv":
-        profile_new_file_writer = csv.writer(profile_new_file, delimiter="\t")
+        profile_file_writer = csv.writer(profile_file, delimiter="\t")
     else:
         logger.warning(f"For the profile new file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
         raise ValueError(f"For the profile new file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
-    name, extension = os.path.splitext(args.task_new_file)
-    task_new_file = open(args.task_new_file, "w")
+    name, extension = os.path.splitext(args.task_file)
+    task_file = open(args.task_file, "w")
     if extension == ".csv":
-        task_new_file_writer = csv.writer(task_new_file)
+        task_file_writer = csv.writer(task_file)
     elif extension == ".tsv":
-        task_new_file_writer = csv.writer(task_new_file, delimiter="\t")
+        task_file_writer = csv.writer(task_file, delimiter="\t")
     else:
         logger.warning(f"For the task new file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
         raise ValueError(f"For the task new file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     user_ids = set(user_ids)
     all_user_ids = set(all_user_ids)
 
-    task_new_file_writer.writerow([
+    task_file_writer.writerow([
         "id", "taskTypeId", "lastUpdateTs", "creationTs", "requesterId", "appId", "closeTs", "communityId",
         "transactions.taskId", "transactions.label", "transactions.creationTs", "transactions.actioneerId", "transactions.lastUpdateTs", "transactions.count.id",
         "transactions.messages.appId", "transactions.messages.receiverId", "transactions.messages.label", "transactions.messages.attributes.taskId",
@@ -248,14 +248,14 @@ if __name__ == '__main__':
             ]
 
             if transaction.label == LABEL_CREATE_TASK_TRANSACTION:
-                task_new_file_writer.writerow([
+                task_file_writer.writerow([
                     task.task_id, task.task_type_id, datetime.datetime.fromtimestamp(task.last_update_ts).strftime('%Y-%m-%d %H:%M:%S') if task.last_update_ts else "", datetime.datetime.fromtimestamp(task.creation_ts).strftime('%Y-%m-%d %H:%M:%S') if task.creation_ts else "", task.requester_id, task.app_id, datetime.datetime.fromtimestamp(task.close_ts).strftime('%Y-%m-%d %H:%M:%S') if task.close_ts else "", task.community_id
                 ] + transaction_info + [
                     task.goal.name, task.goal.description, task.attributes.get("domain", ""), task.attributes.get("domainInterest", ""), task.attributes.get("beliefsAndValues", ""), task.attributes.get("anonymous", ""),
                     task.attributes.get("socialCloseness", ""), task.attributes.get("positionOfAnswerer", ""), task.attributes.get("maxUsers", ""), task.attributes.get("maxAnswers", ""), datetime.datetime.fromtimestamp(task.attributes.get("expirationDate", "")).strftime('%Y-%m-%d %H:%M:%S') if task.attributes.get("expirationDate", "") else ""
                 ])
             else:
-                task_new_file_writer.writerow([
+                task_file_writer.writerow([
                     "", "", "", "", "", "", "", ""
                 ] + transaction_info + [
                     "", "", "", "", "", "",
@@ -278,7 +278,7 @@ if __name__ == '__main__':
             "chatbot_ids": chatbot_ids
         })
 
-    profile_new_file_writer.writerow([
+    profile_file_writer.writerow([
         "userid", "gender", "locale", "nationality", "creationTs", "lastUpdateTs", "appId", "dateOfBirth - year",
         "department", "study_year", "university", "accommodation", "excitement", "promotion", "existence",
         "suprapersonal", "interactive", "normative", "extraversion", "agreeableness", "conscientiousness",
@@ -416,7 +416,7 @@ if __name__ == '__main__':
         task_info = task_user_info[user_info["profile"].profile_id]
         task_info = {info: task_info[info] if task_info[info] else "" for info in task_info}
 
-        profile_new_file_writer.writerow([
+        profile_file_writer.writerow([
             user_info["profile"].profile_id, user_info["profile"].gender.value if user_info["profile"].gender else "", user_info["profile"].locale, user_info["profile"].nationality, user_info["profile"].creation_ts, user_info["profile"].last_update_ts, user_info["chatbot_ids"], user_info["profile"].date_of_birth.year,
             department, study_year, university, accommodation, excitement, promotion, existence, suprapersonal,
             interactive, normative, extraversion, agreeableness, conscientiousness, neuroticism, openness, c_food,
@@ -427,5 +427,5 @@ if __name__ == '__main__':
             task_info["questions_count"], task_info["clicked_more_answers"], task_info["count_Q+A"]
         ])
 
-    profile_new_file.close()
-    task_new_file.close()
+    profile_file.close()
+    task_file.close()

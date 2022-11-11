@@ -157,8 +157,27 @@ The script for getting the app usage of the users, the dump of the profiles with
 
 * `USER_FILE`: the path of csv/tsv file where to store the users apps usage, it can also be set using the argument `-uf` or `--user_file` when manually running the Python service;
 * `PROFILE_FILE`: the path of json file where to store the profiles without personal information, it can also be set using the argument `-pf` or `--profile_file` when manually running the Python service;
-* `PROFILE_NEW_FILE`: the path of csv/tsv file where to store the profiles without personal information in the new format, it can also be set using the argument `-pnf` or `--profile_new_file` when manually running the Python service;
-* `TASK_NEW_FILE`: the path of csv/tsv file where to store the tasks in the new format, it can also be set using the argument `-tnf` or `--task_new_file` when manually running the Python service;
+* `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
+* `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
+* `APP_IDS`: the ids of the chatbots from which take the users. The ids should be separated by `;`, it can also be set using the argument `-ai` or `--app_ids` when manually running the Python service;
+* `ILOG_ID`: the id of the ilog application to check if the user has enabled it or not, it can also be set using the argument `-ii` or `--ilog_id` when manually running the Python service;
+* `SURVEY_IDS`: the ids of the survey applications to check if the user has enabled it or not. The ids should be separated by `;`, it can also be set using the argument `-si` or `--survey_ids` when manually running the Python service;
+* `USER_UPDATES_DUMPS`: the paths of csv/tsv files with the dump of the user that updated the profile. The paths should be separated by `;`, it can also be set using the argument `-u` or `--updates` when manually running the Python service;
+* `USER_FAILURES_DUMPS` (optional): the paths of csv/tsv files with the dump of the user profiles that failed to update the profile. The paths should be separated by `;`, it can also be set using the argument `-f` or `--failures` when manually running the Python service;
+* `TIME_RANGE` (optional): the temporal range in which compute the analytics, example of allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
+
+Alternatively to the `TIME_RANGE` arbitrary start and end time could be set using the following environment variables:
+
+* `START_TIME`: the start time from which compute the analytics, must be in iso format, it can also be set using the argument `-s` or `--start` when manually running the Python service;
+* `END_TIME`: the end time up to which compute the analytics, must be in iso format, it can also be set using the argument `-e` or `--end` when manually running the Python service.
+
+
+#### Script profiles_and_tasks_m46
+
+The script for getting the profiles and task in the newly requested format for M46 pilots. allows to set the following environment variables:
+
+* `PROFILE_FILE`: the path of csv/tsv file where to store the profiles without personal information in the newly requested format for M46 pilots, it can also be set using the argument `-pf` or `--profile_file` when manually running the Python service;
+* `TASK_FILE`: the path of csv/tsv file where to store the tasks in the newly requested format for M46 pilots, it can also be set using the argument `-tf` or `--task_file` when manually running the Python service;
 * `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
 * `APP_IDS`: the ids of the chatbots from which take the users. The ids should be separated by `;`, it can also be set using the argument `-ai` or `--app_ids` when manually running the Python service;

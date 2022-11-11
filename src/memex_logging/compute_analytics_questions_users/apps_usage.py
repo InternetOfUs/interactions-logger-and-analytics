@@ -45,8 +45,8 @@ if __name__ == '__main__':
     arg_parser.add_argument("-ai", "--app_ids", type=str, default=os.getenv("APP_IDS"), help="The ids of the chatbots from which take the users. The ids should be separated by `;`")
     arg_parser.add_argument("-ii", "--ilog_id", type=str, default=os.getenv("ILOG_ID"), help="The id of the ilog application to check if the user has enabled it or not")
     arg_parser.add_argument("-si", "--survey_ids", type=str, default=os.getenv("SURVEY_IDS"), help="The ids of the survey applications to check if the user has enabled it or not. The ids should be separated by `;`")
-    arg_parser.add_argument("-u", "--updates", type=str, default=os.getenv("USER_UPDATES_DUMP"), help="The paths of csv/tsv files with the dump of the user that updated the profile. The paths should be separated by `;`")
-    arg_parser.add_argument("-f", "--failures", type=str, default=os.getenv("USER_FAILURES_DUMP"), help="The paths of csv/tsv files with the dump of the user profiles that failed to update the profile. The paths should be separated by `;`")
+    arg_parser.add_argument("-u", "--updates", type=str, default=os.getenv("USER_UPDATES_DUMPS"), help="The paths of csv/tsv files with the dump of the user that updated the profile. The paths should be separated by `;`")
+    arg_parser.add_argument("-f", "--failures", type=str, default=os.getenv("USER_FAILURES_DUMPS"), help="The paths of csv/tsv files with the dump of the user profiles that failed to update the profile. The paths should be separated by `;`")
     arg_parser.add_argument("-r", "--range", type=str, default=os.getenv("TIME_RANGE"), help="The temporal range in which compute the analytics")
     arg_parser.add_argument("-s", "--start", type=str, default=os.getenv("START_TIME"), help="The start time from which compute the analytics")
     arg_parser.add_argument("-e", "--end", type=str, default=os.getenv("END_TIME"), help="The end time up to which compute the analytics")
@@ -196,6 +196,7 @@ if __name__ == '__main__':
             raw_profiles.append(raw_profile)
 
     user_file.close()
+
     profiles_file = open(args.profile_file, "w")
     json.dump(raw_profiles, profiles_file, ensure_ascii=False, indent=2)
     profiles_file.close()
