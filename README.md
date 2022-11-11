@@ -181,10 +181,6 @@ The script for getting the profiles and task in the newly requested format for M
 * `INSTANCE` (optional, the default value is the development instance): the host of target instance, it can also be set using the argument `-i` or `--instance` when manually running the Python service;
 * `APIKEY`: the apikey for accessing the services, it can also be set using the argument `-a` or `--apikey` when manually running the Python service;
 * `APP_IDS`: the ids of the chatbots from which take the users. The ids should be separated by `;`, it can also be set using the argument `-ai` or `--app_ids` when manually running the Python service;
-* `ILOG_ID`: the id of the ilog application to check if the user has enabled it or not, it can also be set using the argument `-ii` or `--ilog_id` when manually running the Python service;
-* `SURVEY_ID`: the id of the survey application to check if the user has enabled it or not, it can also be set using the argument `-si` or `--survey_id` when manually running the Python service;
-* `USER_UPDATES_DUMP`: the path of csv/tsv file with the dump of the user that updated the profile, it can also be set using the argument `-u` or `--updates` when manually running the Python service;
-* `USER_FAILURES_DUMP` (optional): the path of csv/tsv file with the dump of the user profiles that failed to update the profile, it can also be set using the argument `-f` or `--failures` when manually running the Python service;
 * `TIME_RANGE` (optional): the temporal range in which compute the analytics, example of allowed values are ["TODAY", "1D", "7D", "10D", "30D"], it can also be set using the argument `-r` or `--range` when manually running the Python service.
 
 Alternatively to the `TIME_RANGE` arbitrary start and end time could be set using the following environment variables:
