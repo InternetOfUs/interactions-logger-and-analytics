@@ -117,7 +117,7 @@ if __name__ == '__main__':
         "transactions.taskId", "transactions.label", "transactions.creationTs", "transactions.actioneerId", "transactions.lastUpdateTs", "transactions.count.id",
         "transactions.messages.appId", "transactions.messages.receiverId", "transactions.messages.label", "transactions.messages.attributes.taskId",
         "transactions.messages.attributes.question", "transactions.messages.attributes.userId", "transactions.messages.attributes.anonymous", "transactions.messages.attributes.domain",
-        "transactions.messages.attributes.positionOfAnswerer", "transactions.messages.attributes.transactionId", "transactions.messages.attributes.answer", "transactions.messages.attributes.listOfTransactionIds",
+        "transactions.messages.attributes.positionOfAnswerer", "transactions.messages.attributes.transactionId", "transactions.messages.attributes.answer", "transactions.messages.attributes.listOfTransactionIds", "transactions.messages.attributes.title", "transactions.messages.attributes.text",
         "transactions.attributes.answer", "transactions.attributes.anonymous", "transactions.attributes.publish", "transactions.attributes.publishAnonymously", "transactions.attributes.reason", "transactions.attributes.transactionId", "transactions.attributes.expirationDate",
         "goal.name", "goal.description", "attributes.domain", "attributes.domainInterest", "attributes.beliefsAndValues", "attributes.anonymous",
         "attributes.socialCloseness", "attributes.positionOfAnswerer", "attributes.maxUsers", "attributes.maxAnswers", "attributes.expirationDate"
@@ -180,6 +180,8 @@ if __name__ == '__main__':
             messages_attributes_transaction_id = ""
             messages_attributes_answer = ""
             messages_attributes_list_of_transaction_ids = ""
+            messages_attributes_title = ""
+            messages_attributes_text = ""
             for message in transaction.messages:
                 if message.label in [LABEL_QUESTION_TO_ANSWER_MESSAGE, LABEL_ANSWERED_QUESTION_MESSAGE, LABEL_ANSWERED_PICKED_MESSAGE, LABEL_QUESTION_EXPIRATION_MESSAGE] and message.attributes.get("question"):
                     message.attributes["question"] = reconstruct_string(message.attributes["question"])
@@ -239,11 +241,21 @@ if __name__ == '__main__':
                 elif message.attributes.get("listOfTransactionIds", "") and messages_attributes_list_of_transaction_ids != message.attributes.get("listOfTransactionIds", ""):
                     logger.warning(f"message listOfTransactionIds [{message.attributes.get('listOfTransactionIds', '')}] is different from another message listOfTransactionIds of the same transaction [{messages_attributes_list_of_transaction_ids}]")
 
+                if not messages_attributes_title:
+                    messages_attributes_title = message.attributes.get("title", "")
+                elif message.attributes.get("title", "") and messages_attributes_title != message.attributes.get("title", ""):
+                    logger.warning(f"message title [{message.attributes.get('title', '')}] is different from another message title of the same transaction [{messages_attributes_title}]")
+
+                if not messages_attributes_text:
+                    messages_attributes_text = message.attributes.get("text", "")
+                elif message.attributes.get("text", "") and messages_attributes_text != message.attributes.get("text", ""):
+                    logger.warning(f"message text [{message.attributes.get('text', '')}] is different from another message text of the same transaction [{messages_attributes_text}]")
+
             transaction_info = [
                 transaction.task_id, transaction.label, datetime.datetime.fromtimestamp(transaction.creation_ts).strftime('%Y-%m-%d %H:%M:%S'), transaction.actioneer_id, datetime.datetime.fromtimestamp(transaction.last_update_ts).strftime('%Y-%m-%d %H:%M:%S'), transaction.id,
                 task.app_id, messages_receivers, messages_label, transaction.task_id,
                 messages_attributes_question, messages_attributes_user_id, messages_attributes_anonymous, messages_attributes_domain,
-                messages_attributes_position_of_answerer, messages_attributes_transaction_id, messages_attributes_answer, "|".join(messages_attributes_list_of_transaction_ids),
+                messages_attributes_position_of_answerer, messages_attributes_transaction_id, messages_attributes_answer, "|".join(messages_attributes_list_of_transaction_ids), messages_attributes_title, messages_attributes_text,
                 transaction.attributes.get("answer", ""), transaction.attributes.get("anonymous", ""), transaction.attributes.get("publish", ""), transaction.attributes.get("publishAnonymously", ""), transaction.attributes.get("reason", ""), transaction.attributes.get("transactionId", ""), datetime.datetime.fromtimestamp(transaction.attributes.get("expirationDate", "")) if transaction.attributes.get("expirationDate", "") else ""
             ]
 
