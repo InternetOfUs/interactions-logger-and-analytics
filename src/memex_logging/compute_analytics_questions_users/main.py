@@ -19,9 +19,7 @@ import csv
 import json
 import logging.config
 import os
-from json import JSONDecodeError
 
-from emoji import emojize
 from wenet.interface.client import ApikeyClient
 from wenet.interface.hub import HubInterface
 from wenet.interface.incentive_server import IncentiveServerInterface
@@ -35,6 +33,7 @@ from memex_logging.common.model.analytic.result.count import CountResult
 from memex_logging.common.model.analytic.result.segmentation import SegmentationResult
 from memex_logging.common.model.message import Message, RequestMessage
 from memex_logging.common.model.analytic.time import MovingTimeWindow, FixedTimeWindow
+from memex_logging.compute_analytics_questions_users.utills import reconstruct_string
 from memex_logging.memex_logging_lib.logging_utils import LoggingUtility
 from memex_logging.common.utils import Utils
 
@@ -64,19 +63,6 @@ LABEL_REPORT_QUESTION_TRANSACTION = "reportQuestionTransaction"
 LABEL_BEST_ANSWER_TRANSACTION = "bestAnswerTransaction"
 LABEL_MORE_ANSWER_TRANSACTION = "moreAnswerTransaction"
 LABEL_REPORT_ANSWER_TRANSACTION = "reportAnswerTransaction"
-
-
-def reconstruct_string(raw_text: str) -> str:
-    """
-    json.loads is used to reconstruct non-ascii characters previously encoded using json.dumps
-    emojize it used to reconstruct emojies previously encoded using demojize
-    """
-    try:
-        decoded_text = json.loads(raw_text)
-    except JSONDecodeError:
-        decoded_text = raw_text
-
-    return emojize(str(decoded_text), use_aliases=True)
 
 
 if __name__ == '__main__':
