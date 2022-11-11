@@ -298,7 +298,7 @@ if __name__ == '__main__':
         "c_musgall", "c_perf_art", "c_watch_sp", "c_ind_sp", "c_team_sp", "c_accom", "c_locfac", "u_active", "u_read",
         "u_essay", "u_org", "u_balance", "u_assess", "u_theory", "u_pract",
         "answers_count", "academic_skills_Q", "basic_needs_Q", "physical_activity_Q", "appreciating_culture_Q",
-        "random_thoughts_Q", "producing_culture_Q", "leisure_activities_Q", "campus_life_Q", "sensitive_Q"
+        "random_thoughts_Q", "producing_culture_Q", "leisure_activities_Q", "campus_life_Q", "sensitive_Q",
         "questions_count", "clicked_more_answers", "count_Q+A"
     ])
 
@@ -429,7 +429,7 @@ if __name__ == '__main__':
         task_info = {info: task_info[info] if task_info[info] else "" for info in task_info}
 
         profile_file_writer.writerow([
-            user_info["profile"].profile_id, user_info["profile"].gender.value if user_info["profile"].gender else "", user_info["profile"].locale, user_info["profile"].nationality, user_info["profile"].creation_ts, user_info["profile"].last_update_ts, user_info["chatbot_ids"], user_info["profile"].date_of_birth.year,
+            user_info["profile"].profile_id, user_info["profile"].gender.value if user_info["profile"].gender else "", user_info["profile"].locale, user_info["profile"].nationality, datetime.datetime.fromtimestamp(user_info["profile"].creation_ts).strftime('%Y-%m-%d %H:%M:%S'), datetime.datetime.fromtimestamp(user_info["profile"].last_update_ts).strftime('%Y-%m-%d %H:%M:%S'), user_info["chatbot_ids"], user_info["profile"].date_of_birth.year,
             department, study_year, university, accommodation, excitement, promotion, existence, suprapersonal,
             interactive, normative, extraversion, agreeableness, conscientiousness, neuroticism, openness, c_food,
             c_eating, c_lit, c_creatlit, c_perf_mus, c_plays, c_perf_plays, c_musgall, c_perf_art, c_watch_sp, c_ind_sp,
