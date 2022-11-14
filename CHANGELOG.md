@@ -101,6 +101,7 @@
 * Added user profiles extraction to the main script for extracting pilots stats.
 * Added user profiles extraction without personal information to the app_usage script.
 * Updated to Project template version `4.12.5`.
+* Added script for the extraction of tasks and profiles in the newly requested format for M46 pilots.
 
 ### 2.3.0
 

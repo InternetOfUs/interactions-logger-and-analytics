@@ -44,9 +44,9 @@ if __name__ == '__main__':
     arg_parser.add_argument("-a", "--apikey", type=str, default=os.getenv("APIKEY"), help="The apikey for accessing the services")
     arg_parser.add_argument("-ai", "--app_ids", type=str, default=os.getenv("APP_IDS"), help="The ids of the chatbots from which take the users. The ids should be separated by `;`")
     arg_parser.add_argument("-ii", "--ilog_id", type=str, default=os.getenv("ILOG_ID"), help="The id of the ilog application to check if the user has enabled it or not")
-    arg_parser.add_argument("-si", "--survey_id", type=str, default=os.getenv("SURVEY_ID"), help="The id of the survey application to check if the user has enabled it or not")
-    arg_parser.add_argument("-u", "--updates", type=str, default=os.getenv("USER_UPDATES_DUMP"), help="The path of csv/tsv file with the dump of the user that updated the profile")
-    arg_parser.add_argument("-f", "--failures", type=str, default=os.getenv("USER_FAILURES_DUMP"), help="The path of csv/tsv file with the dump of the user profiles that failed to update the profile")
+    arg_parser.add_argument("-si", "--survey_ids", type=str, default=os.getenv("SURVEY_IDS"), help="The ids of the survey applications to check if the user has enabled it or not. The ids should be separated by `;`")
+    arg_parser.add_argument("-u", "--updates", type=str, default=os.getenv("USER_UPDATES_DUMPS"), help="The paths of csv/tsv files with the dump of the user that updated the profile. The paths should be separated by `;`")
+    arg_parser.add_argument("-f", "--failures", type=str, default=os.getenv("USER_FAILURES_DUMPS"), help="The paths of csv/tsv files with the dump of the user profiles that failed to update the profile. The paths should be separated by `;`")
     arg_parser.add_argument("-r", "--range", type=str, default=os.getenv("TIME_RANGE"), help="The temporal range in which compute the analytics")
     arg_parser.add_argument("-s", "--start", type=str, default=os.getenv("START_TIME"), help="The start time from which compute the analytics")
     arg_parser.add_argument("-e", "--end", type=str, default=os.getenv("END_TIME"), help="The end time up to which compute the analytics")
@@ -66,29 +66,6 @@ if __name__ == '__main__':
         logger.warning(f"For the user file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
         raise ValueError(f"For the user file you should pass the path of one of the following type of file [.csv, .tsv], instead you pass [{extension}]")
 
-    name, extension = os.path.splitext(args.updates)
-    user_updates_dump = open(args.updates, "r")
-    if extension == ".csv":
-        user_updates_dump_reader = csv.DictReader(user_updates_dump)
-    elif extension == ".tsv":
-        user_updates_dump_reader = csv.DictReader(user_updates_dump, delimiter="\t")
-    else:
-        logger.warning(f"For the user updates dump you should pass the path of the following type of file [.csv, .tsv], instead you pass [{extension}]")
-        raise ValueError(f"For the user updates dump you should pass the path of the following type of file [.csv, .tsv], instead you pass [{extension}]")
-
-    if args.failures:
-        name, extension = os.path.splitext(args.failures)
-        user_failures_dump = open(args.failures, "r")
-        if extension == ".csv":
-            user_failures_dump_reader = csv.DictReader(user_failures_dump)
-        elif extension == ".tsv":
-            user_failures_dump_reader = csv.DictReader(user_failures_dump, delimiter="\t")
-        else:
-            logger.warning(f"For the user failures dump you should pass the path of the following type of file [.csv, .tsv], instead you pass [{extension}]")
-            raise ValueError(f"For the user failures dump you should pass the path of the following type of file [.csv, .tsv], instead you pass [{extension}]")
-    else:
-        user_failures_dump_reader = None
-
     if args.start and args.end:
         time_range = FixedTimeWindow.from_isoformat(args.start, args.end)
         creation_from, creation_to = Utils.extract_range_timestamps(time_range)
@@ -106,38 +83,63 @@ if __name__ == '__main__':
     user_profile_updates = []
     all_user_profile_updates = []
     timezone = pytz.timezone("UTC")
-    for row in user_updates_dump_reader:
-        update_date = dateparser.parse(row["last_update"]).astimezone(timezone)
-        if creation_from and creation_to:
-            if timezone.localize(creation_from) <= update_date <= timezone.localize(creation_to):
-                user_profile_updates.append(row["wenet_id"])
-        elif creation_from:
-            if timezone.localize(creation_from) <= update_date:
-                user_profile_updates.append(row["wenet_id"])
-        elif creation_to:
-            if update_date <= timezone.localize(creation_to):
-                user_profile_updates.append(row["wenet_id"])
+    for update_path in args.updates.split(";"):
+        name, extension = os.path.splitext(update_path)
+        user_updates_dump = open(update_path, "r")
+        if extension == ".csv":
+            user_updates_dump_reader = csv.DictReader(user_updates_dump)
+        elif extension == ".tsv":
+            user_updates_dump_reader = csv.DictReader(user_updates_dump, delimiter="\t")
         else:
-            user_profile_updates.append(row["wenet_id"])
-        all_user_profile_updates.append(row["wenet_id"])
+            logger.warning(f"For the user updates dump you should pass the path of the following type of file [.csv, .tsv], instead you pass [{extension}]")
+            raise ValueError(f"For the user updates dump you should pass the path of the following type of file [.csv, .tsv], instead you pass [{extension}]")
+
+        for row in user_updates_dump_reader:
+            update_date = dateparser.parse(row["last_update"]).astimezone(timezone)
+            if creation_from and creation_to:
+                if timezone.localize(creation_from) <= update_date <= timezone.localize(creation_to):
+                    user_profile_updates.append(row["wenet_id"])
+            elif creation_from:
+                if timezone.localize(creation_from) <= update_date:
+                    user_profile_updates.append(row["wenet_id"])
+            elif creation_to:
+                if update_date <= timezone.localize(creation_to):
+                    user_profile_updates.append(row["wenet_id"])
+            else:
+                user_profile_updates.append(row["wenet_id"])
+            all_user_profile_updates.append(row["wenet_id"])
+        user_updates_dump.close()
 
     user_profile_failures = []
     all_user_profile_failures = []
-    if user_failures_dump_reader is not None:
-        for row in user_failures_dump_reader:
-            failure_date = dateparser.parse(row["failure_datetime"]).astimezone(timezone)
-            if creation_from and creation_to:
-                if timezone.localize(creation_from) <= failure_date <= timezone.localize(creation_to):
-                    user_profile_failures.append(row["wenet_id"])
-            elif creation_from:
-                if timezone.localize(creation_from) <= failure_date:
-                    user_profile_failures.append(row["wenet_id"])
-            elif creation_to:
-                if failure_date <= timezone.localize(creation_to):
-                    user_profile_failures.append(row["wenet_id"])
+    if args.failures:
+        for failure_path in args.failures.split(";"):
+            name, extension = os.path.splitext(failure_path)
+            user_failures_dump = open(failure_path, "r")
+            if extension == ".csv":
+                user_failures_dump_reader = csv.DictReader(user_failures_dump)
+            elif extension == ".tsv":
+                user_failures_dump_reader = csv.DictReader(user_failures_dump, delimiter="\t")
             else:
-                user_profile_failures.append(row["wenet_id"])
-            all_user_profile_failures.append(row["wenet_id"])
+                logger.warning(f"For the user failures dump you should pass the path of the following type of file [.csv, .tsv], instead you pass [{extension}]")
+                raise ValueError(f"For the user failures dump you should pass the path of the following type of file [.csv, .tsv], instead you pass [{extension}]")
+
+            for row in user_failures_dump_reader:
+                failure_date = dateparser.parse(row["failure_datetime"]).astimezone(timezone)
+                if creation_from and creation_to:
+                    if timezone.localize(creation_from) <= failure_date <= timezone.localize(creation_to):
+                        user_profile_failures.append(row["wenet_id"])
+                elif creation_from:
+                    if timezone.localize(creation_from) <= failure_date:
+                        user_profile_failures.append(row["wenet_id"])
+                elif creation_to:
+                    if failure_date <= timezone.localize(creation_to):
+                        user_profile_failures.append(row["wenet_id"])
+                else:
+                    user_profile_failures.append(row["wenet_id"])
+                all_user_profile_failures.append(row["wenet_id"])
+
+            user_failures_dump.close()
 
     app_ids = args.app_ids.split(";")
     apps = [hub_interface.get_app_details(app_id) for app_id in app_ids]
@@ -145,8 +147,11 @@ if __name__ == '__main__':
     apps_all_users = [hub_interface.get_user_ids_for_app(app_id) for app_id in app_ids]
     ilog_ids = hub_interface.get_user_ids_for_app(args.ilog_id, from_datetime=creation_from, to_datetime=creation_to)
     ilog_all_ids = hub_interface.get_user_ids_for_app(args.ilog_id)
-    survey_ids = hub_interface.get_user_ids_for_app(args.survey_id, from_datetime=creation_from, to_datetime=creation_to)
-    survey_all_ids = hub_interface.get_user_ids_for_app(args.survey_id)
+    survey_ids = []
+    survey_all_ids = []
+    for survey_id in args.survey_ids.split(";"):
+        survey_ids.extend(hub_interface.get_user_ids_for_app(survey_id, from_datetime=creation_from, to_datetime=creation_to))
+        survey_all_ids.extend(hub_interface.get_user_ids_for_app(survey_id))
 
     user_ids = []
     for app_users in apps_users:
@@ -172,7 +177,7 @@ if __name__ == '__main__':
             "completed_survey": "yes" if user_id in all_user_profile_updates or user_id in all_user_profile_failures else "no",
             "chatbots": chatbots,
             "chatbot_ids": chatbot_ids,
-            "ilog": "yes" if user_id in ilog_all_ids else "no",
+            "ilog": "yes" if user_id in ilog_all_ids else "no"
         })
 
     users_info = sorted(users_info, key=lambda x: x["chatbots"], reverse=True)
