@@ -5,6 +5,7 @@
 - [Changelog](#changelog)
   - [Breaking changes from 1.* to 2.*](#breaking-changes-from-1-to-2)
   - [Version 2.*](#version-2)
+    - [next](#next)
     - [2.3.0](#230)
     - [2.2.0](#220)
     - [2.1.2](#212)
@@ -93,6 +94,17 @@
 * The keys `items` and `transactions` have been removed from the analytic result contents.
 
 ## Version 2.*
+
+### 2.4.0
+
+:rocket: New Features
+* Added possibility to delete all the message for an user from the database.
+
+:house: Internal
+* Added user profiles extraction to the main script for extracting pilots stats.
+* Added user profiles extraction without personal information to the app_usage script.
+* Updated to Project template version `4.12.5`.
+* Added script for the extraction of tasks and profiles in the newly requested format for M46 pilots.
 
 ### 2.3.0
 

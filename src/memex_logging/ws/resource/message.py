@@ -34,7 +34,7 @@ class MessageResourceBuilder(object):
     def routes(dao_collector: DaoCollector):
         return [
             (MessageInterface, '/message', (dao_collector,)),
-            (MessagesInterface, '/messages', (dao_collector,))
+            (MessagesInterface, '/messages', (dao_collector,)),
         ]
 
 
@@ -221,3 +221,31 @@ class MessagesInterface(Resource):
             }, 500
 
         return [message.to_repr() for message in messages], 200
+
+    def delete(self):
+        """
+        Delete a messages for an user.
+        """
+
+
+        try:
+            user_id = request.args['userId']
+            logger.info(f"Cleaning messages for user [{user_id}]")
+            self._dao_collector.message.delete_by_user(user_id)
+        except (ValueError, KeyError) as e:
+            logger.debug("Missing required parameters", exc_info=e)
+            return {
+                "status": "Malformed request: missing required parameter, you have to specify only the `traceId` or the `project`, the `messageId` and the `userId`",
+                "code": 400
+            }, 400
+        except Exception as e:
+            logger.exception("Message failed to be deleted", exc_info=e)
+            return {
+                "status": "Internal server error: could not delete the message",
+                "code": 500
+            }, 500
+
+        return {
+            "status": "Ok: message deleted",
+            "code": 200
+        }, 200

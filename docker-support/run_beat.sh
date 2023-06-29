@@ -24,5 +24,6 @@ echo "Running beat..."
 
 
 
+
 exec celery beat -A memex_logging.celery.initialize.celery -s /celery/celerybeat-schedule
 
