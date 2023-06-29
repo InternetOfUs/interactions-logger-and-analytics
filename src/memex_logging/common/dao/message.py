@@ -58,6 +58,23 @@ class MessageDao(CommonDao):
         }
 
     @staticmethod
+    def _build_query_by_user_id(user_id: str) -> dict:
+        return {
+            "size": 1, # TODO check
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "match_phrase": {
+                                "userId.keyword": user_id
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+
+    @staticmethod
     def _add_user_id_to_query(query: dict, user_id: str) -> dict:
         query["query"]["bool"]["must"].append(
             {
@@ -103,7 +120,7 @@ class MessageDao(CommonDao):
 
     def _build_query_based_on_parameters(self, trace_id: Optional[str] = None, message_id: Optional[str] = None, user_id: Optional[str] = None) -> dict:
         """
-        Build query for Elasticsearch based on parameters, specifying only the `trace_id` or the `message_id` and the `user_id`
+        Build query for Elasticsearch based on parameters, specifying only the `trace_id` or the `message_id` and the `user_id`, or the `user_id` only
 
         :param Optional[str] trace_id: the trace_id of the message to retrieve
         :param Optional[str] message_id: the id of the message to retrieve
@@ -118,6 +135,8 @@ class MessageDao(CommonDao):
         elif message_id and user_id:
             query = self._build_query_by_message_id(message_id)
             return self._add_user_id_to_query(query, user_id)
+        # elif user_id is not None:
+        #     return self._build_query_by_user_id(user_id)
         else:
             raise ValueError("Missing required parameter: you have to specify only the `trace_id` or the `message_id` and the `user_id`")
 
@@ -159,6 +178,11 @@ class MessageDao(CommonDao):
         query = self._build_query_based_on_parameters(trace_id=trace_id, message_id=message_id, user_id=user_id)
         if project:
             query = self._add_project_to_query(query, project)
+        self._delete_document(index, query)
+
+    def delete_by_user(self, user_id: str):
+        index = self._generate_index()
+        query = self._build_query_by_user_id(user_id)
         self._delete_document(index, query)
 
     def search(self, project: str, from_time: datetime, to_time: datetime, max_size: int, user_id: Optional[str] = None,

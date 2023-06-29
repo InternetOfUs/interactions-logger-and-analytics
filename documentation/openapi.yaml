@@ -137,6 +137,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTP_500'
+    delete:
+      tags:
+        - message
+      summary: Delete messages for a specific user
+      description: This end-point allows to delete messages from the database for a specific user
+      parameters:
+        - in: query
+          name: userId
+          schema:
+            type: string
+          example: "USR-JDKHEIU2-31NJDTE94"
+          description: the id of the user related to the message you want to delete
+          required: true
+      responses:
+        '200':
+          description: messages deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_200_basic'
+        '400':
+          description: malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_400'
+        '500':
+          description: internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTP_500'
+
 
   /message:
     get:

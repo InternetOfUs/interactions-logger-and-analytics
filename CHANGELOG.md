@@ -95,7 +95,10 @@
 
 ## Version 2.*
 
-### next
+### 2.4.0
+
+:rocket: New Features
+* Added possibility to delete all the message for an user from the database.
 
 :house: Internal
 * Added user profiles extraction to the main script for extracting pilots stats.
